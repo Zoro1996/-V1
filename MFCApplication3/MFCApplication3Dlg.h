@@ -3,7 +3,14 @@
 //
 
 #pragma once
-
+#include "pch.h"
+#include "MyFunction.h"
+#include <iostream>  
+#include <fstream>
+#include <string>
+#include <vector>
+#include <iterator>
+#include "afxwin.h"
 
 // CMFCApplication3Dlg 对话框
 class CMFCApplication3Dlg : public CDialogEx
@@ -31,4 +38,117 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
+public:
+
+	Mat maskL;
+	Mat maskRGBL;
+	Mat maskR;
+	Mat maskRGBR;
+	Mat srcImageL;
+	Mat srcImageR;
+	Mat testImageL;
+	Mat testImageR;
+	Mat bmImageL;
+	Mat bmImageR;
+	Mat resultImageL, resultImageR;
+
+	Mat secTestImageL;
+	Mat secTestImageR;
+
+	Mat secImageResultL;
+	Mat secImageResultR;
+
+	Mat HL, HR;
+
+	CString RotateX1, RotateY1;
+	CString RotateX2, RotateY2;
+
+	CircleData centerWorldL1, centerWorldR1;
+	CircleData centerWorldL2, centerWorldR2;
+
+	int index = 0;
+
+	float deltaX;
+	float deltaY;
+	float deltaXeWorld;
+	float deltaYeWorld;
+	float deltaThetaeWorld;
+	float deltaX1, deltaY1;
+	float deltaX2, deltaY2;
+
+	vector<tuple<int, float, float, float>> resultText1, resultText2;
+
+	Point2f rotatePoint1, rotatePoint2;
+
+	HomographyStruct invH1,invH2;
+	Position bmPosition, testPosition, resultPosition, resultPosition2;
+
+	CenterPoint circlePoint1,circlePoint2;
+	CircleData circlePointWorldL1, circlePointWorldR1;
+	CircleData circlePointWorldL2, circlePointWorldR2;
+	ControlInstruction instruction1, instruction2;
+
+	Point2f RectifiedRCenter;
+
+	void ShowPic_MaskL(Mat input_1);
+	void ShowPic_MaskR(Mat input_2);
+	void ShowPic_testImageL(Mat input);
+	void ShowPic_testImageR(Mat input);
+	void ShowPic_bmImageViweL(Mat input);
+	void ShowPic_bmImageViweR(Mat input);
+	void ShowPic_resultImageViweL(Mat input);
+	void ShowPic_resultImageViweR(Mat input);
+	void ShowPic_secResultViewL(Mat input);
+	void ShowPic_secResultViewR(Mat input);
+	void ShowPic_secTestViewL(Mat input);
+	void ShowPic_secTestViewR(Mat input);
+
+
+	afx_msg void OnBnClickedOk();
+	afx_msg void OnBnClickedButton3();
+	afx_msg void OnStnClickedPictureviewer1();
+	afx_msg void OnStnClickedPictureviewer2();
+	afx_msg void OnBnClickedButton4();
+	afx_msg void OnBnClickedtestimagel();
+	afx_msg void OnBnClickedtestimager();
+
+	afx_msg void OnBnClickedbmimagel();
+	afx_msg void OnBnClickedbmimager();
+	CListCtrl Instruction_Command;
+private:
+	CListCtrl InstructionCommandList;
+public:
+	afx_msg void OnBnClickedAlignmentWo();
+	afx_msg void OnBnClickedCameracalibation();
+	afx_msg void OnLvnItemchangedList3(NMHDR *pNMHDR, LRESULT *pResult);
+private:
+	CListCtrl ErrorList;
+public:
+	afx_msg void OnBnClickedRectifyrotatecenter();
+	afx_msg void OnLvnItemchangedList1(NMHDR *pNMHDR, LRESULT *pResult);
+private:
+	CListCtrl RectifyInstructionCommand;
+public:
+//	CListCtrl RectifyErrorList;
+private:
+	CListCtrl RectifyErrorList;
+public:
+	afx_msg void OnBnClickedRectifyimagel();
+	afx_msg void OnBnClickedRectifyimager();
+	afx_msg void OnBnClickedButton6();
+	afx_msg void OnBnClickedButton1();
+	afx_msg void OnBnClickedButton5();
+	afx_msg void OnBnClickedButton7();
+	afx_msg void OnStnClickedRectifyimageviewr();
+	afx_msg void OnBnClickedButton8();
+	afx_msg void OnBnClickedButton9();
+	afx_msg void OnBnClickedButton10();
+	afx_msg void OnBnClickedResultimagel();
+	afx_msg void OnBnClickedResultimager();
+	afx_msg void OnBnClickedButton11();
+private:
+	CListCtrl RotatePointList1;
+	CListCtrl RotatePointList2;
+public:
+	afx_msg void OnLvnItemchangedList4(NMHDR *pNMHDR, LRESULT *pResult);
 };
