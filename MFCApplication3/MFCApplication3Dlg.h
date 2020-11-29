@@ -12,12 +12,21 @@
 #include <iterator>
 #include "afxwin.h"
 
+using namespace std;
+
 // CMFCApplication3Dlg 对话框
 class CMFCApplication3Dlg : public CDialogEx
 {
 // 构造
 public:
 	CMFCApplication3Dlg(CWnd* pParent = nullptr);	// 标准构造函数
+
+	//AllocConsole();
+	//freopen("CON", "r", stdin);
+	//freopen("CON", "w", stdout);
+	//freopen("CON", "w", stderr);
+
+	//cout << "启动控制台/n/n";
 
 // 对话框数据
 #ifdef AFX_DESIGN_TIME
@@ -52,6 +61,14 @@ public:
 	Mat bmImageR;
 	Mat resultImageL, resultImageR;
 
+	Mat maskL1;
+	Mat maskL2;
+	Mat maskR1;
+	Mat maskR2;
+
+	//Mat maskImageL;
+	//Mat maskImageR;
+
 	Mat secTestImageL;
 	Mat secTestImageR;
 
@@ -68,8 +85,6 @@ public:
 
 	int index = 0;
 
-	float deltaX;
-	float deltaY;
 	float deltaXeWorld;
 	float deltaYeWorld;
 	float deltaThetaeWorld;
@@ -81,11 +96,11 @@ public:
 	Point2f rotatePoint1, rotatePoint2;
 
 	HomographyStruct invH1,invH2;
-	Position bmPosition, testPosition, resultPosition, resultPosition2;
+	//Position bmPosition, testPosition, resultPosition, resultPosition2;
 
 	CenterPoint circlePoint1,circlePoint2;
-	CircleData circlePointWorldL1, circlePointWorldR1;
-	CircleData circlePointWorldL2, circlePointWorldR2;
+	//CircleData circlePointWorldL1, circlePointWorldR1;
+	//CircleData circlePointWorldL2, circlePointWorldR2;
 	ControlInstruction instruction1, instruction2;
 
 	Point2f RectifiedRCenter;
@@ -151,4 +166,18 @@ private:
 	CListCtrl RotatePointList2;
 public:
 	afx_msg void OnLvnItemchangedList4(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnEnChangeCanny1();
+	afx_msg void OnEnChangeHough1();
+	afx_msg void OnEnChangeThreshold();
+	afx_msg void OnEnChangeerodesize();
+	afx_msg void OnEnChangeHough3();
+	afx_msg void OnEnChangeHough2();
+	afx_msg void OnEnChangeHoughcircle();
+	CEdit m_threshold;
+	CEdit m_erodeSize;
+	CEdit m_cannt1;
+	CEdit m_canny2;
+	CEdit m_hough1;
+	CEdit m_hough2;
+	CEdit m_hough3;
 };
