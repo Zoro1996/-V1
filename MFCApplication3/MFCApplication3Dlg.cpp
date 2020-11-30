@@ -14,6 +14,7 @@
 #include <fstream>
 #include <cstdlib>
 #include "MyGLobal.h"
+#include <string>
 
 
 using namespace std;
@@ -266,7 +267,7 @@ BOOL CMFCApplication3Dlg::OnInitDialog()
 	GetDlgItemText(IDC_Hough3, strHough3);
 	GetDlgItemText(IDC_HoughCircle, strHoughCircleRadius);
 
-	m_threshold.SetWindowTextW(TEXT("100"));
+	m_threshold.SetWindowTextW(TEXT("15"));
 	m_erodeSize.SetWindowTextW(TEXT("3"));
 	m_cannt1.SetWindowTextW(TEXT("150"));
 	m_canny2.SetWindowTextW(TEXT("200"));
@@ -536,22 +537,41 @@ void CMFCApplication3Dlg::OnStnClickedPictureviewer2()
 
 void CMFCApplication3Dlg::OnBnClickedButton4()
 {
-
 	//Mat maskImage = imread("F:\\数据集\\对位\\3号台圆弧盖板图像\\对位2\\F01-20201114223512-1.jpeg", 0);
 	//Mat srcImage = imread("F:\\数据集\\对位\\3号台圆弧盖板图像\\对位2\\F01-20201114223512-1.jpeg", 0);
 
-	string strL = "E:\\数据集\\后盖标定采图\\L\\T-L-7.bmp";
-	string strR = "E:\\数据集\\后盖标定采图\\R\\T-R-7.bmp";
-
-	//maskImageL = imread("F:\\数据集\\对位\\3号台圆弧盖板图像\\maskImageL.bmp", 0);
+	/*计算单相机的平移标定角点的图像像素坐标*/
+	maskImageL = imread("F:\\数据集\\对位\\3号台圆弧盖板图像\\maskImageL.bmp", 0);
 	maskImageR = imread("F:\\数据集\\对位\\3号台圆弧盖板图像\\maskImageR.bmp", 0);
 
-	Mat srcImageL = imread(strL, 0);
-	Mat srcImageR = imread(strR, 0);
+	char srcImagePathL[500], srcImagePathR[500];
+	CString srcPathL, srcPathR;
+	Mat srcImageRectL, srcImageRectR;
+	Rect rectL, rectR;
+	float pointTransSetL[3][9], pointTransSetR[3][9];//角点图像像素坐标
+	for (int index = 3; index < 10; index++)
+	{
+		sprintf_s(srcImagePathL, "E:\\数据集\\后盖标定采图\\L\\T-L-%d.bmp", index);
+		sprintf_s(srcImagePathR, "E:\\数据集\\后盖标定采图\\R\\T-R-%d.bmp", index);
 
-	//Point2f resultPointL = GetCrossBasedFastShapeL(srcImageL, maskImageL, factor, 255, 1500, &strL[0]);
-	Point2f resultPointR = GetCrossBasedFastShapeR(srcImageR, maskImageR, 255, 1500, &strR[0]);
-	//Point2f res = GetCrossBasedShapeR(srcImage, maskImageR);
+
+		//Mat srcImageL = imread(srcImagePathL, 0);
+		Mat srcImageR = imread(srcImagePathR, 0);
+
+#if CrossMethod==1
+		Point2f resultPointL = GetCrossPointL(srcImageL, thresholdValue, erodeSize,
+			circleRadiusMax, deltaRadius, CannyThreshold1, CannyThreshold2,
+			HoughThreshold1, HoughThreshold2, HoughThreshold3);
+		Point2f resultPointR = GetCrossPointR(srcImageR, CannyThreshold1, CannyThreshold2,
+			HoughThreshold1, HoughThreshold2, HoughThreshold3);
+#elif CrossMethod == 2
+		Point2f resultPointL = GetCrossBasedShapeL(srcImageL, maskImageL);
+		Point2f resultPointR = GetCrossBasedShapeR(srcImageR, maskImageR);
+#elif CrossMethod == 3
+		//Point2f resultPointL = GetCrossBasedFastShapeL(srcImageL, maskImageL, 255, 1500, srcImagePathL);
+		Point2f resultPointR = GetCrossBasedFastShapeR(srcImageR, maskImageR, 255, 1500, srcImagePathR);
+#endif
+	}
 
 	cout << "pause here." << endl;
 }

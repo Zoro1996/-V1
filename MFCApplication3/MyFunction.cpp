@@ -60,7 +60,7 @@ double CannyThreshold2 = 200;
 double HoughThreshold1 = 150;
 double HoughThreshold2 = 150;
 double HoughThreshold3 = 50;
-double thresholdValue = 100;
+double thresholdValue = 15;
 int erodeSize = 3;
 
 Mat maskImageL;
@@ -380,6 +380,8 @@ vector<Gradient>GetGradientTable(Mat& image)
 
 	int width = image.cols;
 	int height = image.rows;
+
+	int index = 0;
 	for (int row = 0; row < height; row++) {
 		for (int col = 0; col < width; col++) {
 			float xg = xgrad.at<float>(row, col);
@@ -389,13 +391,15 @@ vector<Gradient>GetGradientTable(Mat& image)
 
 			if (margin > 200)
 			{
-				Gradient gradient;
-				gradient.pt = Point2f(col - width / 2, row - height / 2);
-				gradient.margin = sqrt(pow(xg, 2) + pow(yg, 2));
-				gradient.theta = atan2(yg, xg);
-				//gradient.direct1 = cos(atan2(yg, xg));
-				//gradient.direct2 = sin(atan2(yg, xg));
-				gradientTable.push_back(gradient);
+				index ++ ;
+				if (index % 2== 0)
+				{
+					Gradient gradient;
+					gradient.pt = Point2f(col - width / 2, row - height / 2);
+					gradient.margin = sqrt(pow(xg, 2) + pow(yg, 2));
+					gradient.theta = atan2(yg, xg);
+					gradientTable.push_back(gradient);
+				}
 			}
 		}
 	}
@@ -440,7 +444,7 @@ ShapeMatchResult GetShapeTrans(Mat& maskImage, Mat& srcImage)
 			for (float theta = -10 * PI / 180; theta < 10 * PI / 180; theta += PI / 180)
 			{
 				float similarity = 0;
-				for (double i = 0; i < maskGradientTable.size(); i += maskGradientTable.size()*0.01)
+				for (double i = 0; i < maskGradientTable.size(); i += 1)
 				{
 					Gradient curMaskGradient = maskGradientTable[i];
 
@@ -486,29 +490,31 @@ ShapeMatchResult GetShapeTrans(Mat& maskImage, Mat& srcImage)
 		}
 	}
 
-	Mat dstImage(srcImage5);
-	cvtColor(dstImage, dstImage, CV_GRAY2BGR);
-	for (int i = 0; i < maskGradientTable.size(); i++)
-	{
-		Gradient curMaskGradient = maskGradientTable[i];
+	//Mat dstImage(srcImage5);
+	//cvtColor(dstImage, dstImage, CV_GRAY2BGR);
+	//for (int i = 0; i < maskGradientTable.size(); i++)
+	//{
+	//	Gradient curMaskGradient = maskGradientTable[i];
 
-		/*模板图像计算的轮廓相对于质心的坐标*/
-		float deltaPtX = curMaskGradient.pt.x;
-		float deltaPtY = curMaskGradient.pt.y;
+	//	/*模板图像计算的轮廓相对于质心的坐标*/
+	//	float deltaPtX = curMaskGradient.pt.x;
+	//	float deltaPtY = curMaskGradient.pt.y;
 
-		/*计算旋转后的相对坐标*/
-		float rotateX = cos(bestTheta)*deltaPtX - sin(bestTheta)*deltaPtY;
-		float rotateY = sin(bestTheta)*deltaPtX + cos(bestTheta)*deltaPtY;
+	//	/*计算旋转后的相对坐标*/
+	//	float rotateX = cos(bestTheta)*deltaPtX - sin(bestTheta)*deltaPtY;
+	//	float rotateY = sin(bestTheta)*deltaPtX + cos(bestTheta)*deltaPtY;
 
-		/*待测图像当前点(sx,sy)作为质心，计算质心+旋转坐标pt，用于计算匹配度*/
-		Point2f pt = Point2f(rotateX + locate.x, rotateY + locate.y);
+	//	/*待测图像当前点(sx,sy)作为质心，计算质心+旋转坐标pt，用于计算匹配度*/
+	//	Point2f pt = Point2f(rotateX + locate.x, rotateY + locate.y);
 
-		if (pt.x >= 0 && pt.x < srcImage5.cols - 1
-			&& pt.y >= 0 && pt.y < srcImage5.rows - 1)
-		{
-			dstImage.at<Vec3b>(pt)[2] = 255;
-		}
-	}
+	//	if (pt.x >= 0 && pt.x < srcImage5.cols - 1
+	//		&& pt.y >= 0 && pt.y < srcImage5.rows - 1)
+	//	{
+	//		dstImage.at<Vec3b>(pt)[0] = 0;
+	//		dstImage.at<Vec3b>(pt)[1] = 0;
+	//		dstImage.at<Vec3b>(pt)[2] = 255;
+	//	}
+	//}
 
 	ShapeMatchResult result;
 	result.massCenter = locate;
@@ -729,8 +735,9 @@ vector<Point2f> GetLinePoints3(Mat image, float deltaX, float deltaY, float imag
 				Point2f pt = Point2f(col, row);
 				Point2f pt1 = Point2f(col, row - 1);
 				Point2f pt2 = Point2f(col, row + 1);
-				float deltaGray = abs(ygradabs.at<uchar>(pt1) - ygradabs.at<uchar>(pt2));
-				if (deltaGray > 50)
+				//float deltaGray = abs(ygradabs.at<uchar>(pt1) - ygradabs.at<uchar>(pt2));
+				float deltaGray = abs(ygradabs.at<uchar>(pt2) - ygradabs.at<uchar>(pt));
+				if (deltaGray > 5)
 				{
 					linePoints.push_back(pt2 + Point2f(deltaX, deltaY));
 					imageBGR.at<Vec3b>(pt2)[0] = 0;
@@ -755,8 +762,9 @@ vector<Point2f> GetLinePoints3(Mat image, float deltaX, float deltaY, float imag
 					Point2f pt = Point2f(col, row);
 					Point2f pt1 = Point2f(col - 1, row);
 					Point2f pt2 = Point2f(col + 1, row);
-					float deltaGray = abs(xgradabs.at<uchar>(pt1) - xgradabs.at<uchar>(pt2));
-					if (deltaGray > 50)
+					/*float deltaGray = abs(xgradabs.at<uchar>(pt1) - xgradabs.at<uchar>(pt2));*/
+					float deltaGray = abs(xgradabs.at<uchar>(pt) - xgradabs.at<uchar>(pt2));
+					if (deltaGray > 5)
 					{
 						linePoints.push_back(pt2 + Point2f(deltaX, deltaY));
 						imageBGR.at<Vec3b>(pt2)[0] = 0;
@@ -776,8 +784,9 @@ vector<Point2f> GetLinePoints3(Mat image, float deltaX, float deltaY, float imag
 					Point2f pt = Point2f(col, row);
 					Point2f pt1 = Point2f(col + 1, row);
 					Point2f pt2 = Point2f(col - 1, row);
-					float deltaGray = abs(xgradabs.at<uchar>(pt1) - xgradabs.at<uchar>(pt2));
-					if (deltaGray > 50)
+					/*float deltaGray = abs(xgradabs.at<uchar>(pt1) - xgradabs.at<uchar>(pt2));*/
+					float deltaGray = abs(xgradabs.at<uchar>(pt) - xgradabs.at<uchar>(pt2));
+					if (deltaGray >= 5)
 					{
 						linePoints.push_back(pt2 + Point2f(deltaX, deltaY));
 						imageBGR.at<Vec3b>(pt2)[0] = 0;
@@ -1805,7 +1814,7 @@ Point2f GetCrossBasedFastShapeL(Mat& srcImage, Mat& maskImage,
 	float bestTheta = arcShapeMatchResult.theta;
 
 	Rect maskArcRegion = Rect(1674, 350, 2666 - 1674, 1141 - 350);
-	Rect maskLineRegion1 = Rect(2946, 350, 5000 - 2946, 700 - 350);
+	Rect maskLineRegion1 = Rect(2946, 350, 4000 - 2946, 700 - 350);
 	Rect maskLineRegion2 = Rect(1304, 1660, 2364 - 1304, 2372 - 1660);
 
 	float centerX = (1674 + 2666) / 2;
@@ -1814,9 +1823,9 @@ Point2f GetCrossBasedFastShapeL(Mat& srcImage, Mat& maskImage,
 	float deltaRow = locate.y * pow(2, factor);
 
 	float xUA1 = 2946 - centerX, yUA1 = 350 - centerY;
-	float xUA2 = 5000 - centerX, yUA2 = 350 - centerY;
+	float xUA2 = 4000 - centerX, yUA2 = 350 - centerY;
 	float xUB1 = 2946 - centerX, yUB1 = 700 - centerY;
-	float xUB2 = 3562 - centerX, yUB2 = 700 - centerY;
+	float xUB2 = 4000 - centerX, yUB2 = 700 - centerY;
 
 	float xDA1 = 1304 - centerX, yDA1 = 1660 - centerY;
 	float xDA2 = 2364 - centerX, yDA2 = 1660 - centerY;
@@ -1932,34 +1941,36 @@ Point2f GetCrossBasedFastShapeL(Mat& srcImage, Mat& maskImage,
 	//Point2f crossPoint = bestResult.crossPoint;
 
 	vector<Point2f>linePointU, linePointD;
+
+#if CrossDetectionMode==1
 	linePointU = GetLinePoints3(lineRegionU, brectU.x, brectU.y, 0, 1);//direction=1:U  direction=2:D
 	linePointD = GetLinePoints3(lineRegionD, brectD.x, brectD.y, 0, 2);
+#elif CrossDetectionMode==2
+	GatherEdgePtsInput inputU, inputD;
+	GatherEdgePtsOutput outputU, outputD;
 
-	//GatherEdgePtsInput inputU, inputD;
-	//GatherEdgePtsOutput outputU, outputD;
+	inputU.img = srcImage;
+	inputU.rectangleROI.pt1 = Point2f(brectU.x, brectU.y + brectU.height / 2);
+	inputU.rectangleROI.pt2 = Point2f(brectU.x + brectU.width, brectU.y + brectU.height / 2);
+	inputU.rectangleROI.offset = 200;
+	inputU.rectangleROI.direction = 1;//顺时针扫描，从左到右
 
-	//inputU.img = srcImage;
-	//inputU.rectangleROI.pt1 = Point2f(brectU.x, brectU.y + brectU.height / 2 );
-	//inputU.rectangleROI.pt2 = Point2f(brectU.x + brectU.width, brectU.y + brectU.height / 2 );
-	//inputU.rectangleROI.offset = 200;
-	//inputU.rectangleROI.direction = 1;//顺时针扫描，从左到右
+	inputD.img = srcImage;
+	inputD.rectangleROI.pt1 = Point2f(brectD.x + brectD.width / 2, brectD.y);
+	inputD.rectangleROI.pt2 = Point2f(brectD.x + brectD.width / 2, brectD.y + brectD.height);
+	inputD.rectangleROI.offset = 200;
+	inputD.rectangleROI.direction = 0;//逆时针扫描，从上到下
 
-	//inputD.img = srcImage;
-	//inputD.rectangleROI.pt1 = Point2f(brectD.x + brectD.width / 2, brectD.y);
-	//inputD.rectangleROI.pt2 = Point2f(brectD.x + brectD.width / 2, brectD.y + brectD.height);
-	//inputD.rectangleROI.offset =200;
-	//inputD.rectangleROI.direction = 0;//逆时针扫描，从上到下
+	gatherEdgePts(inputU, outputU);
+	gatherEdgePts(inputD, outputD);
 
-	//gatherEdgePts(inputU, outputU);
-	//gatherEdgePts(inputD, outputD);
-
-	//linePointU = outputU.imgPts;
-	//linePointD = outputD.imgPts;
+	linePointU = outputU.imgPts;
+	linePointD = outputD.imgPts;
+#endif
 
 	//vector<Vec4d> lineU, lineD;
 	//ransacLines(linePointU, lineU, 2, 1, 500);
 	//ransacLines(linePointD, lineD, 2, 1, 500);
-
 	Vec4f fitLineU, fitLineD;
 	fitLine(linePointU, fitLineU, CV_DIST_HUBER, 0, 0.01, 0.01);
 	fitLine(linePointD, fitLineD, CV_DIST_HUBER, 0, 0.01, 0.01);
@@ -2015,8 +2026,6 @@ Point2f GetCrossBasedFastShapeL(Mat& srcImage, Mat& maskImage,
 	line(srcImageBGR, pt1, crossPoint, Scalar(0, 0, 255), 1, LINE_AA);
 	line(srcImageBGR, pt2, crossPoint, Scalar(0, 0, 255), 1, LINE_AA);
 	//circle(srcImageBGR, crossPoint, 8, Scalar(0, 0, 255), -1);
-
-	//imwrite("L.bmp", srcImageBGR);
 
 	//cout << "Best grayThreshold is: " << bestResult.gray << " for the " << a << " \n";
 	//cout << "Best gradientThreshold is: " << bestResult.gradient << " for the " << a << " \n";
@@ -2087,7 +2096,7 @@ Point2f GetCrossBasedFastShapeR(Mat& srcImage, Mat& maskImage,
 
 
 	vector<Point2f> contourU, contourD;
-	Point2f pU1(trxUA1, tryUA1), pU2(trxUA2 - 200, tryUA2), pU3(trxUB1, tryUB1), pU4(trxUB2 - 200, tryUB2);
+	Point2f pU1(trxUA1, tryUA1), pU2(trxUA2 - 320, tryUA2), pU3(trxUB1, tryUB1), pU4(trxUB2 - 320, tryUB2);
 	Point2f pD1(trxDA1, tryDA1 + 40), pD2(trxDA2, tryDA2 + 40), pD3(trxDB1, tryDB1 - 1000), pD4(trxDB2, tryDB2 - 1000);
 
 	contourU.push_back(pU1);
@@ -2175,37 +2184,39 @@ Point2f GetCrossBasedFastShapeR(Mat& srcImage, Mat& maskImage,
 	//Point2f crossPoint = bestResult.crossPoint;
 
 	vector<Point2f>linePointU, linePointD;
-	linePointU = GetLinePoints3(lineRegionU, brectU.x, brectU.y, 1, 1);
-	linePointD = GetLinePoints3(lineRegionD, brectD.x, brectD.y, 1, 2);
 
-	Vec4f fitLineU, fitLineD;
-	fitLine(linePointU, fitLineU, CV_DIST_HUBER, 0, 0.01, 0.01);
-	fitLine(linePointD, fitLineD, CV_DIST_HUBER, 0, 0.01, 0.01);
+#if CrossDetectionMode==1
+	linePointU = GetLinePoints3(lineRegionU, brectU.x, brectU.y, 0, 1);//direction=1:U  direction=2:D
+	linePointD = GetLinePoints3(lineRegionD, brectD.x, brectD.y, 0, 2);
+#elif CrossDetectionMode==2
+	GatherEdgePtsInput inputU, inputD;
+	GatherEdgePtsOutput outputU, outputD;
 
-	//GatherEdgePtsInput inputU, inputD;
-	//GatherEdgePtsOutput outputU, outputD;
+	inputU.img = srcImage;
+	inputU.rectangleROI.pt1 = Point2f(brectU.x, brectU.y + brectU.height / 2);
+	inputU.rectangleROI.pt2 = Point2f(brectU.x + brectU.width, brectU.y + brectU.height / 2);
+	inputU.rectangleROI.offset = 200;
+	inputU.rectangleROI.direction = 1;//顺时针扫描，从左到右
 
-	//inputU.img = srcImage;
-	//inputU.rectangleROI.pt1 = Point2f(brectU.x, brectU.y + brectU.height / 2);
-	//inputU.rectangleROI.pt2 = Point2f(brectU.x + brectU.width, brectU.y + brectU.height / 2);
-	//inputU.rectangleROI.offset = 200;
-	//inputU.rectangleROI.direction = 1;//顺时针扫描，从左到右
+	inputD.img = srcImage;
+	inputD.rectangleROI.pt1 = Point2f(brectD.x + brectD.width / 2, brectD.y);
+	inputD.rectangleROI.pt2 = Point2f(brectD.x + brectD.width / 2, brectD.y + brectD.height);
+	inputD.rectangleROI.offset = 200;
+	inputD.rectangleROI.direction = 1;//逆时针扫描，从上到下
 
-	//inputD.img = srcImage;
-	//inputD.rectangleROI.pt1 = Point2f(brectD.x + brectD.width / 2, brectD.y);
-	//inputD.rectangleROI.pt2 = Point2f(brectD.x + brectD.width / 2, brectD.y + brectD.height);
-	//inputD.rectangleROI.offset = 200;
-	//inputD.rectangleROI.direction = 1;//顺时针扫描，从上到下
+	gatherEdgePts(inputU, outputU);
+	gatherEdgePts(inputD, outputD);
 
-	//gatherEdgePts(inputU, outputU);
-	//gatherEdgePts(inputD, outputD);
-
-	//linePointU = outputU.imgPts;
-	//linePointD = outputD.imgPts;
+	linePointU = outputU.imgPts;
+	linePointD = outputD.imgPts;
+#endif
 
 	//vector<Vec4d> lineU, lineD;
 	//ransacLines(linePointU, lineU, 2, 1, 500);
 	//ransacLines(linePointD, lineD, 2, 1, 500);
+	Vec4f fitLineU, fitLineD;
+	fitLine(linePointU, fitLineU, CV_DIST_HUBER, 0, 0.01, 0.01);
+	fitLine(linePointD, fitLineD, CV_DIST_HUBER, 0, 0.01, 0.01);
 
 	float ka, kb;
 	ka = (float)(fitLineU[1] / (fitLineU[0])); //求出LineA斜率
@@ -2624,8 +2635,8 @@ int collectPolygonEdgePointsGatherLineGray(const Mat& gray,
 			}
 			}*/
 			if (maxGrad > Tgrad) {
-				x = int(xl + (nlen0 + 1)* vn[0]);
-				y = int(yl + (nlen0 + 1)* vn[1]);
+				x = int(xl + (nlen0)* vn[0]);
+				y = int(yl + (nlen0)* vn[1]);
 				edgePtsGroup.push_back(Point(x, y));
 				sharp += maxGrad; cnt++;
 			}
@@ -2901,7 +2912,7 @@ int searchBoundaryForLine(Mat srcImage, cv::Mat &img, RectangleROI roiRect, int 
 	vector<Vec4i> seedEdgeGroups;
 	vector<Point> edgePtsGroup;
 	vector<Point> edgePtsWhitegroup;
-	int Tgrad = 30;                                                                 //将之前的10变为了20 排除杂点的干扰
+	int Tgrad = thresholdValue;                                                                 //将之前的10变为了20 排除杂点的干扰
 	float sharp;
 	LineStruct lineContour;                                                         //拟合的轮廓线
 	LineStruct lineP1;                                                              //ROI的p1点所在的直线
@@ -2932,17 +2943,17 @@ int searchBoundaryForLine(Mat srcImage, cv::Mat &img, RectangleROI roiRect, int 
 		}
 	}
 
-	//Mat imgBGR;
-	//cvtColor(img, imgBGR, CV_GRAY2BGR);
-	cvtColor(srcImage, srcImage, CV_GRAY2BGR);
+	Mat imgBGR;
+	cvtColor(srcImage, imgBGR, CV_GRAY2BGR);
+	//cvtColor(srcImage, srcImage, CV_GRAY2BGR);
 	output.img = Mat::zeros(img.size(), CV_8UC1);
 	for (int i = 0; i < edgePtsGroup.size(); i++) {
 		Point2f tempblack = Point2f(float(edgePtsGroup[i].x), float(edgePtsGroup[i].y));
-		GetSubPixel(img, tempblack);
+		GetSubPixel(srcImage, tempblack);
 
-		srcImage.at<Vec3b>(tempblack)[0] = 0;
-		srcImage.at<Vec3b>(tempblack)[1] = 0;
-		srcImage.at<Vec3b>(tempblack)[2] = 255;
+		imgBGR.at<Vec3b>(tempblack)[0] = 0;
+		imgBGR.at<Vec3b>(tempblack)[1] = 0;
+		imgBGR.at<Vec3b>(tempblack)[2] = 255;
 
 		output.img.at<uchar>(tempblack) = 255;
 
