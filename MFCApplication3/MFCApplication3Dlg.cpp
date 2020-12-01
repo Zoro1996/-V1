@@ -24,11 +24,18 @@ using namespace std;
 
 
 float pointWorldSet[4][9] = {
-	  -3,   0,   3,   3,   0,   -3,   -3,   0,   3,
-	   3,   3,   3,   0,   0,    0,  -3,  -3,  -3,
-	   0,   0,   0,   0,   0,    0,   0,   0,   0,
-	   1,   1,   1,   1,   1,    1,   1,   1,   1
+-3, 0 + 0.01129,  3,  3, 0 + 0.01882, -3, -3,  0 + 0.02033, 3,
+ 3,			  3,  3,  0,           0,  0, -3, -3,          -3,
+ 0,			  0,  0,  0,           0,  0,  0,  0,           0,
+ 1,			  1,  1,  1,           1,  1,  1,  1,           1
 };
+//float pointWorldSet[4][6] = {
+//	  -3,     3,   3,    -3,  -3,  3,
+//	   3,     3,   0,     0,  -3, -3,
+//	   0,     0,   0,     0,   0,  0,
+//	   1,     1,   1,     1,   1,  1
+//};
+
 
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
@@ -49,6 +56,8 @@ public:
 // 实现
 protected:
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnBnClickedButton4();
 };
 
 CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
@@ -61,6 +70,7 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
+	ON_BN_CLICKED(IDC_BUTTON4, &CAboutDlg::OnBnClickedButton4)
 END_MESSAGE_MAP()
 
 
@@ -519,7 +529,7 @@ void CMFCApplication3Dlg::OnBnClickedButton3()
 	erodeSize = (int)(parametersValue[6]);
 
 	//double d = atof(str);
-	cout << "pause here" << endl;
+	cout << "save parameters" << endl;
 }
 
 
@@ -554,26 +564,12 @@ void CMFCApplication3Dlg::OnBnClickedButton4()
 		sprintf_s(srcImagePathL, "E:\\数据集\\后盖标定采图\\L\\T-L-%d.bmp", index);
 		sprintf_s(srcImagePathR, "E:\\数据集\\后盖标定采图\\R\\T-R-%d.bmp", index);
 
-
 		//Mat srcImageL = imread(srcImagePathL, 0);
 		Mat srcImageR = imread(srcImagePathR, 0);
 
-#if CrossMethod==1
-		Point2f resultPointL = GetCrossPointL(srcImageL, thresholdValue, erodeSize,
-			circleRadiusMax, deltaRadius, CannyThreshold1, CannyThreshold2,
-			HoughThreshold1, HoughThreshold2, HoughThreshold3);
-		Point2f resultPointR = GetCrossPointR(srcImageR, CannyThreshold1, CannyThreshold2,
-			HoughThreshold1, HoughThreshold2, HoughThreshold3);
-#elif CrossMethod == 2
-		Point2f resultPointL = GetCrossBasedShapeL(srcImageL, maskImageL);
-		Point2f resultPointR = GetCrossBasedShapeR(srcImageR, maskImageR);
-#elif CrossMethod == 3
-		//Point2f resultPointL = GetCrossBasedFastShapeL(srcImageL, maskImageL, 255, 1500, srcImagePathL);
-		Point2f resultPointR = GetCrossBasedFastShapeR(srcImageR, maskImageR, 255, 1500, srcImagePathR);
-#endif
-	}
 
-	cout << "pause here." << endl;
+		cout << "pause here." << endl;
+	}
 }
 
 
@@ -945,8 +941,15 @@ void CMFCApplication3Dlg::OnBnClickedCameracalibation()
 	Mat srcImageRectL, srcImageRectR;
 	Rect rectL, rectR;
 	float pointTransSetL[3][9], pointTransSetR[3][9];//角点图像像素坐标
+	Point2f resultPointL;
+	Point2f resultPointR;
 	for (int index = 1; index < 10; index++)
 	{
+		//if (index == 2 || index == 5 || index == 8)
+		//{
+		//	continue;
+		//}
+
 		srcPathL.Format(_T("\\L\\T-L-%d.bmp"),index);
 		srcPathR.Format(_T("\\R\\T-R-%d.bmp"), index);
 
@@ -960,17 +963,17 @@ void CMFCApplication3Dlg::OnBnClickedCameracalibation()
 		Mat srcImageR = imread(strR, 0);
 
 #if CrossMethod==1
-		Point2f resultPointL = GetCrossPointL(srcImageL, thresholdValue, erodeSize,
+		resultPointL = GetCrossPointL(srcImageL, thresholdValue, erodeSize,
 			circleRadiusMax, deltaRadius, CannyThreshold1, CannyThreshold2,
 			HoughThreshold1, HoughThreshold2, HoughThreshold3);
-		Point2f resultPointR = GetCrossPointR(srcImageR, CannyThreshold1, CannyThreshold2,
+		resultPointR = GetCrossPointR(srcImageR, CannyThreshold1, CannyThreshold2,
 			HoughThreshold1, HoughThreshold2, HoughThreshold3);
 #elif CrossMethod == 2
-		Point2f resultPointL = GetCrossBasedShapeL(srcImageL, maskImageL);
-		Point2f resultPointR = GetCrossBasedShapeR(srcImageR, maskImageR);
+		resultPointL = GetCrossBasedShapeL(srcImageL, maskImageL);
+		resultPointR = GetCrossBasedShapeR(srcImageR, maskImageR);
 #elif CrossMethod == 3
-		Point2f resultPointL = GetCrossBasedFastShapeL(srcImageL, maskImageL, 255, 1500, &strL[0]);
-		Point2f resultPointR = GetCrossBasedFastShapeR(srcImageR, maskImageR, 255, 1500, &strR[0]);
+		resultPointL = GetCrossBasedFastShapeL(srcImageL, maskImageL, 255, 1500, &strL[0]);
+		resultPointR = GetCrossBasedFastShapeR(srcImageR, maskImageR, 255, 1500, &strR[0]);
 #endif 
 
 		pointTransSetL[0][index - 1] = resultPointL.x;
@@ -980,6 +983,46 @@ void CMFCApplication3Dlg::OnBnClickedCameracalibation()
 		pointTransSetR[0][index - 1] = resultPointR.x;
 		pointTransSetR[1][index - 1] = resultPointR.y;
 		pointTransSetR[2][index - 1] = 1;
+		//if (index==1)
+		//{
+		//	pointTransSetL[0][index - 1] = resultPointL.x;
+		//	pointTransSetL[1][index - 1] = resultPointL.y;
+		//	pointTransSetL[2][index - 1] = 1;
+
+		//	pointTransSetR[0][index - 1] = resultPointR.x;
+		//	pointTransSetR[1][index - 1] = resultPointR.y;
+		//	pointTransSetR[2][index - 1] = 1;
+		//}
+		//if (index==3 ||index==4)
+		//{
+		//	pointTransSetL[0][index - 2] = resultPointL.x;
+		//	pointTransSetL[1][index - 2] = resultPointL.y;
+		//	pointTransSetL[2][index - 2] = 1;
+
+		//	pointTransSetR[0][index - 2] = resultPointR.x;
+		//	pointTransSetR[1][index - 2] = resultPointR.y;
+		//	pointTransSetR[2][index - 2] = 1;
+		//}
+		//if (index == 6 || index == 7)
+		//{
+		//	pointTransSetL[0][index - 3] = resultPointL.x;
+		//	pointTransSetL[1][index - 3] = resultPointL.y;
+		//	pointTransSetL[2][index - 3] = 1;
+
+		//	pointTransSetR[0][index - 3] = resultPointR.x;
+		//	pointTransSetR[1][index - 3] = resultPointR.y;
+		//	pointTransSetR[2][index - 3] = 1;
+		//}
+		//if (index == 9)
+		//{
+		//	pointTransSetL[0][index - 4] = resultPointL.x;
+		//	pointTransSetL[1][index - 4] = resultPointL.y;
+		//	pointTransSetL[2][index - 4] = 1;
+
+		//	pointTransSetR[0][index - 4] = resultPointR.x;
+		//	pointTransSetR[1][index - 4] = resultPointR.y;
+		//	pointTransSetR[2][index - 4] = 1;
+		//}
 
 		//cvtColor(srcImageL, srcImageL, COLOR_GRAY2BGR);
 		//cvtColor(srcImageR, srcImageR, COLOR_GRAY2BGR);
@@ -997,7 +1040,7 @@ void CMFCApplication3Dlg::OnBnClickedCameracalibation()
 	Mat matSetR(3, 9, CV_32FC1);
 
 	for (int y = 0; y < 3; ++y) {
-		for (int x = 0; x < 9; ++x) {
+		for (int x = 0; x < 6; ++x) {
 			matSetL.at<float>(y, x) = pointTransSetL[y][x];
 			matSetR.at<float>(y, x) = pointTransSetR[y][x];
 		}
@@ -1026,6 +1069,8 @@ void CMFCApplication3Dlg::OnBnClickedCameracalibation()
 	invH1.L = matTransWorldSet * imatSetL;
 	invH1.R = matTransWorldSet * imatSetR;
 
+	Mat worldL = invH1.L*matSetL;
+	Mat worldR = invH1.R*matSetR;
 
 	float pointRotateSetL[3][3], pointRotateSetR[3][3];
 	for (int index = 1; index < 4; index++)
@@ -1694,4 +1739,10 @@ void CMFCApplication3Dlg::OnEnChangeHoughcircle()
 	// 同时将 ENM_CHANGE 标志“或”运算到掩码中。
 
 	// TODO:  在此添加控件通知处理程序代码
+}
+
+
+void CAboutDlg::OnBnClickedButton4()
+{
+	// TODO: 在此添加控件通知处理程序代码
 }

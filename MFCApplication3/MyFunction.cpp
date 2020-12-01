@@ -60,7 +60,7 @@ double CannyThreshold2 = 200;
 double HoughThreshold1 = 150;
 double HoughThreshold2 = 150;
 double HoughThreshold3 = 50;
-double thresholdValue = 15;
+double thresholdValue = 5;
 int erodeSize = 3;
 
 Mat maskImageL;
@@ -1853,7 +1853,7 @@ Point2f GetCrossBasedFastShapeL(Mat& srcImage, Mat& maskImage,
 
 	vector<Point2f> contourU, contourD;
 	Point2f pU1(trxUA1, tryUA1 - 150), pU2(trxUA2, tryUA2 - 150), pU3(trxUB1, tryUB1 - 150), pU4(trxUB2, tryUB2 - 150);
-	Point2f pD1(trxDA1 + 200, tryDA1 - 100), pD2(trxDA2 - 200, tryDA2 - 100), pD3(trxDB1 + 200, tryDB1 - 500), pD4(trxDB2 - 200, tryDB2 - 500);
+	Point2f pD1(trxDA1 + 200, tryDA1 - 100), pD2(trxDA2 - 200, tryDA2 - 100), pD3(trxDB1 + 200, tryDB1 - 250), pD4(trxDB2 - 200, tryDB2 - 250);
 
 	contourU.push_back(pU1);
 	contourU.push_back(pU2);
@@ -1968,39 +1968,45 @@ Point2f GetCrossBasedFastShapeL(Mat& srcImage, Mat& maskImage,
 	linePointD = outputD.imgPts;
 #endif
 
+	/*ransac*/
 	//vector<Vec4d> lineU, lineD;
 	//ransacLines(linePointU, lineU, 2, 1, 500);
 	//ransacLines(linePointD, lineD, 2, 1, 500);
+	//float ka = (float)((lineU[0][3] - lineU[0][1]) / (lineU[0][2] - lineU[0][0]));
+	//float kb = (float)((lineD[0][3] - lineD[0][1]) / (lineD[0][2] - lineD[0][0]));
+	//float ma = lineU[0][1] - ka * lineU[0][0];
+	//float mb = lineD[0][1] - kb * lineD[0][0];
+
+	/*opencv-fitline*/
 	Vec4f fitLineU, fitLineD;
 	fitLine(linePointU, fitLineU, CV_DIST_HUBER, 0, 0.01, 0.01);
 	fitLine(linePointD, fitLineD, CV_DIST_HUBER, 0, 0.01, 0.01);
-
 	float ka, kb;
 	ka = (float)(fitLineU[1] / (fitLineU[0])); //求出LineA斜率
 	kb = (float)(fitLineD[1] / (fitLineD[0])); //求出LineB斜率
 	float ma, mb;
 	ma = fitLineU[3] - ka * fitLineU[2];
 	mb = fitLineD[3] - kb * fitLineD[2];
-
-	//float ka = (float)(atan2(lineU[0][2] - lineU[0][0], lineU[0][3] - lineU[0][1])); //求出LineA斜率
-	//float kb = (float)(atan2(lineD[0][2] - lineD[0][0], lineD[0][3] - lineD[0][1])); //求出LineB斜率
-	//float ka = (float)((lineU[0][3] - lineU[0][1]) / (lineU[0][2] - lineU[0][0]));
-	//float kb = (float)((lineD[0][3] - lineD[0][1]) / (lineD[0][2] - lineD[0][0]));
-	//float ma = lineU[0][1] - ka * lineU[0][0];
-	//float mb = lineD[0][1] - kb * lineD[0][0];
+	Point2f pt1, pt2;
+	pt1.x = fitLineU[2];
+	pt1.y = fitLineU[3];
+	pt2.x = fitLineD[2];
+	pt2.y = fitLineD[3];
 
 	Point2f crossPoint;
 	crossPoint.x = (mb - ma) / (ka - kb);
 	crossPoint.y = (ma * kb - mb * ka) / (kb - ka);
 
-	//line(srcImageBGR, Point2f(lineU[0][0], lineU[0][1]), Point2f(lineU[0][2], lineU[0][3]), Scalar(0, 0, 255), 1);
-	//line(srcImageBGR, Point2f(lineD[0][0], lineD[0][1]), Point2f(lineD[0][2], lineD[0][3]), Scalar(0, 0, 255), 1);
 	//line(srcImageBGR, Point2f(lineU[0][0], lineU[0][1]), crossPoint, Scalar(0, 0, 255), 1);
 	//line(srcImageBGR, Point2f(lineD[0][0], lineD[0][1]), crossPoint, Scalar(0, 0, 255), 1);
+	line(srcImageBGR, pt1, crossPoint, Scalar(0, 0, 255), 1);
+	line(srcImageBGR, pt2, crossPoint, Scalar(0, 0, 255), 1);
 
+	//line(srcImageBGR, pt1+Point2f(0,1000), crossPoint + 
+	//	Point2f(-(pt1.x + crossPoint.x) / 2, 1000 - (pt1.y + crossPoint.y) / 2), Scalar(0, 0, 255), 1);
 
-	Mat srcImageRGB;
-	cvtColor(srcImage, srcImageRGB, CV_GRAY2BGR);
+	double duration_ms = (double(getTickCount()) - start) * 1000 / getTickFrequency();
+
 
 	for (int i = 0; i < linePointU.size(); i++)
 	{
@@ -2013,25 +2019,14 @@ Point2f GetCrossBasedFastShapeL(Mat& srcImage, Mat& maskImage,
 		srcImageBGR.at<Vec3b>(linePointD[i])[1] = 0;
 	}
 
-	//float measure = abs(ka * kb + 1);
 
-	Point2f pt1, pt2;
-	pt1.x = fitLineU[2];
-	pt1.y = fitLineU[3];
-	pt2.x = fitLineD[2];
-	pt2.y = fitLineD[3];
-	double duration_ms = (double(getTickCount()) - start) * 1000 / getTickFrequency();
+	float ans = abs(ka*kb + 1);
 
-
-	line(srcImageBGR, pt1, crossPoint, Scalar(0, 0, 255), 1, LINE_AA);
-	line(srcImageBGR, pt2, crossPoint, Scalar(0, 0, 255), 1, LINE_AA);
-	//circle(srcImageBGR, crossPoint, 8, Scalar(0, 0, 255), -1);
-
-	//cout << "Best grayThreshold is: " << bestResult.gray << " for the " << a << " \n";
-	//cout << "Best gradientThreshold is: " << bestResult.gradient << " for the " << a << " \n";
-	//cout << "Best measurement is: " << bestResult.measure << " for the " << a << " \n";
-	cout << "Best measurement is: " << abs(ka*kb + 1) << " for the " << a << " \n";
-	cout << "Best crossPoint is: " << crossPoint << " for the " << a << " \n";
+	//cout << "Best grayThreshold is: " << bestResult.gray << " for the " << a << " image\n";
+	//cout << "Best gradientThreshold is: " << bestResult.gradient << " for the " << a << "th image\n";
+	//cout << "Best measurement is: " << bestResult.measure << " for the " << a << " image\n";
+	cout << "Best measurement is: " << ans << " for the " << a << " \n";
+	cout << "Best crossPoint is: " << crossPoint << " for the " << a << " image\n";
 	std::cout << "It took " << duration_ms << " ms." << "\n" << std::endl;
 
 	return crossPoint;
@@ -2211,41 +2206,44 @@ Point2f GetCrossBasedFastShapeR(Mat& srcImage, Mat& maskImage,
 	linePointD = outputD.imgPts;
 #endif
 
+	/*ransac*/
 	//vector<Vec4d> lineU, lineD;
 	//ransacLines(linePointU, lineU, 2, 1, 500);
 	//ransacLines(linePointD, lineD, 2, 1, 500);
+	//float ka = (float)((lineU[0][3] - lineU[0][1]) / (lineU[0][2] - lineU[0][0]));
+	//float kb = (float)((lineD[0][3] - lineD[0][1]) / (lineD[0][2] - lineD[0][0]));
+	//float ma = lineU[0][1] - ka * lineU[0][0];
+	//float mb = lineD[0][1] - kb * lineD[0][0];
+
+	/*opencv-fitline*/
 	Vec4f fitLineU, fitLineD;
 	fitLine(linePointU, fitLineU, CV_DIST_HUBER, 0, 0.01, 0.01);
 	fitLine(linePointD, fitLineD, CV_DIST_HUBER, 0, 0.01, 0.01);
-
 	float ka, kb;
 	ka = (float)(fitLineU[1] / (fitLineU[0])); //求出LineA斜率
 	kb = (float)(fitLineD[1] / (fitLineD[0])); //求出LineB斜率
 	float ma, mb;
 	ma = fitLineU[3] - ka * fitLineU[2];
 	mb = fitLineD[3] - kb * fitLineD[2];
-
-	//float ka = (float)((lineU[0][3] - lineU[0][1]) / (lineU[0][2] - lineU[0][0]));
-	//float kb = (float)((lineD[0][3] - lineD[0][1]) / (lineD[0][2] - lineD[0][0]));
-	//float ma = lineU[0][1] - ka * lineU[0][0];
-	//float mb = lineD[0][1] - kb * lineD[0][0];
+	Point2f pt1, pt2;
+	pt1.x = fitLineU[2];
+	pt1.y = fitLineU[3];
+	pt2.x = fitLineD[2];
+	pt2.y = fitLineD[3];
 
 	Point2f crossPoint;
 	crossPoint.x = (mb - ma) / (ka - kb);
 	crossPoint.y = (ma * kb - mb * ka) / (kb - ka);
 
-	//line(srcImageBGR, Point2f(lineU[0][0], lineU[0][1]), Point2f(lineU[0][2], lineU[0][3]), Scalar(0, 0, 255), 1);
-	//line(srcImageBGR, Point2f(lineD[0][0], lineD[0][1]), Point2f(lineD[0][2], lineD[0][3]), Scalar(0, 0, 255), 1);
 	//line(srcImageBGR, Point2f(lineU[0][0], lineU[0][1]), crossPoint, Scalar(0, 0, 255), 1);
 	//line(srcImageBGR, Point2f(lineD[0][0], lineD[0][1]), crossPoint, Scalar(0, 0, 255), 1);
+	line(srcImageBGR, pt1, crossPoint, Scalar(0, 0, 255), 1);
+	line(srcImageBGR, pt2, crossPoint, Scalar(0, 0, 255), 1);
+	//line(srcImageBGR, pt1 + Point2f(0, 1000), crossPoint +
+	//	Point2f(-(pt1.x + crossPoint.x) / 2, 1000 - (pt1.y + crossPoint.y) / 2), Scalar(0, 0, 255), 1);
 
 	double duration_ms = (double(getTickCount()) - start) * 1000 / getTickFrequency();
 
-
-	//line(srcImageBGR, Point2f(lineU[0][0], lineU[0][1]), Point2f(lineU[0][2], lineU[0][3]), Scalar(0, 0, 255), 1);
-	//line(srcImageBGR, Point2f(lineD[0][0], lineD[0][1]), Point2f(lineD[0][2], lineD[0][3]), Scalar(0, 0, 255), 1);
-	//line(srcImageBGR, Point2f(lineU[0][0], lineU[0][1]), crossPoint, Scalar(0, 0, 255), 1);
-	//line(srcImageBGR, Point2f(lineD[0][0], lineD[0][1]), crossPoint, Scalar(0, 0, 255), 1);
 
 	for (int i = 0; i < linePointU.size(); i++)
 	{
@@ -2259,21 +2257,12 @@ Point2f GetCrossBasedFastShapeR(Mat& srcImage, Mat& maskImage,
 	}
 
 
-	Point2f pt1, pt2;
-	pt1.x = fitLineU[2];
-	pt1.y = fitLineU[3];
-	pt2.x = fitLineD[2];
-	pt2.y = fitLineD[3];
-
-	line(srcImageBGR, pt1, crossPoint, Scalar(0, 0, 255), 1, LINE_AA);
-	line(srcImageBGR, pt2, crossPoint, Scalar(0, 0, 255), 1, LINE_AA);
-
-	//imwrite("L.bmp", srcImageBGR);
+	float ans = abs(ka*kb + 1);
 
 	//cout << "Best grayThreshold is: " << bestResult.gray << " for the " << a << " image\n";
 	//cout << "Best gradientThreshold is: " << bestResult.gradient << " for the " << a << "th image\n";
 	//cout << "Best measurement is: " << bestResult.measure << " for the " << a << " image\n";
-	cout << "Best measurement is: " << abs(ka*kb + 1) << " for the " << a << " \n";
+	cout << "Best measurement is: " << ans << " for the " << a << " \n";
 	cout << "Best crossPoint is: " << crossPoint << " for the " << a << " image\n";
 	std::cout << "It took " << duration_ms << " ms." << "\n" << std::endl;
 
