@@ -192,6 +192,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
+    <ClInclude Include="LM.h" />
     <ClInclude Include="MFCApplication3.h" />
     <ClInclude Include="MFCApplication3Dlg.h" />
     <ClInclude Include="MyFunction.h" />

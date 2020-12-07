@@ -143,6 +143,16 @@ struct LineStruct
 };
 
 
+struct GatherLineInput
+{
+	vector < cv::Point2f > edgePts;                   //轮廓点
+	int indexROI;                             //直线编号
+};
+struct GatherLineOutput
+{
+	LineStruct fitLine;
+};
+
 
 Point2f TransToWorldAxis(Point2f point, Mat& invH);
 
@@ -275,7 +285,9 @@ float point2line(Point2f p, Point2f p1, Point2f p2);
 //unsigned int ngon                                            输入：迭代次数
 //unsigned int itmax                                           输入：找寻的点的次数
 //----------------------------------------------------------------------------------------------------//
-int ransacLines(std::vector<cv::Point2f> input, std::vector<cv::Vec4d>& lines, double distance, unsigned int ngon, unsigned int itmax);
+int ransacLines(std::vector<cv::Point2f>& input, 
+	/*std::vector<cv::Vec4d>& lines*/vector<Point2f>&lines,
+	double distance, unsigned int ngon, unsigned int itmax);
 
 //-------------------------------------------- Step2.1 gatherEdgePts---------------------------------//
 //名称：获取边缘点
@@ -285,9 +297,9 @@ int ransacLines(std::vector<cv::Point2f> input, std::vector<cv::Vec4d>& lines, d
 int gatherEdgePts(const GatherEdgePtsInput &input, GatherEdgePtsOutput &output);
 
 int collectPolygonEdgePointsGatherLineGray(const Mat& gray,
-	int calMaxGrad, vector<Vec4i> seedEdgeGroups, int polar,
+	int calMaxGrad, vector<Vec4f> seedEdgeGroups, int polar,
 	float Tdist, int Tgrad, int step, int validPts,
-	vector<Point>& edgePtsGroup, float& sharp);
+	vector<Point2f>& edgePtsGroup, float& sharp);
 
 //灰度矩方法亚像素检测，模板定义
 int GetSubPixel(const Mat &img, Point2f &point);
@@ -314,3 +326,7 @@ int computeCoarseLine(const Mat& gray, int calMaxGrad,
 //0-正常 1- 异常
 int searchBoundaryForLine(Mat srcImage, cv::Mat &img, RectangleROI roiRect, int &calMaxGrad,
 	cv::Rect &boundingRectangle, GatherEdgePtsOutput& output);
+
+void gatherLine(const GatherLineInput &input, GatherLineOutput &output);
+
+void getherEdgePtsLsd(Mat img, vector<Point2f>&edgePts, float deltaX, float deltaY);
