@@ -19,9 +19,27 @@ extern Mat maskImageR;
 extern Mat cosImage;
 extern Mat sinImage;
 
+/*九点标定*/
 #define CalibrationNum 9;
-#define CrossMethod 3//1:GetCrossPoint 2:GetCrossBasedShape 3:GetCrossBasedFastShape
-#define CrossDetectionMode 2 
+
+/*CrossMethod=1:GetCrossPoint 
+CrossMethod=2:GetCrossBasedShape 
+CrossMethod=3:GetCrossBaseFastShape*/
+#define CrossMethod 3
+
+/*CrossDetectionMode=1:Sobel提取边缘
+CrossDetectionMode=2:Sobel提取边缘+ransac剔除不理想点+fitline（公司版本，后续换掉）
+CrossDetectionMode=3:LSD提取直线，opencvv4.10不再可用*/
+#define CrossDetectionMode 1 
+
+/*SubPixelMethod=1:灰度矩亚像素算法 
+SubPixelMethod=2:Zernik矩亚像素算法*/
+#define SubPixelMethod 1
+
+/*形状匹配中图像金字塔缩放指数*/
 #define factor 5
-#define THETA -3
+
+/*标定时旋转角度*/
+#define THETA -3*PI/180
+
 #define PI 3.141592636

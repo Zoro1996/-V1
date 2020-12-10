@@ -18,6 +18,8 @@ float kern90[3][3] = {
 	0, 0, 0,
 	1, 2, 1
 };
+
+#if SubPixelMethod==1
 double M00[5][5] = { { 0.0219, 0.1231, 0.1573, 0.1231, 0.0219 },
 { 0.1231, 0.1600, 0.1600, 0.1600, 0.1231 },
 { 0.1573, 0.1600, 0.1600, 0.1600, 0.1573 },
@@ -53,6 +55,73 @@ double M02[5][5] = { { 0.0099, 0.0719, 0.1019, 0.0719, 0.0099 },
 { 0.0021, 0.0021, 0.0021, 0.0021, 0.0021 },
 { 0.0194, 0.0277, 0.0277, 0.0277, 0.0194 },
 { 0.0099, 0.0719, 0.1019, 0.0719, 0.0099 } };
+#elif SubPixelMethod==2
+/*Zernik矩*/
+const int g_N = 7;
+const int h_N = 3;
+Mat M00 = (Mat_<float>(7, 7) <<
+	0, 0.0287, 0.0686, 0.0807, 0.0686, 0.0287, 0,
+	0.0287, 0.0815, 0.0816, 0.0816, 0.0816, 0.0815, 0.0287,
+	0.0686, 0.0816, 0.0816, 0.0816, 0.0816, 0.0816, 0.0686,
+	0.0807, 0.0816, 0.0816, 0.0816, 0.0816, 0.0816, 0.0807,
+	0.0686, 0.0816, 0.0816, 0.0816, 0.0816, 0.0816, 0.0686,
+	0.0287, 0.0815, 0.0816, 0.0816, 0.0816, 0.0815, 0.0287,
+	0, 0.0287, 0.0686, 0.0807, 0.0686, 0.0287, 0);
+
+Mat M11R = (Mat_<float>(7, 7) <<
+	0, -0.015, -0.019, 0, 0.019, 0.015, 0,
+	-0.0224, -0.0466, -0.0233, 0, 0.0233, 0.0466, 0.0224,
+	-0.0573, -0.0466, -0.0233, 0, 0.0233, 0.0466, 0.0573,
+	-0.069, -0.0466, -0.0233, 0, 0.0233, 0.0466, 0.069,
+	-0.0573, -0.0466, -0.0233, 0, 0.0233, 0.0466, 0.0573,
+	-0.0224, -0.0466, -0.0233, 0, 0.0233, 0.0466, 0.0224,
+	0, -0.015, -0.019, 0, 0.019, 0.015, 0);
+
+Mat M11I = (Mat_<float>(7, 7) <<
+	0, -0.0224, -0.0573, -0.069, -0.0573, -0.0224, 0,
+	-0.015, -0.0466, -0.0466, -0.0466, -0.0466, -0.0466, -0.015,
+	-0.019, -0.0233, -0.0233, -0.0233, -0.0233, -0.0233, -0.019,
+	0, 0, 0, 0, 0, 0, 0,
+	0.019, 0.0233, 0.0233, 0.0233, 0.0233, 0.0233, 0.019,
+	0.015, 0.0466, 0.0466, 0.0466, 0.0466, 0.0466, 0.015,
+	0, 0.0224, 0.0573, 0.069, 0.0573, 0.0224, 0);
+
+Mat M20 = (Mat_<float>(7, 7) <<
+	0, 0.0225, 0.0394, 0.0396, 0.0394, 0.0225, 0,
+	0.0225, 0.0271, -0.0128, -0.0261, -0.0128, 0.0271, 0.0225,
+	0.0394, -0.0128, -0.0528, -0.0661, -0.0528, -0.0128, 0.0394,
+	0.0396, -0.0261, -0.0661, -0.0794, -0.0661, -0.0261, 0.0396,
+	0.0394, -0.0128, -0.0528, -0.0661, -0.0528, -0.0128, 0.0394,
+	0.0225, 0.0271, -0.0128, -0.0261, -0.0128, 0.0271, 0.0225,
+	0, 0.0225, 0.0394, 0.0396, 0.0394, 0.0225, 0);
+
+Mat M31R = (Mat_<float>(7, 7) <<
+	0, -0.0103, -0.0073, 0, 0.0073, 0.0103, 0,
+	-0.0153, -0.0018, 0.0162, 0, -0.0162, 0.0018, 0.0153,
+	-0.0223, 0.0324, 0.0333, 0, -0.0333, -0.0324, 0.0223,
+	-0.0190, 0.0438, 0.0390, 0, -0.0390, -0.0438, 0.0190,
+	-0.0223, 0.0324, 0.0333, 0, -0.0333, -0.0324, 0.0223,
+	-0.0153, -0.0018, 0.0162, 0, -0.0162, 0.0018, 0.0153,
+	0, -0.0103, -0.0073, 0, 0.0073, 0.0103, 0);
+
+Mat M31I = (Mat_<float>(7, 7) <<
+	0, -0.0153, -0.0223, -0.019, -0.0223, -0.0153, 0,
+	-0.0103, -0.0018, 0.0324, 0.0438, 0.0324, -0.0018, -0.0103,
+	-0.0073, 0.0162, 0.0333, 0.039, 0.0333, 0.0162, -0.0073,
+	0, 0, 0, 0, 0, 0, 0,
+	0.0073, -0.0162, -0.0333, -0.039, -0.0333, -0.0162, 0.0073,
+	0.0103, 0.0018, -0.0324, -0.0438, -0.0324, 0.0018, 0.0103,
+	0, 0.0153, 0.0223, 0.0190, 0.0223, 0.0153, 0);
+
+Mat M40 = (Mat_<float>(7, 7) <<
+	0, 0.013, 0.0056, -0.0018, 0.0056, 0.013, 0,
+	0.0130, -0.0186, -0.0323, -0.0239, -0.0323, -0.0186, 0.0130,
+	0.0056, -0.0323, 0.0125, 0.0406, 0.0125, -0.0323, 0.0056,
+	-0.0018, -0.0239, 0.0406, 0.0751, 0.0406, -0.0239, -0.0018,
+	0.0056, -0.0323, 0.0125, 0.0406, 0.0125, -0.0323, 0.0056,
+	0.0130, -0.0186, -0.0323, -0.0239, -0.0323, -0.0186, 0.0130,
+	0, 0.013, 0.0056, -0.0018, 0.0056, 0.013, 0);
+#endif
 
 
 double CannyThreshold1 = 150;
@@ -61,7 +130,7 @@ double HoughThreshold1 = 150;
 double HoughThreshold2 = 150;
 double HoughThreshold3 = 50;
 double thresholdValue = 15;
-double ransacDistance = 0.2;
+double ransacDistance = 1.00;
 
 Mat maskImageL;
 Mat maskImageR;
@@ -398,7 +467,7 @@ vector<Gradient>GetGradientTable(Mat& image)
 			if (margin > 200)
 			{
 				index++;
-				if (index % 2 == 0)
+				if (index % 1 == 0)
 				{
 					Gradient gradient;
 					gradient.pt = Point2f(col - width / 2, row - height / 2);
@@ -530,17 +599,11 @@ ShapeMatchResult GetShapeTrans(Mat& maskImage, Mat& srcImage)
 Function:       Hough
 Description:    使用Hough检测图像直线
 Input:          imageMat:待测图像
-Return:         linePoints:直线点集
+Return:         dstImage:包含直线的掩模图像
 /**************************************************************/
 Mat Hough(Mat srcImage)
 {
-	if (ResizeFlag)
-	{
-		pyrDown(srcImage, srcImage, Size(srcImage.cols / 2, srcImage.rows / 2));
-	}
-	Mat edges, imageRGB;
-	//cvtColor(srcImage, imageRGB, CV_GRAY2BGR);
-
+	Mat edges;
 	Mat dstImage = Mat::zeros(srcImage.size(), srcImage.type());
 
 	Canny(srcImage, edges, CannyThreshold1, CannyThreshold2);
@@ -550,9 +613,7 @@ Mat Hough(Mat srcImage)
 
 	for (size_t i = 0; i < lines.size(); i++) {
 		Vec4f l = lines[i];
-
-		line(dstImage, Point2f(l[0], l[1]), Point2f(l[2], l[3]), Scalar(255), 1, LINE_AA);
-		//line(imageRGB, Point2f(l[0], l[1]), Point2f(l[2], l[3]), Scalar(0, 0, 255), 1, LINE_AA);
+		line(dstImage, Point2f(l[0], l[1]), Point2f(l[2], l[3]), Scalar(255));
 	}
 
 	return dstImage;
@@ -563,25 +624,18 @@ Mat Hough(Mat srcImage)
 Function:       LSD
 Description:    使用LSD检测图像直线
 Input:          imageMat:待测图像
-Return:         linePoints:直线点集
+Return:         drawnLines:包含直线的掩模图像
 **************************************************************/
 Mat LSD(Mat srcImage)
 {
-	//if (ResizeFlag == true)
-	//{
-	//	pyrDown(srcImage, srcImage, Size(srcImage.cols / 2, srcImage.rows / 2));
-	//}
-
+	/*创建LSD直线检测器*/
 	Ptr<LineSegmentDetector> ls = createLineSegmentDetector(LSD_REFINE_STD);
 	vector<Vec4f> lines_std;
-
-	// Detect the lines
 	ls->detect(srcImage, lines_std);
 
-	// Show found lines
+	/*画直线*/
 	Mat drawnLines = Mat::zeros(srcImage.size(), srcImage.type());
 	Mat drawnLines2(srcImage);
-
 	ls->drawSegments(drawnLines, lines_std);
 	ls->drawSegments(drawnLines2, lines_std);
 
@@ -591,89 +645,32 @@ Mat LSD(Mat srcImage)
 
 
 /*************************************************************
-Function:       GetLinePoints
-Description:    使用Sobel提取图像潜在直线拟合点
+Function:       GetLinePointsBaseLsd
+Description:    使用Sobel提取图像潜在直线拟合点+LSD拟合直线
 Input:          image:待测图像
 				thresholdEdges:梯度阈值
 				deltaX:待测图像在工件图像中X方向相对位置
 				deltaY:待测图像在工件图像中Y方向相对位置
 Return:         linePoints:直线拟合点集
 **************************************************************/
-//vector<Point2f> GetLinePoints(Mat image,
-//	float grayThreshold, float gradientThreshold,
-//	float delatX, float deltaY)
-//{
-//	Mat xgrad;  //x方向上的梯度
-//	Mat ygrad;  //y方向上的梯度
-//	vector<Gradient> gradientTable;
-//
-//	Sobel(image, xgrad, CV_32F, 1, 0, 3);
-//	Sobel(image, ygrad, CV_32F, 0, 1, 3);
-//
-//	Mat xygrad = Mat::zeros(image.size(), image.type());
-//	//Mat xygrad(image);
-//	//cvtColor(xygrad, xygrad, CV_GRAY2BGR);
-//
-//	//Mat lineImage = LSD(image);
-//	//Mat lineImage = Hough(image);
-//
-//	vector<Point2f>linePoints;
-//
-//	//for (int x = 0; x < image.cols; x += 2)
-//	//{
-//	//	for (int y = 0; y < image.rows; y += 2)
-//	//	{
-//	//		Point2f pt = Point2f(x, y);
-//	//		float xg = xgrad.at<float>(pt);
-//	//		float yg = ygrad.at<float>(pt);
-//
-//	//		float gMargin = sqrt(pow(xg, 2) + pow(yg, 2));
-//
-//	//		Point2f pt2;
-//	//		if (ResizeFlag == true)
-//	//		{
-//	//			pt2 = Point2f(x * 0.5, y * 0.5);
-//	//		}
-//	//		else
-//	//		{
-//	//			pt2 = Point2f(x, y);
-//	//		}
-//
-//	//		float lineValue = lineImage.at<Vec3b>(pt2)[2];
-//	//		//float lineValue = lineImage.at<uchar>(pt2);
-//
-//	//		if (gMargin > gradientThreshold && lineValue != 0)
-//	//		{
-//	//			xygrad.at<uchar>(pt) = 255;
-//	//			linePoints.push_back(Point2f(pt.x + delatX, pt.y + deltaY));
-//	//		}
-//	//	}
-//	//}
-//
-//	return linePoints;
-//}
-vector<Point2f> GetLinePoints(Mat image,
+vector<Point2f> GetLinePointsBaseLsd(Mat image,
 	float grayThreshold, float gradientThreshold,
 	float delatX, float deltaY)
 {
 	Mat imgBGR;
 	cvtColor(image, imgBGR, CV_GRAY2BGR);
 
+	Mat xygrad = Mat::zeros(image.size(), image.type());
 	Mat xgrad;  //x方向上的梯度
 	Mat ygrad;  //y方向上的梯度
-	vector<Gradient> gradientTable;
-
 	Sobel(image, xgrad, CV_32F, 1, 0, 3);
 	Sobel(image, ygrad, CV_32F, 0, 1, 3);
 
-	Mat xygrad = Mat::zeros(image.size(), image.type());
-	//Mat xygrad(image);
-	//cvtColor(xygrad, xygrad, CV_GRAY2BGR);
-
+	/*LSD算法检测直线，输出包含直线段的掩模图像lingImage*/
 	Mat lineImage = LSD(image);
 
+	/*边缘点集linePoints*/
 	vector<Point2f>linePoints;
-
 	for (int x = 0; x < image.cols; x += 1)
 	{
 		for (int y = 0; y < image.rows; y += 1)
@@ -682,28 +679,24 @@ vector<Point2f> GetLinePoints(Mat image,
 			float xg = xgrad.at<float>(pt);
 			float yg = ygrad.at<float>(pt);
 
+			/*当前点的梯度模长*/
 			float gMargin = sqrt(pow(xg, 2) + pow(yg, 2));
 
-			Point2f pt2;
-			//if (ResizeFlag == true)
-			//{
-			//	pt2 = Point2f(x * 0.5, y * 0.5);
-			//}
-			//else
-			//{
-			//	pt2 = Point2f(x, y);
-			//}
-			pt2 = Point2f(x, y);
-
-			float lineValue = lineImage.at<Vec3b>(pt2)[2];
-			//float lineValue = lineImage.at<uchar>(pt2);
+			/*直线掩模图像当前点是否是直线段上的点，255/0*/
+			float lineValue = lineImage.at<Vec3b>(pt)[2];
 
 			if (gMargin > gradientThreshold && lineValue != 0)
 			{
+				/*显示*/
 				xygrad.at<uchar>(pt) = 255;
 				imgBGR.at<Vec3b>(pt)[0] = 255;
 				imgBGR.at<Vec3b>(pt)[1] = 0;
 				imgBGR.at<Vec3b>(pt)[2] = 0;
+
+				/*亚像素处理*/
+				GetSubPixel(image, pt);
+
+				/*存点*/
 				linePoints.push_back(Point2f(pt.x + delatX, pt.y + deltaY));
 			}
 		}
@@ -762,7 +755,8 @@ vector<Point2f> GetLinePoints2(Mat& image, float delatX, float deltaY)
 
 
 
-vector<Point2f> GetLinePoints3(Mat image, float deltaX, float deltaY, float imagePair, float direction) {
+vector<Point2f> GetLinePointsBaseSobel(Mat image, float deltaX, float deltaY, float imagePair, float direction) 
+{
 	vector<Point2f>linePoints;
 
 	Mat edges;
@@ -790,10 +784,15 @@ vector<Point2f> GetLinePoints3(Mat image, float deltaX, float deltaY, float imag
 				//float deltaGray = abs(ygradabs.at<uchar>(pt2) - ygradabs.at<uchar>(pt));
 				if (deltaGray >= 15)
 				{
-					linePoints.push_back(pt2 + Point2f(deltaX, deltaY));
 					imageBGR.at<Vec3b>(pt2)[0] = 0;
 					imageBGR.at<Vec3b>(pt2)[1] = 0;
 					imageBGR.at<Vec3b>(pt2)[2] = 255;
+
+					/*亚像素处理*/
+					GetSubPixel(image, pt2);
+
+					/*存点*/
+					linePoints.push_back(pt2 + Point2f(deltaX, deltaY));
 					break;
 				}
 			}
@@ -818,10 +817,15 @@ vector<Point2f> GetLinePoints3(Mat image, float deltaX, float deltaY, float imag
 					//float deltaGray = abs(xgradabs.at<uchar>(pt) - xgradabs.at<uchar>(pt2));
 					if (deltaGray >= 15)
 					{
-						linePoints.push_back(pt2 + Point2f(deltaX, deltaY));
 						imageBGR.at<Vec3b>(pt2)[0] = 0;
 						imageBGR.at<Vec3b>(pt2)[1] = 0;
 						imageBGR.at<Vec3b>(pt2)[2] = 255;
+
+						/*亚像素处理*/
+						GetSubPixel(image, pt2);
+
+						/*存点*/
+						linePoints.push_back(pt2 + Point2f(deltaX, deltaY));
 						break;
 					}
 				}
@@ -840,10 +844,15 @@ vector<Point2f> GetLinePoints3(Mat image, float deltaX, float deltaY, float imag
 					//float deltaGray = abs(xgradabs.at<uchar>(pt) - xgradabs.at<uchar>(pt2));
 					if (deltaGray >= 15)
 					{
-						linePoints.push_back(pt2 + Point2f(deltaX, deltaY));
 						imageBGR.at<Vec3b>(pt2)[0] = 0;
 						imageBGR.at<Vec3b>(pt2)[1] = 0;
 						imageBGR.at<Vec3b>(pt2)[2] = 255;
+
+						/*亚像素处理*/
+						GetSubPixel(image, pt2);
+
+						/*存点*/
+						linePoints.push_back(pt2 + Point2f(deltaX, deltaY));
 						break;
 					}
 				}
@@ -870,7 +879,7 @@ Point2f GetCrossBasedShapeL(Mat& srcImage, Mat& maskImage)
 	float bestTheta = arcShapeMatchResult.theta;
 
 	Rect maskArcRegion = Rect(1674, 350, 2666 - 1674, 1141 - 350);
-	Rect maskLineRegion1 = Rect(2946, 350, 4000 - 2946, 700 - 350);
+	Rect maskLineRegion1 = Rect(2946, 350, 4500 - 2946, 700 - 350);
 	Rect maskLineRegion2 = Rect(1304, 1660, 2364 - 1304, 2372 - 1660);
 
 	float centerX = (1674 + 2666) / 2;
@@ -1526,6 +1535,7 @@ Position CalPosition(Mat imageL, Mat imageR,
 {
 	Point2f crossPointL, crossPointR;
 
+	/*计算角点的像素坐标*/
 #if CrossMethod == 1
 	crossPointL = GetCrossPointL(imageL, thresholdValue, erodeSize,
 		circleRadiusMax, deltaRadius, CannyThreshold1, CannyThreshold2,
@@ -1538,36 +1548,36 @@ Position CalPosition(Mat imageL, Mat imageR,
 #elif CrossMethod == 3
 	string strL = "待测图像左";
 	string strR = "待测图像右";
-	crossPointL = GetCrossBasedFastShapeL(imageL, maskImageL, 255, 1500, &strL[0]);
-	crossPointR = GetCrossBasedFastShapeR(imageR, maskImageR, 255, 1500, &strR[0]);
+	RansacTest rl, rr;
+	crossPointL = GetCrossBaseFastShapeL(imageL, maskImageL, rl, &strL[0]);
+	crossPointR = GetCrossBaseFastShapeR(imageR, maskImageR, rr, &strR[0]);
+
 #endif 
 
-	//变换至局部世界坐标系
+	//角点像素坐标变换至局部世界坐标系
 	Point2f crossPointWorldL = TransToWorldAxis(crossPointL, invH.L);
 	Point2f crossPointWorldR = TransToWorldAxis(crossPointR, invH.R);
 
-	/*减去旋转中心坐标，变换至以旋转中心为原点的统一世界坐标系*/
-	//左角点
+	/*分别减去各自的旋转中心坐标，变换至以旋转中心为原点的统一世界坐标系*/
 	Point2f uniformCrossPointL = Point2f(crossPointWorldL.x - rotatePtW1.x,
-		crossPointWorldL.y - rotatePtW1.y);
-	//右角点
+		crossPointWorldL.y - rotatePtW1.y);//左角点-左局部世界坐标系旋转中心坐标
 	Point2f uniformCrossPointR = Point2f(crossPointWorldR.x - rotatePtW2.x,
-		crossPointWorldR.y - rotatePtW2.y);
+		crossPointWorldR.y - rotatePtW2.y);//右角点-右局部世界坐标系旋转中心坐标
 
-	//计算角点的中心点坐标
+	//计算角点的中心点的统一世界坐标
 	float pointX = (uniformCrossPointL.x + uniformCrossPointR.x) / 2;
 	float pointY = (uniformCrossPointL.y + uniformCrossPointR.y) / 2;
 	Point2f uniformCenterPoint = Point2f(pointX, pointY);
 
-	//根据旋转中心计算边缘倾斜角度theta1
-	float theta1 = atan((uniformCrossPointR.y - uniformCrossPointL.y)
+	//在统一世界坐标系下计算盖板边缘的倾斜角度theta
+	float theta = atan((uniformCrossPointR.y - uniformCrossPointL.y)
 		/ (uniformCrossPointR.x - uniformCrossPointL.x));
 
 	Position position;
 	position.uniformCrossPointL = uniformCrossPointL;
 	position.uniformCrossPointR = uniformCrossPointR;
 	position.uniformCenterPoint = uniformCenterPoint;
-	position.theta = theta1;
+	position.theta = theta;
 
 	return position;
 }
@@ -1580,59 +1590,51 @@ ControlInstruction GetInstruction(Position& bmPosition, Position& testPosition, 
 	ControlInstruction instruction;
 
 	//计算旋转量alpha
-	Point2f uniformCrossPointL = bmPosition.uniformCrossPointL;
-	Point2f uniformCrossPointR = bmPosition.uniformCrossPointR;
-	Point2f uniformCenterPoint = bmPosition.uniformCenterPoint;
+	instruction.commandTheta = bmPosition.theta - testPosition.theta;
+
+	//计算偏移量
+	Point2f uniformBmCrossPointL = bmPosition.uniformCrossPointL;
+	Point2f uniformBmCrossPointR = bmPosition.uniformCrossPointR;
+	Point2f uniformBmCenterPoint = bmPosition.uniformCenterPoint;
 
 	Point2f uniformTestCrossPointL = testPosition.uniformCrossPointL;
 	Point2f uniformTestCrossPointR = testPosition.uniformCrossPointR;
 	Point2f uniformTestCenterPoint = testPosition.uniformCenterPoint;
 
-	//float A = uniformTestCrossPointR.x - uniformTestCrossPointL.x;
-	//float B = uniformTestCrossPointR.y - uniformTestCrossPointL.y;
-	//float k = tan((uniformCrossPointR.y - uniformCrossPointL.y) / (uniformCrossPointR.x - uniformCrossPointL.x));
-	//
-	//float theta2 = atan(B / A);
+	float uTCRotatePointLX = cos(instruction.commandTheta)*(uniformTestCrossPointL.x) -
+		sin(instruction.commandTheta)*(uniformTestCrossPointL.y);
+	float uTCRotatePointLY = sin(instruction.commandTheta)*(uniformTestCrossPointL.x) +
+		cos(instruction.commandTheta)*(uniformTestCrossPointL.y);
 
-	//instruction.commandTheta = atan((k*A - B) / (A + k * B));
-	instruction.commandTheta = bmPosition.theta - testPosition.theta;
+	float uTCRotatePointRX = cos(instruction.commandTheta)*(uniformTestCrossPointR.x) -
+		sin(instruction.commandTheta)*(uniformTestCrossPointR.y);
+	float uTCRotatePointRY = sin(instruction.commandTheta)*(uniformTestCrossPointR.x) +
+		cos(instruction.commandTheta)*(uniformTestCrossPointR.y);
 
-	//计算偏移量
-	float uTCRotatePointLX = cos(instruction.commandTheta)*(uniformTestCrossPointL.x - rotatePoint.x) -
-		sin(instruction.commandTheta)*(uniformTestCrossPointL.y - rotatePoint.y) + rotatePoint.x;
-	float uTCRotatePointLY = sin(instruction.commandTheta)*(uniformTestCrossPointL.x - rotatePoint.x) +
-		cos(instruction.commandTheta)*(uniformTestCrossPointL.y - rotatePoint.y) + rotatePoint.y;
-
-	float uTCRotatePointRX = cos(instruction.commandTheta)*(uniformTestCrossPointR.x - rotatePoint.x) -
-		sin(instruction.commandTheta)*(uniformTestCrossPointR.y - rotatePoint.y) + rotatePoint.x;
-	float uTCRotatePointRY = sin(instruction.commandTheta)*(uniformTestCrossPointR.x - rotatePoint.x) +
-		cos(instruction.commandTheta)*(uniformTestCrossPointR.y - rotatePoint.y) + rotatePoint.y;
-
-	float uTCRotatePointCenterX = cos(instruction.commandTheta)*(uniformTestCenterPoint.x - rotatePoint.x) -
-		sin(instruction.commandTheta)*(uniformTestCenterPoint.y - rotatePoint.y) + rotatePoint.x;
-	float uTCRotatePointCenterY = sin(instruction.commandTheta)*(uniformTestCenterPoint.x - rotatePoint.x) +
-		cos(instruction.commandTheta)*(uniformTestCenterPoint.y - rotatePoint.y) + rotatePoint.y;
+	float uTCRotatePointCenterX = cos(instruction.commandTheta)*(uniformTestCenterPoint.x) -
+		sin(instruction.commandTheta)*(uniformTestCenterPoint.y);
+	float uTCRotatePointCenterY = sin(instruction.commandTheta)*(uniformTestCenterPoint.x) +
+		cos(instruction.commandTheta)*(uniformTestCenterPoint.y);
 
 	//旋转校正之后的中心点坐标
-	//Point2f testRotatePoint = Point2f((uTCRotatePointLX + uTCRotatePointRX) / 2, (uTCRotatePointLY + uTCRotatePointRY) / 2);
 	Point2f testRotatePoint = Point2f(uTCRotatePointCenterX, uTCRotatePointCenterY);
 
 	float commandX1, commandX2, commandX3;
 	float commandY1, commandY2, commandY3;
 
-	commandX1 = -uTCRotatePointLX + uniformCrossPointL.x;
-	commandY1 = -uTCRotatePointLY + uniformCrossPointL.y;
+	commandX1 = -uTCRotatePointLX + uniformBmCrossPointL.x;
+	commandY1 = -uTCRotatePointLY + uniformBmCrossPointL.y;
 
-	commandX2 = -uTCRotatePointCenterX + uniformCenterPoint.x;
-	commandY2 = -uTCRotatePointCenterY + uniformCenterPoint.y;
+	commandX2 = -uTCRotatePointRX + uniformBmCrossPointR.x;
+	commandY2 = -uTCRotatePointRY + uniformBmCrossPointR.y;
 
-	commandX3 = -uTCRotatePointRX + uniformCrossPointR.x;;
-	commandY3 = -uTCRotatePointRY + uniformCrossPointR.y;
+	commandX3 = -uTCRotatePointCenterX + uniformBmCenterPoint.x;
+	commandY3 = -uTCRotatePointCenterY + uniformBmCenterPoint.y;
 
-	instruction.commandX = (commandX1 + commandX2 + commandX3) / 3;
-	instruction.commandY = (commandY1 + commandY2 + commandY3) / 3;
-	//instruction.commandX = commandX1;
-	//instruction.commandY = commandY1;
+	//instruction.commandX = (commandX1 + commandX2 + commandX3) / 3;
+	//instruction.commandY = (commandY1 + commandY2 + commandY3) / 3;
+	instruction.commandX = commandX3;
+	instruction.commandY = commandY3;
 
 	return instruction;
 }
@@ -1649,11 +1651,8 @@ GCBS SingleTransEvaluation(Mat& lineRegionU, Mat& lineRegionD,
 	int gradient = get<1>(curParam);
 
 	vector<Point2f>linePointX, linePointY;
-	linePointX = GetLinePoints(lineRegionU, gray, gradient, brectUX, brectUY);
-	linePointY = GetLinePoints(lineRegionD, gray, gradient, brectDX, brectDY);
-
-	//linePointX = GetLinePoints2(lineRegionU, brectUX, brectUY);
-	//linePointY = GetLinePoints2(lineRegionD, brectDX, brectDY);
+	linePointX = GetLinePointsBaseLsd(lineRegionU, gray, gradient, brectUX, brectUY);
+	linePointY = GetLinePointsBaseLsd(lineRegionD, gray, gradient, brectDX, brectDY);
 
 	curResult.FLAG = (linePointX.size() < 20 || linePointY.size() < 20) ? false : true;
 
@@ -2003,33 +2002,37 @@ Description:    使用形状匹配计算手机盖板左角点
 Input:          srcImage:待测图像 maskImage:模板图像
 Return:         盖板左角点
 **************************************************************/
-Point2f GetCrossBasedFastShapeL(Mat& srcImage, Mat& maskImage,
-	float grayThreshold, float gradientThreshold, char *a)
+Point2f GetCrossBaseFastShapeL(Mat& srcImage, Mat& maskImage,RansacTest& ransacResult, char *a)
 {
-	/*step1:形状匹配，ROI*/
+	/*step1:形状匹配，获取局部ROI*/
 	ShapeMatchResult arcShapeMatchResult = GetShapeTrans(maskImage, srcImage);
 
 	Point2f locate = arcShapeMatchResult.massCenter;
 	float bestTheta = arcShapeMatchResult.theta;
 
-	Rect maskArcRegion = Rect(1674, 350, 2666 - 1674, 1141 - 350);
-	Rect maskLineRegion1 = Rect(2946, 350, 4000 - 2946, 700 - 350);
-	Rect maskLineRegion2 = Rect(1304, 1660, 2364 - 1304, 2372 - 1660);
+	//Rect maskArcRegion = Rect(1674, 350, 2666 - 1674, 1141 - 350);
+	//Rect maskLineRegion1 = Rect(2946, 350, 4000 - 2946, 700 - 350);
+	//Rect maskLineRegion2 = Rect(1304, 1660, 2364 - 1304, 2372 - 1660);
+	//Rect maskArcRegion = Rect(1296, 692, 2500 - 1296, 2000 - 692);
+	Rect maskArcRegion = Rect(1300, 708, 2580 - 1300, 1828 - 708);
+	Rect maskLineRegion1 = Rect(2712, 551, 3556 - 2712, 1028 - 551);
+	Rect maskLineRegion2 = Rect(1044, 1887, 1673 - 1044, 2528 - 1887);
 
-	float centerX = (1674 + 2666) / 2;
-	float centerY = (350 + 1141) / 2;
+	float centerX = maskArcRegion.width / 2 + maskArcRegion.x;
+	float centerY = maskArcRegion.height / 2 + maskArcRegion.y;
 	float deltaCol = locate.x * pow(2, factor);
 	float deltaRow = locate.y * pow(2, factor);
 
-	float xUA1 = 2946 - centerX, yUA1 = 350 - centerY;
-	float xUA2 = 4000 - centerX, yUA2 = 350 - centerY;
-	float xUB1 = 2946 - centerX, yUB1 = 700 - centerY;
-	float xUB2 = 4000 - centerX, yUB2 = 700 - centerY;
+	float xUA1 = maskLineRegion1.x - centerX, yUA1 = maskLineRegion1.y - centerY;
+	float xUA2 = maskLineRegion1.x + maskLineRegion1.width - centerX, yUA2 = maskLineRegion1.y - centerY;
+	float xUB1 = maskLineRegion1.x - centerX, yUB1 = maskLineRegion1.y + maskLineRegion1.height - centerY;
+	float xUB2 = maskLineRegion1.x + maskLineRegion1.width - centerX, yUB2 = maskLineRegion1.y + maskLineRegion1.height - centerY;
 
-	float xDA1 = 1304 - centerX, yDA1 = 1660 - centerY;
-	float xDA2 = 2364 - centerX, yDA2 = 1660 - centerY;
-	float xDB1 = 1304 - centerX, yDB1 = 2372 - centerY;
-	float xDB2 = 2364 - centerX, yDB2 = 2372 - centerY;
+	float xDA1 = maskLineRegion2.x - centerX, yDA1 = maskLineRegion2.y - centerY;
+	float xDA2 = maskLineRegion2.x + maskLineRegion2.width - centerX, yDA2 = maskLineRegion2.y - centerY;
+	float xDB1 = maskLineRegion2.x - centerX, yDB1 = maskLineRegion2.y + maskLineRegion2.height - centerY;
+	float xDB2 = maskLineRegion2.x + maskLineRegion2.width - centerX, yDB2 = maskLineRegion2.y + maskLineRegion2.height - centerY;
+
 
 	float trxUA1 = cos(bestTheta)*xUA1 - sin(bestTheta)*yUA1 + deltaCol;
 	float tryUA1 = sin(bestTheta)*xUA1 + cos(bestTheta)*yUA1 + deltaRow;
@@ -2055,11 +2058,12 @@ Point2f GetCrossBasedFastShapeL(Mat& srcImage, Mat& maskImage,
 	float trxDB2 = cos(bestTheta)*xDB2 - sin(bestTheta)*yDB2 + deltaCol;
 	float tryDB2 = sin(bestTheta)*xDB2 + cos(bestTheta)*yDB2 + deltaRow;
 
-
+	/*获取仿射变换之后的ROI四个角点*/
 	vector<Point2f> contourU, contourD;
-	Point2f pU1(trxUA1 + 100, tryUA1 - 150), pU2(trxUA2 +500, tryUA2 - 150), pU3(trxUB1 + 100, tryUB1 - 150), pU4(trxUB2 + 500, tryUB2 - 150);
-	Point2f pD1(trxDA1 + 300, tryDA1 - 100), pD2(trxDA2 - 300, tryDA2 - 100), pD3(trxDB1 + 300, tryDB1 - 300), pD4(trxDB2 - 300, tryDB2 - 300);
+	Point2f pU1(trxUA1, tryUA1), pU2(trxUA2, tryUA2), pU3(trxUB1, tryUB1), pU4(trxUB2, tryUB2);
+	Point2f pD1(trxDA1, tryDA1), pD2(trxDA2, tryDA2), pD3(trxDB1, tryDB1), pD4(trxDB2, tryDB2);
 
+	/*计算ROI的最小外接矩形，作为待测图像的ROI：brectU,brectD*/
 	contourU.push_back(pU1);
 	contourU.push_back(pU2);
 	contourU.push_back(pU3);
@@ -2079,6 +2083,7 @@ Point2f GetCrossBasedFastShapeL(Mat& srcImage, Mat& maskImage,
 	Rect brectD = rectD.boundingRect();
 
 
+	/*ROI边界限制*/
 	if (brectU.x < 0)
 	{
 		brectU.width -= abs(brectU.x);
@@ -2115,57 +2120,61 @@ Point2f GetCrossBasedFastShapeL(Mat& srcImage, Mat& maskImage,
 	if (brectD.height % 2 != 0)brectD.height -= 1;
 	
 
-	Mat srcImageBGR,BGR1, BGR2;
+	Mat srcImageBGR, BGR1, BGR2;
 	cvtColor(srcImage, srcImageBGR, CV_GRAY2BGR);
 	cvtColor(srcImage, BGR1, CV_GRAY2BGR);
 	cvtColor(srcImage, BGR2, CV_GRAY2BGR);
-
+	
+	/*在待测图向上画出ROI*/
 	for (int i = 0; i < 4; i++)//画矩形
 	{
 		line(srcImageBGR, verticesU[i], verticesU[(i + 1) % 4], Scalar(0, 0, 255));
 		line(srcImageBGR, verticesD[i], verticesD[(i + 1) % 4], Scalar(0, 0, 255));
 	}
-
-
-	/*画ROI*/
 	rectangle(srcImageBGR, brectD, Scalar(255, 0, 0));
 	rectangle(srcImageBGR, brectU, Scalar(255, 0, 0));
 
 
+	/*获取ROI局部图像:lineRegionU,lineRegionD。用于直线检测*/
 	Mat lineRegionU, lineRegionD;
 	srcImage(brectU).copyTo(lineRegionU);
 	srcImage(brectD).copyTo(lineRegionD);
 
+	/*计算时间*/
 	double start = double(getTickCount());
 
 	vector<Point2f>linePointU, linePointD;
 
 #if CrossDetectionMode==1
-	linePointU = GetLinePoints3(lineRegionU, brectU.x, brectU.y, 0, 1);//direction=1:U  direction=2:D
-	linePointD = GetLinePoints3(lineRegionD, brectD.x, brectD.y, 0, 2);
-#elif CrossDetectionMode==2
+	//direction=1:U  direction=2:D
+	linePointU = GetLinePointsBaseSobel(lineRegionU, brectU.x, brectU.y, 0, 1);
+	linePointD = GetLinePointsBaseSobel(lineRegionD, brectD.x, brectD.y, 0, 2);
+
+#elif CrossDetectionMode==2 //Sobel提取边缘+ransac剔除不理想点+fitline
 	GatherEdgePtsInput inputU, inputD;
 	GatherEdgePtsOutput outputU, outputD;
 
 	inputU.img = srcImage;
 	inputU.rectangleROI.pt1 = Point2f(brectU.x, brectU.y + brectU.height / 2);
 	inputU.rectangleROI.pt2 = Point2f(brectU.x + brectU.width, brectU.y + brectU.height / 2);
-	inputU.rectangleROI.offset = 200;
+	inputU.rectangleROI.offset = brectU.height / 2;
 	inputU.rectangleROI.direction = 1;//顺时针扫描，从左到右
 
 	inputD.img = srcImage;
 	inputD.rectangleROI.pt1 = Point2f(brectD.x + brectD.width / 2, brectD.y);
 	inputD.rectangleROI.pt2 = Point2f(brectD.x + brectD.width / 2, brectD.y + brectD.height);
-	inputD.rectangleROI.offset = 200;
+	inputD.rectangleROI.offset = brectD.width / 2;
 	inputD.rectangleROI.direction = 0;//逆时针扫描，从上到下
 
+	/*获取边缘点集linePointU,linePointD*/
 	gatherEdgePts(inputU, outputU);
 	gatherEdgePts(inputD, outputD);
-	//getherEdgePtsLsd(lineRegionU, linePointU, brectU.x, brectU.y);
-	//getherEdgePtsLsd(lineRegionD, linePointD, brectD.x, brectD.y);
-
 	linePointU = outputU.imgPts;
 	linePointD = outputD.imgPts;
+
+#elif CrossDetectionMode==3//LSD算法检测直线,opencv4.10版本不再可用
+	linePointU = GetLinePointsBaseLsd(lineRegionU,0, 200, brectU.x, brectU.y);//direction=1:U  direction=2:D
+	linePointD = GetLinePointsBaseLsd(lineRegionD,0, 200, brectD.x, brectD.y);
 #endif
 
 	/*绘制原始边缘点集*/
@@ -2222,8 +2231,8 @@ Point2f GetCrossBasedFastShapeL(Mat& srcImage, Mat& maskImage,
 	Point2f ptD1 = outputLD.fitLine.pt1;
 	Point2f ptD2 = outputLD.fitLine.pt2;
 
-	float ka = (float)((ptU2.y - ptU1.y) / (ptU2.x - ptU1.x + 1e-6));
-	float kb = (float)((ptD2.y - ptD1.y) / (ptD2.x - ptD1.x + 1e-6));
+	float ka = (float)((ptU2.y - ptU1.y) / (ptU2.x - ptU1.x + 1e-16));
+	float kb = (float)((ptD2.y - ptD1.y) / (ptD2.x - ptD1.x + 1e-16));
 
 	float ma = ptU1.y - ka * ptU1.x;
 	float mb = ptD1.y - kb * ptD1.x;
@@ -2279,11 +2288,28 @@ Point2f GetCrossBasedFastShapeL(Mat& srcImage, Mat& maskImage,
 
 	float ans = abs(ka*kb + 1);
 
+	//SinglePicInfo result;
+	//result.crossPoint = crossPoint;
+	//result.ptU = ptU2;
+	//result.ptD = ptD2;
+	//result.thetaU = atan(ka);
+	//result.thetaD = atan(kb);
+
+	ransacResult.crossPoint = crossPoint;
+	ransacResult.ka = ka;
+	ransacResult.ma = ma;
+	ransacResult.kb = kb;
+	ransacResult.mb = mb;
+	ransacResult.ransac = ransacDistance;
+
+	cout << "current ransacDis is: " << ransacDistance << endl;
 	cout << "ka is: " << ka << endl;
 	cout << "kb is: " << kb << endl;
-	cout << "Best measurement is: " << ans << " for the " << a << " \n";
+	cout << "ma is:" << ma << endl;
+	cout << "mb is:" << mb << endl;
+	//cout << "Best measurement is: " << ans << " for the " << ans << " \n";
 	cout << "Best crossPoint is: " << crossPoint << " for the " << a << " image\n";
-	std::cout << "It took " << duration_ms << " ms." << "\n" << std::endl;
+	std::cout << "It took " << duration_ms << " ms." << "\n" << endl;
 
 	return crossPoint;
 }
@@ -2295,33 +2321,61 @@ Description:    使用形状匹配计算手机盖板右角点
 Input:          srcImage:待测图像 maskImage:模板图像
 Return:         盖板右角点
 **************************************************************/
-Point2f GetCrossBasedFastShapeR(Mat& srcImage, Mat& maskImage,
-	float grayThreshold, float gradientThreshold, char *a)
+Point2f GetCrossBaseFastShapeR(Mat& srcImage, Mat& maskImage,RansacTest& ransacResult, char *a)
 {
+	//for (int row = 0; row < srcImage.rows; row++)
+	//{
+	//	for (int col = 0; col < srcImage.cols; col++)
+	//	{
+	//		if (srcImage.at<uchar>(row, col) >= 250)
+	//		{
+	//			srcImage.at<uchar>(row, col) = 255;
+	//		}
+	//	}
+	//}
+
 	/*step1:形状匹配，ROI*/
 	ShapeMatchResult arcShapeMatchResult = GetShapeTrans(maskImage, srcImage);
 
 	Point2f locate = arcShapeMatchResult.massCenter;
 	float bestTheta = arcShapeMatchResult.theta;
 
-	Rect maskArcRegion = Rect(1204, 418, 2330 - 1204, 1384 - 418);
-	Rect maskLineRegion1 = Rect(0, 360, 1327 - 0, 750 - 360);
-	Rect maskLineRegion2 = Rect(1916, 1474, 2338 - 1916, 3000 - 1474);
+	//Rect maskArcRegion = Rect(1204, 418, 2330 - 1204, 1384 - 418);
+	//Rect maskLineRegion1 = Rect(0, 360, 1327 - 0 - 200, 750 - 360);
+	//Rect maskLineRegion2 = Rect(1916, 1474, 2338 - 1916, 3000 - 1474);
 
-	float centerX = (1204 + 2330) / 2;
-	float centerY = (1384 + 418) / 2;
+	//Rect maskArcRegion = Rect(1204, 418, 2330 - 1204, 1384 - 418);
+	Rect maskArcRegion = Rect(332, 751, 1660 - 332, 1903 - 751);
+	Rect maskLineRegion1 = Rect(30, 550, 600 - 30, 1050 - 550);
+	Rect maskLineRegion2 = Rect(1300, 1800, 1850 - 1300, 2400 - 1800);
+	
+
+	//float centerX = (1204 + 2330) / 2;
+	//float centerY = (1384 + 418) / 2;
+	float centerX = maskArcRegion.width / 2 + maskArcRegion.x;
+	float centerY = maskArcRegion.height / 2 + maskArcRegion.y;
 	float deltaCol = locate.x * pow(2, factor);
 	float deltaRow = locate.y * pow(2, factor);
 
-	float xUA1 = 0 - centerX, yUA1 = 360 - centerY;
-	float xUA2 = 1327 - centerX, yUA2 = 360 - centerY;
-	float xUB1 = 0 - centerX, yUB1 = 750 - centerY;
-	float xUB2 = 1327 - centerX, yUB2 = 750 - centerY;
+	//float xUA1 = 30 - centerX, yUA1 = 150 - centerY;
+	//float xUA2 = 855 - centerX, yUA2 = 150 - centerY;
+	//float xUB1 = 30 - centerX, yUB1 = 500 - centerY;
+	//float xUB2 = 855 - centerX, yUB2 = 500 - centerY;
 
-	float xDA1 = 1916 - centerX, yDA1 = 1474 - centerY;
-	float xDA2 = 2338 - centerX, yDA2 = 1474 - centerY;
-	float xDB1 = 1916 - centerX, yDB1 = 3000 - centerY;
-	float xDB2 = 2338 - centerX, yDB2 = 3000 - centerY;
+	//float xDA1 = 2039 - centerX, yDA1 = 1505 - centerY;
+	//float xDA2 = 2553 - centerX, yDA2 = 1505 - centerY;
+	//float xDB1 = 2039 - centerX, yDB1 = 2079 - centerY;
+	//float xDB2 = 2553 - centerX, yDB2 = 2079 - centerY;
+	float xUA1 = maskLineRegion1.x - centerX, yUA1 = maskLineRegion1.y - centerY;
+	float xUA2 = maskLineRegion1.x + maskLineRegion1.width - centerX, yUA2 = maskLineRegion1.y - centerY;
+	float xUB1 = maskLineRegion1.x - centerX, yUB1 = maskLineRegion1.y + maskLineRegion1.height - centerY;
+	float xUB2 = maskLineRegion1.x + maskLineRegion1.width - centerX, yUB2 = maskLineRegion1.y + maskLineRegion1.height - centerY;
+
+	float xDA1 = maskLineRegion2.x - centerX, yDA1 = maskLineRegion2.y - centerY;
+	float xDA2 = maskLineRegion2.x + maskLineRegion2.width - centerX, yDA2 = maskLineRegion2.y - centerY;
+	float xDB1 = maskLineRegion2.x - centerX, yDB1 = maskLineRegion2.y + maskLineRegion2.height - centerY;
+	float xDB2 = maskLineRegion2.x + maskLineRegion2.width - centerX, yDB2 = maskLineRegion2.y + maskLineRegion2.height - centerY;
+
 
 	float trxUA1 = cos(bestTheta)*xUA1 - sin(bestTheta)*yUA1 + deltaCol;
 	float tryUA1 = sin(bestTheta)*xUA1 + cos(bestTheta)*yUA1 + deltaRow;
@@ -2342,8 +2396,10 @@ Point2f GetCrossBasedFastShapeR(Mat& srcImage, Mat& maskImage,
 
 
 	vector<Point2f> contourU, contourD;
-	Point2f pU1(trxUA1, tryUA1), pU2(trxUA2 - 300, tryUA2), pU3(trxUB1, tryUB1), pU4(trxUB2 - 300, tryUB2);
-	Point2f pD1(trxDA1, tryDA1 + 40), pD2(trxDA2, tryDA2 + 40), pD3(trxDB1, tryDB1 - 1000), pD4(trxDB2, tryDB2 - 1000);
+	//Point2f pU1(trxUA1+400, tryUA1), pU2(trxUA2 - 400, tryUA2), pU3(trxUB1+400, tryUB1), pU4(trxUB2 - 400, tryUB2);
+	//Point2f pD1(trxDA1, tryDA1 + 40), pD2(trxDA2, tryDA2 + 40), pD3(trxDB1, tryDB1 - 1000), pD4(trxDB2, tryDB2 - 1000);
+	Point2f pU1(trxUA1, tryUA1), pU2(trxUA2, tryUA2), pU3(trxUB1 , tryUB1), pU4(trxUB2 , tryUB2);
+	Point2f pD1(trxDA1, tryDA1), pD2(trxDA2, tryDA2 ), pD3(trxDB1, tryDB1), pD4(trxDB2, tryDB2 );
 
 	contourU.push_back(pU1);
 	contourU.push_back(pU2);
@@ -2435,8 +2491,8 @@ Point2f GetCrossBasedFastShapeR(Mat& srcImage, Mat& maskImage,
 	vector<Point2f>linePointU, linePointD;
 
 #if CrossDetectionMode==1
-	linePointU = GetLinePoints3(lineRegionU, brectU.x, brectU.y, 1, 1);//direction=1:U  direction=2:D
-	linePointD = GetLinePoints3(lineRegionD, brectD.x, brectD.y, 1, 2);
+	linePointU = GetLinePointsBaseSobel(lineRegionU, brectU.x, brectU.y, 1, 1);//direction=1:U  direction=2:D
+	linePointD = GetLinePointsBaseSobel(lineRegionD, brectD.x, brectD.y, 1, 2);
 #elif CrossDetectionMode==2
 	GatherEdgePtsInput inputU, inputD;
 	GatherEdgePtsOutput outputU, outputD;
@@ -2444,14 +2500,14 @@ Point2f GetCrossBasedFastShapeR(Mat& srcImage, Mat& maskImage,
 	inputU.img = srcImage;
 	inputU.rectangleROI.pt1 = Point2f(brectU.x, brectU.y + brectU.height / 2);
 	inputU.rectangleROI.pt2 = Point2f(brectU.x + brectU.width, brectU.y + brectU.height / 2);
-	inputU.rectangleROI.offset = 200;
+	inputU.rectangleROI.offset = brectU.height / 2;
 	inputU.rectangleROI.direction = 1;//顺时针扫描，从左到右
 
 	inputD.img = srcImage;
 	inputD.rectangleROI.pt1 = Point2f(brectD.x + brectD.width / 2, brectD.y);
 	inputD.rectangleROI.pt2 = Point2f(brectD.x + brectD.width / 2, brectD.y + brectD.height);
-	inputD.rectangleROI.offset = 200;
-	inputD.rectangleROI.direction = 1;//顺时针扫描，从上到下
+	inputD.rectangleROI.offset = brectD.width / 2;
+	inputD.rectangleROI.direction = 1;//逆时针扫描，从上到下
 
 	gatherEdgePts(inputU, outputU);
 	gatherEdgePts(inputD, outputD);
@@ -2460,6 +2516,10 @@ Point2f GetCrossBasedFastShapeR(Mat& srcImage, Mat& maskImage,
 
 	linePointU = outputU.imgPts;
 	linePointD = outputD.imgPts;
+
+#elif CrossDetectionMode==3//LSD算法检测直线
+	linePointU = GetLinePointsBaseLsd(lineRegionU, 0, 200, brectU.x, brectU.y);//direction=1:U  direction=2:D
+	linePointD = GetLinePointsBaseLsd(lineRegionD, 0, 200, brectD.x, brectD.y);
 #endif
 
 	/*绘制原始边缘点集*/
@@ -2504,8 +2564,6 @@ Point2f GetCrossBasedFastShapeR(Mat& srcImage, Mat& maskImage,
 	GatherLineInput inputLD;
 	inputLU.edgePts = linePointU;
 	inputLD.edgePts = linePointD;
-	//inputLU.edgePts = linesU;
-	//inputLD.edgePts = linesD;
 
 	GatherLineOutput outputLU, outputLD;
 	gatherLine(inputLU, outputLU);
@@ -2516,31 +2574,12 @@ Point2f GetCrossBasedFastShapeR(Mat& srcImage, Mat& maskImage,
 	Point2f ptD1 = outputLD.fitLine.pt1;
 	Point2f ptD2 = outputLD.fitLine.pt2;
 
-	//float ka = (float)((lineU[0][3] - lineU[0][1]) / (lineU[0][2] - lineU[0][0]));
-	//float kb = (float)((lineD[0][3] - lineD[0][1]) / (lineD[0][2] - lineD[0][0]));
 
-	float ka = (float)((ptU2.y - ptU1.y) / (ptU2.x - ptU1.x + 1e-6));
-	float kb = (float)((ptD2.y - ptD1.y) / (ptD2.x - ptD1.x + 1e-6));
+	float ka = (float)((ptU2.y - ptU1.y) / (ptU2.x - ptU1.x + 1e-16));
+	float kb = (float)((ptD2.y - ptD1.y) / (ptD2.x - ptD1.x + 1e-16));
 
 	float ma = ptU1.y - ka * ptU1.x;
 	float mb = ptD1.y - kb * ptD1.x;
-
-
-	/*opencv-fitline*/
-	//Vec4f fitLineU, fitLineD;
-	//fitLine(linePointU, fitLineU, CV_DIST_HUBER, 0, 0.01, 0.01);
-	//fitLine(linePointD, fitLineD, CV_DIST_HUBER, 0, 0.01, 0.01);
-	//float ka, kb;
-	//ka = (float)(fitLineU[1] / (fitLineU[0])); //求出LineA斜率
-	//kb = (float)(fitLineD[1] / (fitLineD[0])); //求出LineB斜率
-	//float ma, mb;
-	//ma = fitLineU[3] - ka * fitLineU[2];
-	//mb = fitLineD[3] - kb * fitLineD[2];
-	//Point2f pt1, pt2;
-	//pt1.x = fitLineU[2];
-	//pt1.y = fitLineU[3];
-	//pt2.x = fitLineD[2];
-	//pt2.y = fitLineD[3];
 
 	Point2f crossPoint;
 	crossPoint.x = (mb - ma) / (ka - kb);
@@ -2548,8 +2587,6 @@ Point2f GetCrossBasedFastShapeR(Mat& srcImage, Mat& maskImage,
 
 	line(srcImageBGR, ptU1, crossPoint, Scalar(0, 0, 255), 1);
 	line(srcImageBGR, ptD2, crossPoint, Scalar(0, 0, 255), 1);
-	//line(srcImageBGR, pt1, crossPoint, Scalar(0, 0, 255), 1);
-	//line(srcImageBGR, pt2, crossPoint, Scalar(0, 0, 255), 1);
 
 	double duration_ms = (double(getTickCount()) - start) * 1000 / getTickFrequency();
 
@@ -2593,15 +2630,26 @@ Point2f GetCrossBasedFastShapeR(Mat& srcImage, Mat& maskImage,
 		}
 	}
 
+	SinglePicInfo result;
+	result.crossPoint = crossPoint;
+	result.ptU = ptU2;
+	result.ptD = ptD2;
+	result.thetaU = atan(ka);
+	result.thetaD = atan(kb);
 
-	float ans = abs(ka*kb + 1);
+	ransacResult.crossPoint = crossPoint;
+	ransacResult.ka = ka;
+	ransacResult.ma = ma;
+	ransacResult.kb = kb;
+	ransacResult.mb = mb;
+	ransacResult.ransac = ransacDistance;
 
+	float ans = ka * kb;
+	cout << "current ransacDis is: " << ransacDistance << endl;
 	cout << "ka is: " << ka << endl;
 	cout << "kb is: " << kb << endl;
-	//cout << "Best grayThreshold is: " << bestResult.gray << " for the " << a << " image\n";
-	//cout << "Best gradientThreshold is: " << bestResult.gradient << " for the " << a << "th image\n";
-	//cout << "Best measurement is: " << bestResult.measure << " for the " << a << " image\n";
-	cout << "Best measurement is: " << ans << " for the " << a << " \n";
+	cout << "ma is:" << ma << endl;
+	cout << "mb is:" << mb << endl;
 	cout << "Best crossPoint is: " << crossPoint << " for the " << a << " image\n";
 	std::cout << "It took " << duration_ms << " ms." << "\n" << std::endl;
 
@@ -2725,32 +2773,13 @@ int ransacLines(std::vector<cv::Point2f>& input,
 	/*std::vector<cv::Vec4d>& lines*/vector<Point2f>& lines,
 	double distance, unsigned int ngon, unsigned int itmax)
 {
-	//vector<Point2f> input2(input);
-
-	//refinrPointSet(input2, lines, distance, ngon, itmax);
-
-	/*直线拟合点数量约束，拟合点数量至少大于阈值 或者迭代次数到达阈值*/
-	//if (input2.size() < input.size()*0.25)
-	//{
-	//	int index = 0;
-	//	while (true)
-	//	{
-	//		index++;
-	//		vector<Point2f> input2(input);
-	//		refinrPointSet(input2, lines, distance, ngon, itmax);
-	//		if (input2.size() > input.size()*0.25 || index > 50)
-	//		{
-	//			break;
-	//		}
-	//	}
-	//}
-
 	unsigned int Mmax = 0;
 	cv::Point2f imax;
 	cv::Point2f jmax;
 	cv::Vec4d line;
 	size_t t1, t2;
 
+	/*ransac 随机选取种子点*/
 	for (int i = 0; i <int(ngon); ++i) {
 		int inter = int(input.size());
 		unsigned int it = itmax;
@@ -2771,12 +2800,10 @@ int ransacLines(std::vector<cv::Point2f>& input,
 			unsigned int M = 0;
 			Point2f i = input[t1];
 			Point2f j = input[t2];
-
 			//if (sqrt(pow(i.x - j.x, 2) + pow(i.y - j.y, 2)) < 50)
 			//{
 			//	continue;
 			//}
-
 			for (int p = 0; p < input.size(); p++)
 			{
 				Point2f a = input[p];
@@ -2792,6 +2819,29 @@ int ransacLines(std::vector<cv::Point2f>& input,
 		}
 	}
 
+	/*每次搜索整个点集，找到最优的直线端点，排除ransac随机种子点的影响*/
+	/*for (int t1 =0; t1 <input.size(); t1++)
+	{
+		for (int t2 = t1 +1; t2 < input.size(); t2++)
+		{
+			Point2f i = input[t1];
+			Point2f j = input[t2];
+
+			unsigned int M = 0;
+			for (int p = 0; p < input.size(); p++)
+			{
+				Point2f a = input[p];
+				float dis = point2line(a, i, j);
+				if (dis < distance)
+					++M;
+			}
+			if (M > Mmax) {
+				Mmax = M;
+				imax = i;
+				jmax = j;
+			}
+		}
+	}*/
 
 	cout << "current Mmax is:" << Mmax << endl;
 	cout << "current imax is:" << imax << endl;
@@ -2807,10 +2857,6 @@ int ransacLines(std::vector<cv::Point2f>& input,
 	}
 
 	cout << "current input's size is: " << input.size() << endl;
-
-
-	//vector<Point2f>().swap(input);
-	//input.swap(input2);
 
 	return 0;
 }
@@ -2835,7 +2881,7 @@ int GetFreemanCode(Point2f pt1, Point2f pt2)
 
 void getherEdgePtsLsd(Mat img, vector<Point2f>&edgePts, float deltaX, float deltaY)
 {
-	edgePts = GetLinePoints(img, 0, 200, deltaX, deltaY);
+	edgePts = GetLinePointsBaseLsd(img, 0, 200, deltaX, deltaY);
 }
 
 
@@ -3437,4 +3483,51 @@ int searchBoundaryForLine(Mat srcImage, cv::Mat &img, RectangleROI roiRect, int 
 	if (output.imgPts.size() < 2)
 		return 3;
 	return 0;
+}
+
+
+float CalDistance(Point2f circlePt, Point2f pt1, Point2f pt2, Point2f pt3)
+{
+	float d1 = sqrt(pow(circlePt.x - pt1.x, 2) + pow(circlePt.y - pt1.y, 2));
+	float d2 = sqrt(pow(circlePt.x - pt2.x, 2) + pow(circlePt.y - pt2.y, 2));
+	float d3 = sqrt(pow(circlePt.x - pt3.x, 2) + pow(circlePt.y - pt3.y, 2));
+
+	return (d1 + d2 + d3) / 3;
+}
+
+
+float CalSD(Point2f circlePt, Point2f pt1, Point2f pt2, Point2f pt3)
+{
+	float d1 = sqrt(pow(circlePt.x - pt1.x, 2) + pow(circlePt.y - pt1.y, 2));
+	float d2 = sqrt(pow(circlePt.x - pt2.x, 2) + pow(circlePt.y - pt2.y, 2));
+	float d3 = sqrt(pow(circlePt.x - pt3.x, 2) + pow(circlePt.y - pt3.y, 2));
+	float meanD = (d1 + d2 + d3) / 3;
+	float SD = sqrt(pow(d1 - meanD, 2) + pow(d2 - meanD, 2) + pow(d3 - meanD, 2)) / 3;
+	return SD;
+}
+
+
+Point2f GetAccuracyCirclePoint(Point2f pointLW1, Point2f pointLW2, Point2f pointLW3, float theta)
+{
+	Point2f circlePoint1 = findCircle1(pointLW1, pointLW2, THETA);
+	float SD1 = CalSD(circlePoint1, pointLW1, pointLW2, pointLW3);
+
+	Point2f circlePoint2 = findCircle1(pointLW2, pointLW3, THETA);
+	float SD2 = CalSD(circlePoint2, pointLW1, pointLW2, pointLW3);
+
+	Point2f circlePoint3 = findCircle1(pointLW1, pointLW3, 2 * THETA);
+	float SD3 = CalSD(circlePoint3, pointLW1, pointLW2, pointLW3);
+
+	Point2f resultPoint;
+	if (SD1 > SD2)
+	{
+		if (SD3 > SD2)resultPoint = circlePoint2;
+		else resultPoint = circlePoint3;
+	}
+	else
+	{
+		if (SD3 < SD1) resultPoint = circlePoint3;
+		else resultPoint = circlePoint1;
+	}
+	return resultPoint;
 }

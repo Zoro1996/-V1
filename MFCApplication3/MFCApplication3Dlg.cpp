@@ -8,7 +8,6 @@
 #include "MFCApplication3Dlg.h"
 #include "afxdialogex.h"
 #include "MyFunction.h"
-//#include "FastMatchForLineParam.h"
 #include "resource.h"
 #include<stdio.h>
 #include <fstream>
@@ -53,12 +52,12 @@ class CAboutDlg : public CDialogEx
 public:
 	CAboutDlg();
 
-// 对话框数据
+	// 对话框数据
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_ABOUTBOX };
 #endif
 
-	protected:
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 
 // 实现
@@ -83,9 +82,6 @@ END_MESSAGE_MAP()
 
 
 // CMFCApplication3Dlg 对话框
-
-
-
 CMFCApplication3Dlg::CMFCApplication3Dlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MFCAPPLICATION3_DIALOG, pParent)
 {
@@ -252,13 +248,13 @@ BOOL CMFCApplication3Dlg::OnInitDialog()
 	//::ShowWindow(hParent12, SW_HIDE);
 
 	CString str1[] = { TEXT("RotateX"),TEXT("RotateY"),TEXT("X"),TEXT("Y"),TEXT("Theta") };
-	CString str2[] = {TEXT("X(mm)"),TEXT("Y(mm)"),TEXT("Theta(°)") };
+	CString str2[] = { TEXT("X(mm)"),TEXT("Y(mm)"),TEXT("Theta(°)") };
 	InstructionCommandList.InsertColumn(0, TEXT("序号"), LVCFMT_CENTER, 40);
 	RectifyInstructionCommand.InsertColumn(0, TEXT("序号"), LVCFMT_CENTER, 40);
 	for (int i = 1; i < 4; i++)
 	{
-		InstructionCommandList.InsertColumn(i, str2[i-1], LVCFMT_CENTER, 80);
-		RectifyInstructionCommand.InsertColumn(i, str2[i-1], LVCFMT_CENTER, 80);
+		InstructionCommandList.InsertColumn(i, str2[i - 1], LVCFMT_CENTER, 80);
+		RectifyInstructionCommand.InsertColumn(i, str2[i - 1], LVCFMT_CENTER, 80);
 	}
 
 	for (int i = 0; i < 100; i++)
@@ -286,7 +282,7 @@ BOOL CMFCApplication3Dlg::OnInitDialog()
 	GetDlgItemText(IDC_HoughCircle, strHoughCircleRadius);
 
 	m_threshold.SetWindowTextW(TEXT("15"));
-	m_erodeSize.SetWindowTextW(TEXT("0.2"));
+	m_erodeSize.SetWindowTextW(TEXT("1.00"));
 	m_cannt1.SetWindowTextW(TEXT("150"));
 	m_canny2.SetWindowTextW(TEXT("200"));
 	m_hough1.SetWindowTextW(TEXT("150"));
@@ -534,9 +530,8 @@ void CMFCApplication3Dlg::OnBnClickedButton3()
 	HoughThreshold2 = parametersValue[3];
 	HoughThreshold3 = parametersValue[4];
 	thresholdValue = parametersValue[5];
-	ransacDistance = (double)(parametersValue[6]);
+	ransacDistance = (float)(parametersValue[6]);
 
-	//double d = atof(str);
 	cout << "save parameters" << "\n" << endl;
 }
 
@@ -553,53 +548,57 @@ void CMFCApplication3Dlg::OnStnClickedPictureviewer2()
 }
 
 
+
+RansacTest GetLineParaBaseRansac(Mat image)
+{
+
+}
+
+
+
 void CMFCApplication3Dlg::OnBnClickedButton4()
 {
-	maskImageL = imread("E:\\数据集\\后盖标定采图\\maskImageL.bmp", 0);
-	maskImageR = imread("E:\\数据集\\后盖标定采图\\maskImageR.bmp", 0);
+	//maskImageL = imread("E:\\VS_PROJECT\\对位系统-4.5\\MFCApplication3\\L-12-8.bmp", 0);
+	//maskImageR = imread("E:\\VS_PROJECT\\对位系统-4.5\\MFCApplication3\\R-12-8.bmp", 0);
 
-	char srcImagePathL[500], srcImagePathR[500];
+	//char srcImagePathL[500], srcImagePathR[500];
 
-	sprintf_s(srcImagePathL, "E:\\数据集\\后盖标定采图\\L\\T-L-7.bmp");
-	sprintf_s(srcImagePathR, "E:\\数据集\\后盖标定采图\\R\\T-R-7.bmp");
-
-
-	Mat srcImageL = imread(srcImagePathL, 0);
-	Mat srcImageR = imread(srcImagePathR, 0);
-
-	Point2f resultPointL = GetCrossBasedFastShapeL(srcImageL, maskImageL, 255, 1500, srcImagePathL);
-	Point2f resultPointR = GetCrossBasedFastShapeR(srcImageR, maskImageR, 255, 1500, srcImagePathR);
-
-	cout << "resultPointL is: (" << resultPointL.x << ", " << resultPointL.y << ")" << endl;
-	cout << "resultPointR is: (" << resultPointR.x << ", " << resultPointR.y << ")" << endl;
-
-	//Mat cosImage(1, 3600, CV_32FC1);
-	//Mat sinImage(1, 3600, CV_32FC1);
-
-	//for (float i = 0; i < 3600; i++)
-	//{
-	//	float curValue = (float)((i - 1800) / 10)*PI / 180;
-	//	float cosValue = cos(curValue);
-	//	float sinValue = sin(curValue);
-	//	cosImage.at<float>(0, i) = cosValue;
-	//	sinImage.at<float>(0, i) = sinValue;
-	//}
+	//sprintf_s(srcImagePathL, "E:\\数据集\\后盖标定采图\\L\\T-L-1.bmp");
+	//sprintf_s(srcImagePathR, "E:\\数据集\\后盖标定采图\\R\\T-R-1.bmp");
 
 
-        //std::vector<Point2f> pt1(4);
-        //std::vector<Point2f> pt2(4);
+	//Mat srcImageL = imread(srcImagePathL, 0);
+	//Mat srcImageR = imread(srcImagePathR, 0);
 
-        //pt1[0] = Point2f(0,0) ;    
-        //pt1[1] = Point2f(1,0) ; 
-        //pt1[2] = Point2f(1,1) ; 
-        //pt1[3] = Point2f(0,1) ;  
+	////Rect ML = Rect(1296,692,2500-1296,2000-692);
+	////Rect MR = Rect(567, 664, 2000-567, 2000-664);
+	////Rect ML = Rect(1300, 708, 2580 - 1300, 1828 - 708);
+	////Rect MR = Rect(332, 751, 1660 - 332, 1903 - 751);
+	////Mat L, R;
+	////srcImageL(ML).copyTo(L);
+	////srcImageR(MR).copyTo(R);
+	////imwrite("L-12-8.bmp", L);
+	////imwrite("R-12-8.bmp", R);
 
-        //pt2[0] = Point2f(496.01f,147.48f); //496.0167  147.4822             
-        //pt2[1] = Point2f(492,419);                 
-        //pt2[2] = Point2f(118,355);                    
-        //pt2[3] = Point2f(200,98); 
-        //std::vector<unsigned char> inliersMask(4);
-        //cv::Mat h = cv::findHomography( (Mat)pt1, (Mat)pt2, CV_FM_RANSAC, 1.0,inliersMask);     
+	//RansacTest rl, rr;
+	//Point2f resultPointL = GetCrossBaseFastShapeL(srcImageL, maskImageL, rl, srcImagePathL);
+	//Point2f resultPointR = GetCrossBaseFastShapeR(srcImageR, maskImageR, rr, srcImagePathR);
+
+	Point2f pointLW1 = Point2f(-4.40287685, -2.04862309);
+	Point2f pointLW2 = Point2f(0.00335502625, -0.000316619873);
+	//Point2f pointLW3 = Point2f(4.51957321, 1.81849003);
+	Point2f pointLW3 = Point2f(4.51943398,1.81605911);
+
+	//Point2f circlePoint1 = findCircle1(pointLW1, pointLW2, THETA);
+	//Point2f circlePoint2 = findCircle1(pointLW2, pointLW3, THETA);
+	//Point2f circlePoint3 = findCircle1(pointLW1, pointLW3, 2 * THETA);
+
+	CircleData centerLW = findCircle3(pointLW1, pointLW2, pointLW3);
+
+	Point2f circlePoint = GetAccuracyCirclePoint(pointLW1, pointLW2, pointLW3, THETA);
+
+	float d1 = CalDistance(circlePoint, pointLW1, pointLW2, pointLW3);
+	float d2 = CalDistance(centerLW.center, pointLW1, pointLW2, pointLW3);
 
 	cout << "pause here" << endl;
 }
@@ -613,7 +612,7 @@ void CMFCApplication3Dlg::OnBnClickedtestimagel()
 	//打开图像文件，获取文件路径名
 	LPCTSTR szFilter = _T("ALLSUPORTFILE(*.*)|*.*|JPG(*.jpg)|*.jpg|BMP(*.bmp)|*.bmp||");
 	CFileDialog dlgFileOpenImg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, szFilter, NULL);
-	
+
 	//打开图像
 	if (dlgFileOpenImg.DoModal() == IDOK)
 	{
@@ -662,7 +661,7 @@ void CMFCApplication3Dlg::OnBnClickedtestimager()
 void CMFCApplication3Dlg::OnBnClickedbmimagel()
 {
 	// TODO: 在此添加控件通知处理程序代码
-		//打开文件 定义四种格式的文件bmp gif jpg tiff
+	//打开文件 定义四种格式的文件bmp gif jpg tiff
 	CString m_strFilePath = _T("");
 
 	//打开图像文件，获取文件路径名
@@ -683,16 +682,6 @@ void CMFCApplication3Dlg::OnBnClickedbmimagel()
 	string str(W2A(m_strFilePath));
 	bmImageL = imread(str, 0);
 
-	//Rect maskLRegion1 = Rect(2650, 1284,  3791- 2650, 1563 - 1284);
-	//Mat maskLResult1;
-	//bmImageL(maskLRegion1).copyTo(maskLResult1);
-	//imwrite("F:\\数据集\\标定\\标定B\\maskL1.bmp", maskLResult1);
-
-	//Rect maskLRegion2 = Rect(1600, 2280, 2060 - 1600, 2683 - 2280);
-	//Mat maskLResult2;
-	//bmImageL(maskLRegion2).copyTo(maskLResult2);
-	//imwrite("F:\\数据集\\标定\\标定B\\maskL2.bmp", maskLResult2);
-
 	ShowPic_bmImageViweL(bmImageL);
 }
 
@@ -700,7 +689,7 @@ void CMFCApplication3Dlg::OnBnClickedbmimagel()
 void CMFCApplication3Dlg::OnBnClickedbmimager()
 {
 	// TODO: 在此添加控件通知处理程序代码
-		//打开文件 定义四种格式的文件bmp gif jpg tiff
+	//打开文件 定义四种格式的文件bmp gif jpg tiff
 	CString m_strFilePath = _T("");
 
 	//打开图像文件，获取文件路径名
@@ -720,16 +709,6 @@ void CMFCApplication3Dlg::OnBnClickedbmimager()
 	USES_CONVERSION;
 	string str(W2A(m_strFilePath));
 	bmImageR = imread(str, 0);
-
-	//Rect maskLRegion1 = Rect(77, 1081, 1771 - 77, 1564 - 1081);
-	//Mat maskResult1;
-	//bmImageR(maskLRegion1).copyTo(maskResult1);
-	//imwrite("F:\\数据集\\标定\\标定B\\maskR1.bmp", maskResult1);
-
-	//Rect maskLRegion2 = Rect(2234, 2207, 2633 - 2234, 2701 - 2207);
-	//Mat maskResult2;
-	//bmImageR(maskLRegion2).copyTo(maskResult2);
-	//imwrite("F:\\数据集\\标定\\标定B\\maskR2.bmp", maskResult2);
 
 	ShowPic_bmImageViweR(bmImageR);
 }
@@ -756,7 +735,6 @@ float CalThetaR(Mat&srcImage, double CannyThreshold1, double CannyThreshold2,
 	float epsilon = 0.001;
 	for (size_t i = 0; i < lines.size(); i++) {
 		Vec4f l = lines[i];
-		//line(dstImage, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255), 3, LINE_AA);
 		if (abs((l[3] - l[1]) / (l[2] - l[0] + epsilon)) > 5)
 		{
 			line(dstImage, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255), 3, LINE_AA);				line(srcImageRGB, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 255), 3, LINE_AA);
@@ -790,7 +768,152 @@ float CalThetaR(Mat&srcImage, double CannyThreshold1, double CannyThreshold2,
 }
 
 
-ControlInstruction GetInstruction2(Mat& bmImageL,Mat& testImageL,
+void GetSingleCameraPInfo(Mat srcImage, SingleCameraAlignment& result)
+{
+	/*step1:形状匹配，ROI*/
+	ShapeMatchResult arcShapeMatchResult = GetShapeTrans(maskImageL, srcImage);
+
+	Point2f locate = arcShapeMatchResult.massCenter;
+	float bestTheta = arcShapeMatchResult.theta;
+
+	Rect maskArcRegion = Rect(1674, 350, 2666 - 1674, 1141 - 350);
+	Rect maskLineRegion1 = Rect(2946, 350, 4000 - 2946, 700 - 350);
+
+	float centerX = (1674 + 2666) / 2;
+	float centerY = (350 + 1141) / 2;
+	float deltaCol = locate.x * pow(2, factor);
+	float deltaRow = locate.y * pow(2, factor);
+
+	float xUA1 = 2946 - centerX, yUA1 = 350 - centerY;
+	float xUA2 = 4000 - centerX, yUA2 = 350 - centerY;
+	float xUB1 = 2946 - centerX, yUB1 = 700 - centerY;
+	float xUB2 = 4000 - centerX, yUB2 = 700 - centerY;
+
+	float trxUA1 = cos(bestTheta)*xUA1 - sin(bestTheta)*yUA1 + deltaCol;
+	float tryUA1 = sin(bestTheta)*xUA1 + cos(bestTheta)*yUA1 + deltaRow;
+
+	float trxUA2 = cos(bestTheta)*xUA2 - sin(bestTheta)*yUA2 + deltaCol;
+	float tryUA2 = sin(bestTheta)*xUA2 + cos(bestTheta)*yUA2 + deltaRow;
+
+	float trxUB1 = cos(bestTheta)*xUB1 - sin(bestTheta)*yUB1 + deltaCol;
+	float tryUB1 = sin(bestTheta)*xUB1 + cos(bestTheta)*yUB1 + deltaRow;
+
+	float trxUB2 = cos(bestTheta)*xUB2 - sin(bestTheta)*yUB2 + deltaCol;
+	float tryUB2 = sin(bestTheta)*xUB2 + cos(bestTheta)*yUB2 + deltaRow;
+
+
+	vector<Point2f> contourU, contourD;
+	Point2f pU1(trxUA1 + 100, tryUA1 - 150), pU2(trxUA2 + 200, tryUA2 - 150), pU3(trxUB1 + 100, tryUB1 - 150), pU4(trxUB2 + 200, tryUB2 - 150);
+
+	contourU.push_back(pU1);
+	contourU.push_back(pU2);
+	contourU.push_back(pU3);
+	contourU.push_back(pU4);
+	RotatedRect rectU = minAreaRect(contourU);//外接矩形
+	Point2f verticesU[4];
+	rectU.points(verticesU);//外接矩形的4个顶点
+	Rect brectU = rectU.boundingRect();
+
+	if (brectU.x < 0)
+	{
+		brectU.width -= abs(brectU.x);
+		brectU.x = 0;
+	}
+	if (brectU.y < 0)
+	{
+		brectU.height -= abs(brectU.y);
+		brectU.y = 0;
+	}
+
+	if (brectU.x + brectU.width > srcImage.cols)brectU.width = srcImage.cols - brectU.x;
+	if (brectU.y + brectU.height > srcImage.rows)brectU.height = srcImage.rows - brectU.y;
+
+	if (brectU.x % 2 != 0)brectU.x += 1;
+	if (brectU.y % 2 != 0)brectU.y += 1;
+	if (brectU.width % 2 != 0)brectU.width -= 1;
+	if (brectU.height % 2 != 0)brectU.height -= 1;
+
+	Mat srcImageBGR, BGR1, BGR2;
+	cvtColor(srcImage, srcImageBGR, CV_GRAY2BGR);
+	cvtColor(srcImage, BGR1, CV_GRAY2BGR);
+	cvtColor(srcImage, BGR2, CV_GRAY2BGR);
+
+	for (int i = 0; i < 4; i++)//画矩形
+	{
+		line(srcImageBGR, verticesU[i], verticesU[(i + 1) % 4], Scalar(0, 0, 255));
+	}
+
+
+	/*画ROI*/
+	rectangle(srcImageBGR, brectU, Scalar(255, 0, 0));
+
+
+	Mat lineRegionU, lineRegionD;
+	srcImage(brectU).copyTo(lineRegionU);
+
+	double start = double(getTickCount());
+
+	vector<Point2f>linePointU, linePointD;
+
+#if CrossDetectionMode==1
+	//direction=1:U  direction=2:DGetSingleCameraPInfo
+	linePointU = GetLinePointsBaseSobel(lineRegionU, brectU.x, brectU.y, 0, 1);
+	//linePointD = GetLinePointsBaseSobel(lineRegionD, brectD.x, brectD.y, 0, 2);
+	//linePointU = GetLinePoints3(lineRegionU, brectU.x, brectU.y, 0, 1);//direction=1:U  direction=2:D
+#elif CrossDetectionMode==2
+	GatherEdgePtsInput inputU, inputD;
+	GatherEdgePtsOutput outputU, outputD;
+
+	inputU.img = srcImage;
+	inputU.rectangleROI.pt1 = Point2f(brectU.x, brectU.y + brectU.height / 2);
+	inputU.rectangleROI.pt2 = Point2f(brectU.x + brectU.width, brectU.y + brectU.height / 2);
+	inputU.rectangleROI.offset = 200;
+	inputU.rectangleROI.direction = 1;//顺时针扫描，从左到右
+
+	gatherEdgePts(inputU, outputU);
+	//getherEdgePtsLsd(lineRegionU, linePointU, brectU.x, brectU.y);
+
+	linePointU = outputU.imgPts;
+#endif
+
+	/*绘制原始边缘点集*/
+	for (int i = 0; i < linePointU.size(); i++)
+	{
+		BGR1.at<Vec3b>(linePointU[i])[0] = 0;
+		BGR1.at<Vec3b>(linePointU[i])[1] = 0;
+		BGR1.at<Vec3b>(linePointU[i])[2] = 255;
+	}
+
+	cout << "before ransac refine: linePointU's size is: " << linePointU.size() << endl;
+
+	//vector<Vec4d> linesU, linesD;
+	vector<Point2f>linesU, linesD;
+	ransacLines(linePointU, linesU, ransacDistance, 10, 2000);
+	cout << "after ransac refine: linePointU's size is: " << linePointU.size() << endl;
+
+	/*绘制ransac筛选后的点集*/
+	for (int i = 0; i < linePointU.size(); i++)
+	{
+		BGR2.at<Vec3b>(linePointU[i])[0] = 0;
+		BGR2.at<Vec3b>(linePointU[i])[1] = 0;
+		BGR2.at<Vec3b>(linePointU[i])[2] = 255;
+	}
+
+	GatherLineInput inputLU;
+	inputLU.edgePts = linePointU;
+
+	GatherLineOutput outputLU;
+	gatherLine(inputLU, outputLU);
+
+	Point2f ptU1 = outputLU.fitLine.pt1;
+	Point2f ptU2 = outputLU.fitLine.pt2;
+
+	float ka = (float)((ptU2.y - ptU1.y) / (ptU2.x - ptU1.x + 1e-6));
+
+}
+
+
+ControlInstruction GetInstruction2(Mat& bmImageL, Mat& testImageL,
 	Position& bmPosition, Position& testPosition, Point2f& rotatePoint)
 {
 	/*计算待测工件移动至基准位置需要移动的偏移量和旋转量*/
@@ -805,42 +928,18 @@ ControlInstruction GetInstruction2(Mat& bmImageL,Mat& testImageL,
 	Point2f uniformTestCrossPointR = testPosition.uniformCrossPointR;
 	Point2f uniformTestCenterPoint = testPosition.uniformCenterPoint;
 
-	//float thetaL1 = CalThetaL(bmImageL, 100, 3, 200, 350,
-	//	100, 200, 100, 100, 50);
-	//float thetaL2 = CalThetaL(testImageL, 100, 3, 200, 350,
-	//	100, 200, 100, 100, 50);
-	//float ansThetaL = thetaL1 - thetaL2;
-	//instruction.commandTheta = ansThetaL;
-	instruction.commandTheta = bmPosition.theta - testPosition.theta;
+	float theta= bmPosition.theta - testPosition.theta;
 
 	//计算偏移量
-	//float uTCRotatePointLX = cos(instruction.commandTheta)*(uniformTestCrossPointL.x - rotatePoint.x) -
-	//	sin(instruction.commandTheta)*(uniformTestCrossPointL.y - rotatePoint.y) + rotatePoint.x;
-	//float uTCRotatePointLY = sin(instruction.commandTheta)*(uniformTestCrossPointL.x - rotatePoint.x) +
-	//	cos(instruction.commandTheta)*(uniformTestCrossPointL.y - rotatePoint.y) + rotatePoint.y;
-	//float uTCRotatePointRX = cos(instruction.commandTheta)*(uniformTestCrossPointR.x - rotatePoint.x) -
-	//	sin(instruction.commandTheta)*(uniformTestCrossPointR.y - rotatePoint.y) + rotatePoint.x;
-	//float uTCRotatePointRY = sin(instruction.commandTheta)*(uniformTestCrossPointR.x - rotatePoint.x) +
-	//	cos(instruction.commandTheta)*(uniformTestCrossPointR.y - rotatePoint.y) + rotatePoint.y;
-	//float uTCRotatePointCenterX = cos(instruction.commandTheta)*(uniformTestCenterPoint.x - rotatePoint.x) -
-	//	sin(instruction.commandTheta)*(uniformTestCenterPoint.y - rotatePoint.y) + rotatePoint.x;
-	//float uTCRotatePointCenterY = sin(instruction.commandTheta)*(uniformTestCenterPoint.x - rotatePoint.x) +
-	//	cos(instruction.commandTheta)*(uniformTestCenterPoint.y - rotatePoint.y) + rotatePoint.y;
-
-	float uTCRotatePointLX = cos(instruction.commandTheta)*(uniformTestCrossPointL.x ) -
-		sin(instruction.commandTheta)*(uniformTestCrossPointL.y );
-	float uTCRotatePointLY = sin(instruction.commandTheta)*(uniformTestCrossPointL.x ) +
-		cos(instruction.commandTheta)*(uniformTestCrossPointL.y) ;
-
-	float uTCRotatePointRX = cos(instruction.commandTheta)*(uniformTestCrossPointR.x) -
-		sin(instruction.commandTheta)*(uniformTestCrossPointR.y);
-	float uTCRotatePointRY = sin(instruction.commandTheta)*(uniformTestCrossPointR.x) +
-		cos(instruction.commandTheta)*(uniformTestCrossPointR.y);
-
-	float uTCRotatePointCenterX = cos(instruction.commandTheta)*(uniformTestCenterPoint.x) -
-		sin(instruction.commandTheta)*(uniformTestCenterPoint.y);
-	float uTCRotatePointCenterY = sin(instruction.commandTheta)*(uniformTestCenterPoint.x) +
-		cos(instruction.commandTheta)*(uniformTestCenterPoint.y);
+	//@1:左角点
+	float uTCRotatePointLX = cos(theta)*(uniformTestCrossPointL.x) - sin(theta)*(uniformTestCrossPointL.y);
+	float uTCRotatePointLY = sin(theta)*(uniformTestCrossPointL.x) + cos(theta)*(uniformTestCrossPointL.y);
+	//@2:右角点
+	float uTCRotatePointRX = cos(theta)*(uniformTestCrossPointR.x) - sin(theta)*(uniformTestCrossPointR.y);
+	float uTCRotatePointRY = sin(theta)*(uniformTestCrossPointR.x) + cos(theta)*(uniformTestCrossPointR.y);
+	//@3:中心点
+	float uTCRotatePointCenterX = cos(theta)*(uniformTestCenterPoint.x) - sin(theta)*(uniformTestCenterPoint.y);
+	float uTCRotatePointCenterY = sin(theta)*(uniformTestCenterPoint.x) + cos(theta)*(uniformTestCenterPoint.y);
 
 	//旋转校正之后的中心点坐标
 	Point2f testRotatePoint = Point2f(uTCRotatePointCenterX, uTCRotatePointCenterY);
@@ -848,19 +947,21 @@ ControlInstruction GetInstruction2(Mat& bmImageL,Mat& testImageL,
 	float commandX1, commandX2, commandX3;
 	float commandY1, commandY2, commandY3;
 
+	/*按照左角点计算控制指令*/
 	commandX1 = -uTCRotatePointLX + uniformCrossPointL.x;
 	commandY1 = -uTCRotatePointLY + uniformCrossPointL.y;
-
+	/*按照中心点计算控制指令*/
 	commandX2 = -uTCRotatePointCenterX + uniformCenterPoint.x;
 	commandY2 = -uTCRotatePointCenterY + uniformCenterPoint.y;
-
+	/*按照右角点计算控制指令*/
 	commandX3 = -uTCRotatePointRX + uniformCrossPointR.x;;
 	commandY3 = -uTCRotatePointRY + uniformCrossPointR.y;
 
-	instruction.commandX = (commandX1 + commandX2 + commandX3) / 3;
-	instruction.commandY = (commandY1 + commandY2 + commandY3) / 3;
-	//instruction.commandX = commandX1;
-	//instruction.commandY = commandY1;
+	//instruction.commandX = (commandX1 + commandX2 + commandX3) / 3;
+	//instruction.commandY = (commandY1 + commandY2 + commandY3) / 3;
+	instruction.commandX = commandX2;
+	instruction.commandY = commandY2;
+	instruction.commandTheta = bmPosition.theta - testPosition.theta;
 
 	return instruction;
 }
@@ -868,33 +969,30 @@ ControlInstruction GetInstruction2(Mat& bmImageL,Mat& testImageL,
 
 void CMFCApplication3Dlg::OnBnClickedAlignmentWo()
 {
-	index++;
+	index++;//界面按index从小到大顺序显示对位结果
 
 	/*对位开始*/
 	/*计算基准位姿*/
 	Position bmPosition;
-	bmPosition = CalPosition(bmImageL, bmImageR, invH1,
-		centerWorldL1.center,centerWorldR1.center);
+	bmPosition = CalPosition(bmImageL, bmImageR, invH1,	rotatePoint1,rotatePoint2);
 
 	/*计算待测工件位姿*/
-	Position testPosition = CalPosition(testImageL, testImageR, invH1, 
-		centerWorldL1.center, centerWorldR1.center);
+	Position testPosition = CalPosition(testImageL, testImageR, invH1, rotatePoint1, rotatePoint2);
 
 	/*运动指令*/
 	instruction1 = GetInstruction2(bmImageL, testImageL, bmPosition, testPosition, rotatePoint1);
 
-	CString  indexToText,X, Y, Theta;
-
+	/*界面显示运动控制指令*/
+	CString  indexToText, X, Y, Theta;
 	indexToText.Format(TEXT("%d"), index);
 	X.Format(TEXT("%0.5f"), instruction1.commandX);
 	Y.Format(TEXT("%0.5f"), instruction1.commandY);
-	Theta.Format(TEXT("%f"),instruction1.commandTheta * 180 / PI);
-
-	//InstructionCommandList.SetItemText(index - 1, 0, indexToText);
+	Theta.Format(TEXT("%f"), instruction1.commandTheta * 180 / PI);
 	InstructionCommandList.SetItemText(index - 1, 1, X);
 	InstructionCommandList.SetItemText(index - 1, 2, Y);
 	InstructionCommandList.SetItemText(index - 1, 3, Theta);
-	
+
+	/*保存数据 -> vector::resultText1 -> result.txt*/
 	tuple<int, float, float, float> res1;
 	get<0>(res1) = index;
 	get<1>(res1) = instruction1.commandX;
@@ -956,7 +1054,7 @@ void CMFCApplication3Dlg::OnBnClickedCameracalibation()
 	bi.iImage = NULL;
 	if ((pidl = SHBrowseForFolder(&bi)) != NULL)
 	{
-		if (SUCCEEDED(SHGetPathFromIDList(pidl, szSelected))) //得到文件夹的全路径，不要的话，只得本文件夹名  
+		if (SUCCEEDED(SHGetPathFromIDList(pidl, szSelected)))
 		{
 			m_strFileOut = szSelected;  	//获得文件夹的全路径
 		}
@@ -965,8 +1063,9 @@ void CMFCApplication3Dlg::OnBnClickedCameracalibation()
 	USES_CONVERSION;
 
 	/*计算单相机的平移标定角点的图像像素坐标*/
-	maskImageL = imread("F:\\数据集\\对位\\3号台圆弧盖板图像\\maskImageL.bmp", 0);
-	maskImageR = imread("F:\\数据集\\对位\\3号台圆弧盖板图像\\maskImageR.bmp", 0);
+	maskImageL = imread("E:\\VS_PROJECT\\对位系统-4.5\\MFCApplication3\\L-12-8.bmp", 0);
+	maskImageR = imread("E:\\VS_PROJECT\\对位系统-4.5\\MFCApplication3\\R-12-8.bmp", 0);
+
 
 	CString srcImagePathL, srcImagePathR;
 	CString srcPathL, srcPathR;
@@ -977,11 +1076,6 @@ void CMFCApplication3Dlg::OnBnClickedCameracalibation()
 	Point2f resultPointR;
 	for (int index = 1; index < 10; index++)
 	{
-		//if (index == 2 || index == 5 || index == 8)
-		//{
-		//	continue;
-		//}
-
 		srcPathL.Format(_T("\\L\\T-L-%d.bmp"), index);
 		srcPathR.Format(_T("\\R\\T-R-%d.bmp"), index);
 
@@ -991,6 +1085,7 @@ void CMFCApplication3Dlg::OnBnClickedCameracalibation()
 		string strL(W2A(srcImagePathL));
 		string strR(W2A(srcImagePathR));
 
+		/*加载图像*/
 		Mat srcImageL = imread(strL, 0);
 		Mat srcImageR = imread(strR, 0);
 
@@ -1004,8 +1099,9 @@ void CMFCApplication3Dlg::OnBnClickedCameracalibation()
 		resultPointL = GetCrossBasedShapeL(srcImageL, maskImageL);
 		resultPointR = GetCrossBasedShapeR(srcImageR, maskImageR);
 #elif CrossMethod == 3
-		resultPointL = GetCrossBasedFastShapeL(srcImageL, maskImageL, 255, 1500, &strL[0]);
-		resultPointR = GetCrossBasedFastShapeR(srcImageR, maskImageR, 255, 1500, &strR[0]);
+		RansacTest rl, rr;//后续实验调用，暂无用处
+		resultPointL = GetCrossBaseFastShapeL(srcImageL, maskImageL, rl, &strL[0]);
+		resultPointR = GetCrossBaseFastShapeR(srcImageR, maskImageR, rr, &strR[0]);
 #endif 
 
 		pointTransSetL[0][index - 1] = resultPointL.x;
@@ -1015,81 +1111,32 @@ void CMFCApplication3Dlg::OnBnClickedCameracalibation()
 		pointTransSetR[0][index - 1] = resultPointR.x;
 		pointTransSetR[1][index - 1] = resultPointR.y;
 		pointTransSetR[2][index - 1] = 1;
-		//if (index==1)
-		//{
-		//	pointTransSetL[0][index - 1] = resultPointL.x;
-		//	pointTransSetL[1][index - 1] = resultPointL.y;
-		//	pointTransSetL[2][index - 1] = 1;
-
-		//	pointTransSetR[0][index - 1] = resultPointR.x;
-		//	pointTransSetR[1][index - 1] = resultPointR.y;
-		//	pointTransSetR[2][index - 1] = 1;
-		//}
-		//if (index==3 ||index==4)
-		//{
-		//	pointTransSetL[0][index - 2] = resultPointL.x;
-		//	pointTransSetL[1][index - 2] = resultPointL.y;
-		//	pointTransSetL[2][index - 2] = 1;
-
-		//	pointTransSetR[0][index - 2] = resultPointR.x;
-		//	pointTransSetR[1][index - 2] = resultPointR.y;
-		//	pointTransSetR[2][index - 2] = 1;
-		//}
-		//if (index == 6 || index == 7)
-		//{
-		//	pointTransSetL[0][index - 3] = resultPointL.x;
-		//	pointTransSetL[1][index - 3] = resultPointL.y;
-		//	pointTransSetL[2][index - 3] = 1;
-
-		//	pointTransSetR[0][index - 3] = resultPointR.x;
-		//	pointTransSetR[1][index - 3] = resultPointR.y;
-		//	pointTransSetR[2][index - 3] = 1;
-		//}
-		//if (index == 9)
-		//{
-		//	pointTransSetL[0][index - 4] = resultPointL.x;
-		//	pointTransSetL[1][index - 4] = resultPointL.y;
-		//	pointTransSetL[2][index - 4] = 1;
-
-		//	pointTransSetR[0][index - 4] = resultPointR.x;
-		//	pointTransSetR[1][index - 4] = resultPointR.y;
-		//	pointTransSetR[2][index - 4] = 1;
-		//}
-
-		//cvtColor(srcImageL, srcImageL, COLOR_GRAY2BGR);
-		//cvtColor(srcImageR, srcImageR, COLOR_GRAY2BGR);
-		//circle(srcImageL, resultPointL, 8, Scalar(0, 0, 255), 8);
-		//circle(srcImageR, resultPointR, 8, Scalar(0, 0, 255), 8);
-		//namedWindow(srcImagePathR, 0);
-		//imshow(srcImagePathR, srcImageR);
-		//namedWindow(srcImagePathL, 0);
-		//imshow(srcImagePathL, srcImageL);
 	}
 
 	/*单相机标定，计算单应性矩阵H*/
 	//图像像素坐标以Mat形式存储
 	Mat matSetL(3, 9, CV_32FC1);
 	Mat matSetR(3, 9, CV_32FC1);
-
-	for (int y = 0; y < 3; ++y) {
-		for (int x = 0; x < 9; ++x) {
+	for (int y = 0; y < 3; ++y)
+	{
+		for (int x = 0; x < 9; ++x)
+		{
 			matSetL.at<float>(y, x) = pointTransSetL[y][x];
 			matSetR.at<float>(y, x) = pointTransSetR[y][x];
+		}
 	}
-}
-
 	//计算图像像素坐标矩阵的伪逆
 	Mat imatSetL(9, 3, CV_32FC1);
 	Mat imatSetR(9, 3, CV_32FC1);
-
 	invert(matSetL, imatSetL, DECOMP_SVD);
 	invert(matSetR, imatSetR, DECOMP_SVD);
 
 	//标定点的物理坐标以Mat形式存储
 	Mat matTransWorldSet(4, 9, CV_32FC1);
-	//cvtColor(matTransWorldSet, matTransWorldSet, CV_BGR2GRAY);
-	for (int y = 0; y < 4; ++y) {
-		for (int x = 0; x < 9; ++x) {
+	for (int y = 0; y < 4; ++y) 
+	{
+		for (int x = 0; x < 9; ++x) 
+		{
 			matTransWorldSet.at<float>(y, x) = pointWorldSet[y][x];
 		}
 	}
@@ -1097,10 +1144,10 @@ void CMFCApplication3Dlg::OnBnClickedCameracalibation()
 	/*计算单应性矩阵*/
 	invH1.L.convertTo(invH1.L, CV_32FC1);
 	invH1.R.convertTo(invH1.R, CV_32FC1);
-
 	invH1.L = matTransWorldSet * imatSetL;
 	invH1.R = matTransWorldSet * imatSetR;
 
+	/*相机标定计算精度验证*/
 	Mat worldL = invH1.L*matSetL;
 	Mat worldR = invH1.R*matSetR;
 
@@ -1131,8 +1178,9 @@ void CMFCApplication3Dlg::OnBnClickedCameracalibation()
 		Point2f resultPointL = GetCrossBasedShapeL(srcImageL, maskImageL);
 		Point2f resultPointR = GetCrossBasedShapeR(srcImageR, maskImageR);
 #elif CrossMethod == 3
-		Point2f resultPointL = GetCrossBasedFastShapeL(srcImageL, maskImageL, 255, 1500, &strL[0]);
-		Point2f resultPointR = GetCrossBasedFastShapeR(srcImageR, maskImageR, 255, 1500, &strR[0]);
+		RansacTest rl, rr;
+		resultPointL = GetCrossBaseFastShapeL(srcImageL, maskImageL, rl, &strL[0]);
+		resultPointR = GetCrossBaseFastShapeR(srcImageR, maskImageR, rr, &strR[0]);
 #endif 
 
 		pointRotateSetL[0][index - 1] = resultPointL.x;
@@ -1142,15 +1190,6 @@ void CMFCApplication3Dlg::OnBnClickedCameracalibation()
 		pointRotateSetR[0][index - 1] = resultPointR.x;
 		pointRotateSetR[1][index - 1] = resultPointR.y;
 		pointRotateSetR[2][index - 1] = 1;
-
-		//cvtColor(srcImageL, srcImageL, COLOR_GRAY2BGR);
-		//cvtColor(srcImageR, srcImageR, COLOR_GRAY2BGR);
-		//circle(srcImageL, resultPointL, 8, Scalar(0, 0, 255), 8);
-		//circle(srcImageR, resultPointR, 8, Scalar(0, 0, 255), 8);
-		//namedWindow(srcImagePathR, 0);
-		//imshow(srcImagePathR, srcImageR);
-		//namedWindow(srcImagePathL, 0);
-		//imshow(srcImagePathL, srcImageL);
 	}
 
 	Point2f pointL1 = Point2f(pointRotateSetL[0][0], pointRotateSetL[1][0]);
@@ -1161,7 +1200,7 @@ void CMFCApplication3Dlg::OnBnClickedCameracalibation()
 	Point2f pointR2 = Point2f(pointRotateSetR[0][1], pointRotateSetR[1][1]);
 	Point2f pointR3 = Point2f(pointRotateSetR[0][2], pointRotateSetR[1][2]);
 
-	/*拟合点变换至世界坐标系*/
+	/*旋转拟合点变换至世界坐标系*/
 	Point2f pointLW1 = TransToWorldAxis(pointL1, invH1.L);
 	Point2f pointLW2 = TransToWorldAxis(pointL2, invH1.L);
 	Point2f pointLW3 = TransToWorldAxis(pointL3, invH1.L);
@@ -1170,19 +1209,30 @@ void CMFCApplication3Dlg::OnBnClickedCameracalibation()
 	Point2f pointRW2 = TransToWorldAxis(pointR2, invH1.R);
 	Point2f pointRW3 = TransToWorldAxis(pointR3, invH1.R);
 
-	/*根据最小二乘法计算旋转中心centerLW,centerRW*/
-	CircleData centerLW = findCircle2(pointLW1, pointLW2, pointLW3);
-	CircleData centerRW = findCircle2(pointRW1, pointRW2, pointRW3);
+	/*根据最小二乘法计算旋转中心centerLW.center,centerRW.center*/
+	//CircleData centerLW = findCircle3(pointLW1, pointLW2, pointLW3);
+	//CircleData centerRW = findCircle3(pointRW1, pointRW2, pointRW3);
 
-	centerWorldL1.center = centerLW.center;
-	centerWorldR1.center = centerRW.center;
-	rotatePoint1 = centerWorldL1.center;
+	/*圆心角约束的旋转中心坐标计算*/
+	//左旋转中心
+	rotatePoint1 = GetAccuracyCirclePoint(pointLW1, pointLW2, pointLW3, THETA);
+	//右旋转中心
+	rotatePoint2 = GetAccuracyCirclePoint(pointRW1, pointRW2, pointRW3, THETA);
 
+	//centerWorldL1.center = centerLW.center;
+	//centerWorldR1.center = centerRW.center;
+	//rotatePoint1 = centerWorldL1.center;
+	//rotatePoint2 = centerWorldR1.center;
+
+	/*软件界面显示旋转中心坐标*/
 	RotateX1.Format(TEXT("%0.5f"), rotatePoint1.x);
 	RotateY1.Format(TEXT("%0.5f"), rotatePoint1.y);
-
+	RotateX2.Format(TEXT("%0.5f"), rotatePoint2.x);
+	RotateY2.Format(TEXT("%0.5f"), rotatePoint2.y);
 	RotatePointList1.InsertItem(0, RotateX1);
 	RotatePointList1.SetItemText(0, 1, RotateY1);
+	RotatePointList1.InsertItem(1, RotateX2);
+	RotatePointList1.SetItemText(1, 1, RotateY2);
 }
 
 
@@ -1256,41 +1306,31 @@ void CMFCApplication3Dlg::OnBnClickedButton6()
 	}
 }
 
-
+/*单相机对位*/
 void CMFCApplication3Dlg::OnBnClickedButton1()
 {
-	/*对位开始*/
-	/*计算基准位姿*/
-	Position bmPosition = CalPosition(bmImageL, bmImageR, invH2,
-		centerWorldL2.center, centerWorldR2.center);
+	///*运动指令*/
+	//instruction2 = GetInstruction2(bmImageL, testImageL,rotatePoint1);
 
-	/*计算待测工件位姿*/
-	Position testPosition = CalPosition(testImageL, testImageR, invH2, 
-		centerWorldL2.center, centerWorldR2.center);
+	//CString  indexToText, X, Y, Theta;
 
-	/*运动指令*/
-	//instruction2 = GetInstruction(bmPosition, testPosition, rotatePoint2);
-	instruction2 = GetInstruction2(bmImageL, testImageL, bmPosition, testPosition, rotatePoint1);
+	////indexToText.Format(TEXT("%d"), index-1);
+	//X.Format(TEXT("%0.5f"), instruction2.commandX);
+	//Y.Format(TEXT("%0.5f"), instruction2.commandY);
+	//Theta.Format(TEXT("%f"), instruction2.commandTheta * 180 / PI);
 
-	CString  indexToText, X, Y, Theta;
+	////RectifyInstructionCommand.InsertItem(0, indexToText);
+	//RectifyInstructionCommand.SetItemText(index - 1, 1, X);
+	//RectifyInstructionCommand.SetItemText(index - 1, 2, Y);
+	//RectifyInstructionCommand.SetItemText(index - 1, 3, Theta);
 
-	//indexToText.Format(TEXT("%d"), index-1);
-	X.Format(TEXT("%0.5f"), instruction2.commandX);
-	Y.Format(TEXT("%0.5f"), instruction2.commandY);
-	Theta.Format(TEXT("%f"), instruction2.commandTheta * 180 / PI);
+	//tuple<int, float, float, float> res2;
+	//get<0>(res2) = index;
+	//get<1>(res2) = instruction2.commandX;
+	//get<2>(res2) = instruction2.commandY;
+	//get<3>(res2) = instruction2.commandTheta * 180 / PI;
 
-	//RectifyInstructionCommand.InsertItem(0, indexToText);
-	RectifyInstructionCommand.SetItemText(index - 1, 1, X);
-	RectifyInstructionCommand.SetItemText(index - 1, 2, Y);
-	RectifyInstructionCommand.SetItemText(index - 1, 3, Theta);
-
-	tuple<int, float, float, float> res2;
-	get<0>(res2) = index;
-	get<1>(res2) = instruction2.commandX;
-	get<2>(res2) = instruction2.commandY;
-	get<3>(res2) = instruction2.commandTheta * 180 / PI;
-
-	resultText2.push_back(res2);
+	//resultText2.push_back(res2);
 }
 
 
@@ -1316,7 +1356,7 @@ void CMFCApplication3Dlg::OnBnClickedButton5()
 		outfile1 << "index:" << get<0>(resultText1[i]) <<
 			"  " << "X: " << get<1>(resultText1[i]) <<
 			"  " << "Y: " << get<2>(resultText1[i]) <<
-			"  " << "Theta: " << get<3>(resultText1[i]) <<"\n";
+			"  " << "Theta: " << get<3>(resultText1[i]) << "\n";
 	}
 	outfile1.close();//关闭文件，保存文件
 }
@@ -1555,8 +1595,9 @@ void CMFCApplication3Dlg::OnBnClickedButton11()
 		resultPointL = GetCrossBasedShapeL(srcImageL, maskImageL);
 		resultPointR = GetCrossBasedShapeR(srcImageR, maskImageR);
 #elif CrossMethod == 3
-		resultPointL = GetCrossBasedFastShapeL(srcImageL, maskImageL, 255, 1500, &strL[0]);
-		resultPointR = GetCrossBasedFastShapeR(srcImageR, maskImageR, 255, 1500, &strR[0]);
+		RansacTest rl, rr;
+		resultPointL = GetCrossBaseFastShapeL(srcImageL, maskImageL, rl, &strL[0]);
+		resultPointR = GetCrossBaseFastShapeR(srcImageR, maskImageR, rr, &strR[0]);
 #endif 
 
 		pointTransSetL[0][index - 1] = resultPointL.x;
@@ -1681,8 +1722,9 @@ void CMFCApplication3Dlg::OnBnClickedButton11()
 		Point2f resultPointL = GetCrossBasedShapeL(srcImageL, maskImageL);
 		Point2f resultPointR = GetCrossBasedShapeR(srcImageR, maskImageR);
 #elif CrossMethod == 3
-		Point2f resultPointL = GetCrossBasedFastShapeL(srcImageL, maskImageL, 255, 1500, &strL[0]);
-		Point2f resultPointR = GetCrossBasedFastShapeR(srcImageR, maskImageR, 255, 1500, &strR[0]);
+		RansacTest rl, rr;
+		resultPointL = GetCrossBaseFastShapeL(srcImageL, maskImageL, rl, &strL[0]);
+		resultPointR = GetCrossBaseFastShapeR(srcImageR, maskImageR, rr, &strR[0]);
 #endif 
 
 		pointRotateSetL[0][index - 1] = resultPointL.x;

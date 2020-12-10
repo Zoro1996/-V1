@@ -2,7 +2,7 @@
 #include "opencv2/features2d/features2d.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/calib3d/calib3d.hpp"
-//#include "opencv2/xfeatures2d/nonfree.hpp"
+#include "opencv2/xfeatures2d/nonfree.hpp"
 #include <opencv2/imgproc/imgproc.hpp>
 #include<opencv2/opencv.hpp>
 #include<opencv2/core.hpp>
@@ -21,20 +21,6 @@ using namespace cv;
 static constexpr const double PI = 3.141592636;
 static constexpr const double circleRadiusMax = 200;
 static constexpr const double deltaRadius = 350;
-//static constexpr const double thresholdValue = 100;
-//static constexpr const int erodeSize = 3;
-//static constexpr const double CannyThreshold1 = 150;
-//static constexpr const double CannyThreshold2 = 200;
-//static constexpr const double HoughThreshold1 = 150;
-//static constexpr const double HoughThreshold2 = 150;
-//static constexpr const double HoughThreshold3 = 50;
-
-//float uTCRotatePointLX;
-//float uTCRotatePointLY;
-//float uTCRotatePointRX;
-//float uTCRotatePointRY;
-
-//Point2f testRotatePoint;
 
 
 struct CircleData
@@ -89,9 +75,6 @@ struct Gradient
 	Point2f pt;
 	float theta;
 	float margin;
-	//float direct1;
-	//float direct2;
-	//Mat image;
 };
 
 
@@ -126,7 +109,6 @@ struct GatherEdgePtsInput
 {
 	cv::Mat img;                       //输入图像
 	RectangleROI  rectangleROI;    //拟合直线的ROI
-	//AlgrithmParams algPara;        //算法参数
 };
 struct GatherEdgePtsOutput
 {
@@ -151,6 +133,33 @@ struct GatherLineInput
 struct GatherLineOutput
 {
 	LineStruct fitLine;
+};
+
+struct SingleCameraAlignment
+{
+	Point2f crossPoint;
+	Point2f theta;
+};
+
+struct SinglePicInfo
+{
+	Point2f crossPoint;
+	Point2f ptU;
+	Point2f ptD;
+	float thetaU;
+	float thetaD;
+
+};
+
+
+struct RansacTest
+{
+	Point2f crossPoint;
+	float ka;
+	float kb;
+	float ma;
+	float mb;
+	float ransac;
 };
 
 
@@ -186,6 +195,9 @@ Position CalPosition(Mat  imageL, Mat  imageR,
 
 ControlInstruction GetInstruction(Position& bmPosition, Position& testPosition, Point2f& rotatePoint);
 
+ControlInstruction GetInstruction2(Mat& bmImageL, Mat& testImageL,
+	Position& bmPosition, Position& testPosition, Point2f& rotatePoint);
+
 //cv::Point2f RectifyRotateCenter(Position& testPosition, Position& bmPosition,
 //	ControlInstruction& instruction, float deltaXeWorld, float deltaYeWorld);
 
@@ -217,8 +229,7 @@ Description:    使用快速匹配形状匹配计算手机盖板左角点
 Input:          srcImage:待测图像 maskImage:模板图像
 Return:         盖板左角点
 **************************************************************/
-Point2f GetCrossBasedFastShapeL(Mat& srcImage, Mat& maskImage,
-	float grayThreshold, float gradientThreshold, char *a);
+Point2f GetCrossBaseFastShapeL(Mat& srcImage, Mat& maskImage,RansacTest& ransacResult, char *a);
 
 
 /*************************************************************
@@ -227,11 +238,10 @@ Description:    使用快速匹配形状匹配计算手机盖板右角点
 Input:          srcImage:待测图像 maskImage:模板图像
 Return:         盖板右角点
 **************************************************************/
-Point2f GetCrossBasedFastShapeR(Mat& srcImage, Mat& maskImage,
-	float grayThreshold, float gradientThreshold, char *a);
+Point2f GetCrossBaseFastShapeR(Mat& srcImage, Mat& maskImage, RansacTest& ransacResult, char *a);
 
 /*************************************************************
-Function:       GetLinePoints
+Function:       GetLinePointsBaseLsd
 Description:    使用Sobel提取图像潜在直线拟合点
 Input:          image:待测图像
 				thresholdEdges:梯度阈值
@@ -239,10 +249,7 @@ Input:          image:待测图像
 				deltaY:待测图像在工件图像中Y方向相对位置
 Return:         linePoints:直线拟合点集
 **************************************************************/
-vector<Point2f> GetLinePoints(Mat image,
-	float grayThreshold, float gradientThreshold,
-	float delatX, float deltaY);
-
+vector<Point2f> GetLinePointsBaseLsd(Mat image, float delatX, float deltaY);
 
 /*计算某一变换对应的特征距离*/
 GCBS SingleTransEvaluation(Mat& lineRegionU, Mat& lineRegionD,
@@ -329,4 +336,14 @@ int searchBoundaryForLine(Mat srcImage, cv::Mat &img, RectangleROI roiRect, int 
 
 void gatherLine(const GatherLineInput &input, GatherLineOutput &output);
 
-void getherEdgePtsLsd(Mat img, vector<Point2f>&edgePts, float deltaX, float deltaY);
+
+vector<Point2f> GetLinePointsBaseSobel(Mat image, float deltaX, float deltaY, float imagePair, float direction);
+
+
+float CalDistance(Point2f circlePt, Point2f pt1, Point2f pt2, Point2f pt3);
+
+
+float CalSD(Point2f circlePt, Point2f pt1, Point2f pt2, Point2f pt3);
+
+
+Point2f GetAccuracyCirclePoint(Point2f pointLW1, Point2f pointLW2, Point2f pointLW3, float theta);
