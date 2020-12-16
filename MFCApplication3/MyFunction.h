@@ -64,10 +64,12 @@ struct Position
 	float theta;
 };
 
-struct ShapeMatchResult
+struct ShapeMatchLocation
 {
-	Point2f massCenter;
+	Point2f anchorPt;
 	float theta;
+	float similarity;
+	int resizeFactor;
 };
 
 struct Gradient
@@ -205,9 +207,9 @@ Point2f GetCrossBasedShapeL(Mat& srcImage, Mat& maskImage);
 
 Point2f GetCrossBasedShapeR(Mat& srcImage, Mat& maskImage);
 
-ShapeMatchResult GetShapeTrans(Mat& maskImage, Mat& srcImage);
+ShapeMatchLocation GetShapeTrans(Mat& maskImage, Mat& srcImage, int resizeFactor);
 
-vector<Gradient>GetGradientTable(Mat& image);
+vector<Gradient>GetGradientTable(Mat& image, int modNum);
 
 vector<tuple<float, float>> ConstructNetForLineParam(
 	float lowGray, float highGray,
@@ -249,7 +251,7 @@ Input:          image:待测图像
 				deltaY:待测图像在工件图像中Y方向相对位置
 Return:         linePoints:直线拟合点集
 **************************************************************/
-vector<Point2f> GetLinePointsBaseLsd(Mat image, float delatX, float deltaY);
+//vector<Point2f> GetLinePointsBaseLsd(Mat image, float delatX, float deltaY);
 
 /*计算某一变换对应的特征距离*/
 GCBS SingleTransEvaluation(Mat& lineRegionU, Mat& lineRegionD,
@@ -337,7 +339,7 @@ int searchBoundaryForLine(Mat srcImage, cv::Mat &img, RectangleROI roiRect, int 
 void gatherLine(const GatherLineInput &input, GatherLineOutput &output);
 
 
-vector<Point2f> GetLinePointsBaseSobel(Mat image, float deltaX, float deltaY, float imagePair, float direction);
+vector<Point2f> GetLinePointsBaseSobel(Mat srcImage, Mat image, float deltaX, float deltaY, float imagePair, float direction);
 
 
 float CalDistance(Point2f circlePt, Point2f pt1, Point2f pt2, Point2f pt3);
@@ -347,3 +349,12 @@ float CalSD(Point2f circlePt, Point2f pt1, Point2f pt2, Point2f pt3);
 
 
 Point2f GetAccuracyCirclePoint(Point2f pointLW1, Point2f pointLW2, Point2f pointLW3, float theta);
+
+void refinePointSet(vector<Point2f>& srcPointSet, vector<Point2f>& dstPointSet);
+
+int GetFreemanCode(Point2f pt1, Point2f pt2);
+
+vector<Point2f> GetLinePointsBaseHoughLineP(Mat& srcImage, Mat& image,
+	float deltaX, float deltaY,
+	double CannyThreshold1, double CannyThreshold2,
+	double HoughThreshold1, double HoughThreshold2, double HoughThreshold3);

@@ -76,6 +76,10 @@ public:
 	Mat secImageResultR;
 
 	Mat HL, HR;
+	Mat worldL;
+	Mat worldR;
+	Mat matSetL;
+	Mat matSetR;
 
 	CString RotateX1, RotateY1;
 	CString RotateX2, RotateY2;
@@ -99,8 +103,6 @@ public:
 	//Position bmPosition, testPosition, resultPosition, resultPosition2;
 
 	CenterPoint circlePoint1,circlePoint2;
-	//CircleData circlePointWorldL1, circlePointWorldR1;
-	//CircleData circlePointWorldL2, circlePointWorldR2;
 	ControlInstruction instruction1, instruction2;
 
 	Point2f RectifiedRCenter;
