@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "MyFunction.h"
 #include "MFCApplication3Dlg.h"
 #include "MyGLobal.h"
@@ -56,7 +56,7 @@ double M02[5][5] = { { 0.0099, 0.0719, 0.1019, 0.0719, 0.0099 },
 { 0.0194, 0.0277, 0.0277, 0.0277, 0.0194 },
 { 0.0099, 0.0719, 0.1019, 0.0719, 0.0099 } };
 #elif SubPixelMethod==2
-/*Zernik¾Ø*/
+/*ZernikçŸ©*/
 const int g_N = 7;
 const int h_N = 3;
 Mat M00 = (Mat_<float>(7, 7) <<
@@ -129,13 +129,13 @@ double CannyThreshold2 = 200;
 double HoughThreshold1 = 150;
 double HoughThreshold2 = 150;
 double HoughThreshold3 = 50;
-double thresholdValue = 15;
+double thresholdValue = 100;
 double ransacDistance = 1.00;
 
 Mat maskImageL;
 Mat maskImageR;
-
-
+//Mat ML;
+//Mat MR;
 
 Point2f TransToWorldAxis(Point2f point, Mat& invH)
 {
@@ -150,15 +150,17 @@ Point2f TransToWorldAxis(Point2f point, Mat& invH)
 
 
 
-Point2f findCircle1(Point2f pt1, Point2f pt2, float theta)
+Point2f CalCircleCenter(Point2f pt1, Point2f pt2, float theta)
 {
 	float XMean = (pt1.x + pt2.x) / 2;
 	float YMean = (pt1.y + pt2.y) / 2;
+	Point2f ptMean = (pt1 + pt2) / 2;
 
 	float XAddition = sin(theta)*(pt1.y - pt2.y) / (2 * (1 - cos(theta)));
 	float YAddition = sin(theta)*(pt2.x - pt1.x) / (2 * (1 - cos(theta)));
+	Point2f ptAddition(XAddition, YAddition);
 
-	Point2f pt = Point2f(XMean + XAddition, YMean + YAddition);
+	Point2f pt = ptMean + ptAddition;
 	return pt;
 }
 
@@ -188,7 +190,7 @@ CircleData findCircle2(Point2f pt1, Point2f pt2, Point2f pt3)
 
 CircleData findCircle3(Point2f pt1, Point2f pt2, Point2f pt3)
 {
-	//*¼ÆËãĞı×ªÖĞĞÄ£¬²¢ÒÀ¾İÉÏÊö±ê¶¨¾ØÕó£¬²¢½«Í¼ÏñĞı×ªÖĞĞÄ±ä»»µ½ÊÀ½ç×ø±ê¡£
+	//*è®¡ç®—æ—‹è½¬ä¸­å¿ƒï¼Œå¹¶ä¾æ®ä¸Šè¿°æ ‡å®šçŸ©é˜µï¼Œå¹¶å°†å›¾åƒæ—‹è½¬ä¸­å¿ƒå˜æ¢åˆ°ä¸–ç•Œåæ ‡ã€‚
 	//	u : = (row_ys[10] - row_ys[9]) / (col_xs[10] - col_xs[9])
 	//	v : = (row_ys[11] - row_ys[10]) / (col_xs[11] - col_xs[10])
 	//	w : = 0.5 * (row_ys[9] + row_ys[10]) + 0.5 * (col_xs[9] + col_xs[10]) / (u)
@@ -229,20 +231,20 @@ Point2f GetCrossInCMask(Mat& srcImageL,
 
 /*************************************************************
 Function:       GetLinePointsBaseHoughLineP
-Description:    Ê¹ÓÃ»ô·òÖ±Ïß¼ì²âËã·¨¼ì²âROIÖ±Ïß¶Î
-Input:          image:´ı²âÍ¼Ïñ,
-				CannyThreshold1,CannyThreshold2:CannyËã×Ó²ÎÊı
-				HoughThreshold1,HoughThreshold2,HoughThreshold3:»ô·òÖ±Ïß¼ì²âËã×Ó²ÎÊı
-Return:         linePoints:Ö±Ïßµã¼¯
+Description:    ä½¿ç”¨éœå¤«ç›´çº¿æ£€æµ‹ç®—æ³•æ£€æµ‹ROIç›´çº¿æ®µ
+Input:          image:å¾…æµ‹å›¾åƒ,
+				CannyThreshold1,CannyThreshold2:Cannyç®—å­å‚æ•°
+				HoughThreshold1,HoughThreshold2,HoughThreshold3:éœå¤«ç›´çº¿æ£€æµ‹ç®—å­å‚æ•°
+Return:         linePoints:ç›´çº¿ç‚¹é›†
 **************************************************************/
-vector<Point2f> GetLinePointsBaseHoughLineP(Mat& srcImage,Mat& image,
+vector<Point2f> GetLinePointsBaseHoughLineP(Mat& srcImage, Mat& image,
 	float deltaX, float deltaY,
 	double CannyThreshold1, double CannyThreshold2,
 	double HoughThreshold1, double HoughThreshold2, double HoughThreshold3)
 {
-	Mat edges,imageBGR;
+	Mat edges, imageBGR;
 	vector<Vec4f> lines;
-	vector<Point2f>linPoints2,linePoints;
+	vector<Point2f>linPoints2, linePoints;
 	cvtColor(image, imageBGR, CV_GRAY2BGR);
 	Mat dstImage = Mat::zeros(image.size(), image.type());
 
@@ -269,10 +271,10 @@ vector<Point2f> GetLinePointsBaseHoughLineP(Mat& srcImage,Mat& image,
 	for (int i = 0; i < linPoints2.size(); i++)
 	{
 		Point2f pt = linPoints2[i] + Point2f(deltaX, deltaY);
-		/*ÑÇÏñËØ´¦Àí*/
+		/*äºšåƒç´ å¤„ç†*/
 		GetSubPixel(srcImage, pt);
 
-		/*´æµã*/
+		/*å­˜ç‚¹*/
 		linePoints.push_back(pt);
 	}
 
@@ -297,16 +299,16 @@ Point2f GetCrossPointL(Mat image,
 	erode(srcImage, srcImage, element);
 
 	vector<Vec3f> circles;
-	//µÚÒ»¸ö²ÎÊı£¬InputArrayÀàĞÍµÄimage£¬ÊäÈëÍ¼Ïñ£¬¼´Ô´Í¼Ïñ£¬ĞèÎª8Î»µÄ»Ò¶Èµ¥Í¨µÀÍ¼Ïñ¡£
-	//µÚ¶ş¸ö²ÎÊı£¬InputArrayÀàĞÍµÄcircles£¬¾­¹ıµ÷ÓÃHoughCirclesº¯Êıºó´Ë²ÎÊı´æ´¢ÁË¼ì²âµ½µÄÔ²µÄÊä³öÊ¸Á¿£¬Ã¿¸öÊ¸Á¿ÓÉ°üº¬ÁË3¸öÔªËØµÄ¸¡µãÊ¸Á¿(x, y, radius)±íÊ¾¡£
-	//µÚÈı¸ö²ÎÊı£¬intÀàĞÍµÄmethod£¬¼´Ê¹ÓÃµÄ¼ì²â·½·¨£¬Ä¿Ç°OpenCVÖĞ¾Í»ô·òÌİ¶È·¨Ò»ÖÖ¿ÉÒÔÊ¹ÓÃ£¬ËüµÄ±êÊ¶·ûÎªCV_HOUGH_GRADIENT£¬ÔÚ´Ë²ÎÊı´¦ÌîÕâ¸ö±êÊ¶·û¼´¿É¡£
-	//µÚËÄ¸ö²ÎÊı£¬doubleÀàĞÍµÄdp£¬ÓÃÀ´¼ì²âÔ²ĞÄµÄÀÛ¼ÓÆ÷Í¼ÏñµÄ·Ö±æÂÊÓÚÊäÈëÍ¼ÏñÖ®±ÈµÄµ¹Êı£¬ÇÒ´Ë²ÎÊıÔÊĞí´´½¨Ò»¸ö±ÈÊäÈëÍ¼Ïñ·Ö±æÂÊµÍµÄÀÛ¼ÓÆ÷¡£ÉÏÊöÎÄ×Ö²»ºÃÀí½âµÄ»°£¬À´¿´Àı×Ó°É¡£ÀıÈç£¬Èç¹ûdp= 1Ê±£¬ÀÛ¼ÓÆ÷ºÍÊäÈëÍ¼Ïñ¾ßÓĞÏàÍ¬µÄ·Ö±æÂÊ¡£Èç¹ûdp=2£¬ÀÛ¼ÓÆ÷±ãÓĞÊäÈëÍ¼ÏñÒ»°ëÄÇÃ´´óµÄ¿í¶ÈºÍ¸ß¶È¡£
-	//µÚÎå¸ö²ÎÊı£¬doubleÀàĞÍµÄminDist£¬Îª»ô·ò±ä»»¼ì²âµ½µÄÔ²µÄÔ²ĞÄÖ®¼äµÄ×îĞ¡¾àÀë£¬¼´ÈÃÎÒÃÇµÄËã·¨ÄÜÃ÷ÏÔÇø·ÖµÄÁ½¸ö²»Í¬Ô²Ö®¼äµÄ×îĞ¡¾àÀë¡£Õâ¸ö²ÎÊıÈç¹ûÌ«Ğ¡µÄ»°£¬¶à¸öÏàÁÚµÄÔ²¿ÉÄÜ±»´íÎóµØ¼ì²â³ÉÁËÒ»¸öÖØºÏµÄÔ²¡£·´Ö®£¬Õâ¸ö²ÎÊıÉèÖÃÌ«´óµÄ»°£¬Ä³Ğ©Ô²¾Í²»ÄÜ±»¼ì²â³öÀ´ÁË¡£
-	//µÚÁù¸ö²ÎÊı£¬doubleÀàĞÍµÄparam1£¬ÓĞÄ¬ÈÏÖµ100¡£ËüÊÇµÚÈı¸ö²ÎÊımethodÉèÖÃµÄ¼ì²â·½·¨µÄ¶ÔÓ¦µÄ²ÎÊı¡£¶Ôµ±Ç°Î¨Ò»µÄ·½·¨»ô·òÌİ¶È·¨CV_HOUGH_GRADIENT£¬Ëü±íÊ¾´«µİ¸øcanny±ßÔµ¼ì²âËã×ÓµÄ¸ßãĞÖµ£¬¶øµÍãĞÖµÎª¸ßãĞÖµµÄÒ»°ë¡£
-	//µÚÆß¸ö²ÎÊı£¬doubleÀàĞÍµÄparam2£¬Ò²ÓĞÄ¬ÈÏÖµ100¡£ËüÊÇµÚÈı¸ö²ÎÊımethodÉèÖÃµÄ¼ì²â·½·¨µÄ¶ÔÓ¦µÄ²ÎÊı¡£¶Ôµ±Ç°Î¨Ò»µÄ·½·¨»ô·òÌİ¶È·¨CV_HOUGH_GRADIENT£¬Ëü±íÊ¾ÔÚ¼ì²â½×¶ÎÔ²ĞÄµÄÀÛ¼ÓÆ÷ãĞÖµ¡£ËüÔ½Ğ¡µÄ»°£¬¾Í¿ÉÒÔ¼ì²âµ½¸ü¶à¸ù±¾²»´æÔÚµÄÔ²£¬¶øËüÔ½´óµÄ»°£¬ÄÜÍ¨¹ı¼ì²âµÄÔ²¾Í¸ü¼Ó½Ó½üÍêÃÀµÄÔ²ĞÎÁË¡£
-	//µÚ°Ë¸ö²ÎÊı£¬intÀàĞÍµÄminRadius,ÓĞÄ¬ÈÏÖµ0£¬±íÊ¾Ô²°ë¾¶µÄ×îĞ¡Öµ¡£
-	//µÚ¾Å¸ö²ÎÊı£¬intÀàĞÍµÄmaxRadius,Ò²ÓĞÄ¬ÈÏÖµ0£¬±íÊ¾Ô²°ë¾¶µÄ×î´óÖµ¡£
-	//ĞèÒª×¢ÒâµÄÊÇ£¬Ê¹ÓÃ´Ëº¯Êı¿ÉÒÔºÜÈİÒ×µØ¼ì²â³öÔ²µÄÔ²ĞÄ£¬µ«ÊÇËü¿ÉÄÜÕÒ²»µ½ºÏÊÊµÄÔ²°ë¾¶
+	//ç¬¬ä¸€ä¸ªå‚æ•°ï¼ŒInputArrayç±»å‹çš„imageï¼Œè¾“å…¥å›¾åƒï¼Œå³æºå›¾åƒï¼Œéœ€ä¸º8ä½çš„ç°åº¦å•é€šé“å›¾åƒã€‚
+	//ç¬¬äºŒä¸ªå‚æ•°ï¼ŒInputArrayç±»å‹çš„circlesï¼Œç»è¿‡è°ƒç”¨HoughCircleså‡½æ•°åæ­¤å‚æ•°å­˜å‚¨äº†æ£€æµ‹åˆ°çš„åœ†çš„è¾“å‡ºçŸ¢é‡ï¼Œæ¯ä¸ªçŸ¢é‡ç”±åŒ…å«äº†3ä¸ªå…ƒç´ çš„æµ®ç‚¹çŸ¢é‡(x, y, radius)è¡¨ç¤ºã€‚
+	//ç¬¬ä¸‰ä¸ªå‚æ•°ï¼Œintç±»å‹çš„methodï¼Œå³ä½¿ç”¨çš„æ£€æµ‹æ–¹æ³•ï¼Œç›®å‰OpenCVä¸­å°±éœå¤«æ¢¯åº¦æ³•ä¸€ç§å¯ä»¥ä½¿ç”¨ï¼Œå®ƒçš„æ ‡è¯†ç¬¦ä¸ºCV_HOUGH_GRADIENTï¼Œåœ¨æ­¤å‚æ•°å¤„å¡«è¿™ä¸ªæ ‡è¯†ç¬¦å³å¯ã€‚
+	//ç¬¬å››ä¸ªå‚æ•°ï¼Œdoubleç±»å‹çš„dpï¼Œç”¨æ¥æ£€æµ‹åœ†å¿ƒçš„ç´¯åŠ å™¨å›¾åƒçš„åˆ†è¾¨ç‡äºè¾“å…¥å›¾åƒä¹‹æ¯”çš„å€’æ•°ï¼Œä¸”æ­¤å‚æ•°å…è®¸åˆ›å»ºä¸€ä¸ªæ¯”è¾“å…¥å›¾åƒåˆ†è¾¨ç‡ä½çš„ç´¯åŠ å™¨ã€‚ä¸Šè¿°æ–‡å­—ä¸å¥½ç†è§£çš„è¯ï¼Œæ¥çœ‹ä¾‹å­å§ã€‚ä¾‹å¦‚ï¼Œå¦‚æœdp= 1æ—¶ï¼Œç´¯åŠ å™¨å’Œè¾“å…¥å›¾åƒå…·æœ‰ç›¸åŒçš„åˆ†è¾¨ç‡ã€‚å¦‚æœdp=2ï¼Œç´¯åŠ å™¨ä¾¿æœ‰è¾“å…¥å›¾åƒä¸€åŠé‚£ä¹ˆå¤§çš„å®½åº¦å’Œé«˜åº¦ã€‚
+	//ç¬¬äº”ä¸ªå‚æ•°ï¼Œdoubleç±»å‹çš„minDistï¼Œä¸ºéœå¤«å˜æ¢æ£€æµ‹åˆ°çš„åœ†çš„åœ†å¿ƒä¹‹é—´çš„æœ€å°è·ç¦»ï¼Œå³è®©æˆ‘ä»¬çš„ç®—æ³•èƒ½æ˜æ˜¾åŒºåˆ†çš„ä¸¤ä¸ªä¸åŒåœ†ä¹‹é—´çš„æœ€å°è·ç¦»ã€‚è¿™ä¸ªå‚æ•°å¦‚æœå¤ªå°çš„è¯ï¼Œå¤šä¸ªç›¸é‚»çš„åœ†å¯èƒ½è¢«é”™è¯¯åœ°æ£€æµ‹æˆäº†ä¸€ä¸ªé‡åˆçš„åœ†ã€‚åä¹‹ï¼Œè¿™ä¸ªå‚æ•°è®¾ç½®å¤ªå¤§çš„è¯ï¼ŒæŸäº›åœ†å°±ä¸èƒ½è¢«æ£€æµ‹å‡ºæ¥äº†ã€‚
+	//ç¬¬å…­ä¸ªå‚æ•°ï¼Œdoubleç±»å‹çš„param1ï¼Œæœ‰é»˜è®¤å€¼100ã€‚å®ƒæ˜¯ç¬¬ä¸‰ä¸ªå‚æ•°methodè®¾ç½®çš„æ£€æµ‹æ–¹æ³•çš„å¯¹åº”çš„å‚æ•°ã€‚å¯¹å½“å‰å”¯ä¸€çš„æ–¹æ³•éœå¤«æ¢¯åº¦æ³•CV_HOUGH_GRADIENTï¼Œå®ƒè¡¨ç¤ºä¼ é€’ç»™cannyè¾¹ç¼˜æ£€æµ‹ç®—å­çš„é«˜é˜ˆå€¼ï¼Œè€Œä½é˜ˆå€¼ä¸ºé«˜é˜ˆå€¼çš„ä¸€åŠã€‚
+	//ç¬¬ä¸ƒä¸ªå‚æ•°ï¼Œdoubleç±»å‹çš„param2ï¼Œä¹Ÿæœ‰é»˜è®¤å€¼100ã€‚å®ƒæ˜¯ç¬¬ä¸‰ä¸ªå‚æ•°methodè®¾ç½®çš„æ£€æµ‹æ–¹æ³•çš„å¯¹åº”çš„å‚æ•°ã€‚å¯¹å½“å‰å”¯ä¸€çš„æ–¹æ³•éœå¤«æ¢¯åº¦æ³•CV_HOUGH_GRADIENTï¼Œå®ƒè¡¨ç¤ºåœ¨æ£€æµ‹é˜¶æ®µåœ†å¿ƒçš„ç´¯åŠ å™¨é˜ˆå€¼ã€‚å®ƒè¶Šå°çš„è¯ï¼Œå°±å¯ä»¥æ£€æµ‹åˆ°æ›´å¤šæ ¹æœ¬ä¸å­˜åœ¨çš„åœ†ï¼Œè€Œå®ƒè¶Šå¤§çš„è¯ï¼Œèƒ½é€šè¿‡æ£€æµ‹çš„åœ†å°±æ›´åŠ æ¥è¿‘å®Œç¾çš„åœ†å½¢äº†ã€‚
+	//ç¬¬å…«ä¸ªå‚æ•°ï¼Œintç±»å‹çš„minRadius,æœ‰é»˜è®¤å€¼0ï¼Œè¡¨ç¤ºåœ†åŠå¾„çš„æœ€å°å€¼ã€‚
+	//ç¬¬ä¹ä¸ªå‚æ•°ï¼Œintç±»å‹çš„maxRadius,ä¹Ÿæœ‰é»˜è®¤å€¼0ï¼Œè¡¨ç¤ºåœ†åŠå¾„çš„æœ€å¤§å€¼ã€‚
+	//éœ€è¦æ³¨æ„çš„æ˜¯ï¼Œä½¿ç”¨æ­¤å‡½æ•°å¯ä»¥å¾ˆå®¹æ˜“åœ°æ£€æµ‹å‡ºåœ†çš„åœ†å¿ƒï¼Œä½†æ˜¯å®ƒå¯èƒ½æ‰¾ä¸åˆ°åˆé€‚çš„åœ†åŠå¾„
 	HoughCircles(srcImage, circles, cv::HOUGH_GRADIENT, 2, 50, 150, 100, 0, circleRadiusMax);
 	for (int i = 0; i < circles.size(); i++)
 	{
@@ -336,9 +338,9 @@ Point2f GetCrossPointL(Mat image,
 			linePointY.push_back(Point(l[0], l[1]));
 			linePointY.push_back(Point(l[2], l[3]));
 		}
-		else 
+		else
 		{
-			line(dstImage, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255));				
+			line(dstImage, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255));
 			line(srcImageRGB, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255, 0, 0));
 			linePointX.push_back(Point(l[0], l[1]));
 			linePointX.push_back(Point(l[2], l[3]));
@@ -346,12 +348,12 @@ Point2f GetCrossPointL(Mat image,
 	}
 
 	Vec4f fitLineX, fitLineY;
-	//ÄâºÏ·½·¨²ÉÓÃ×îĞ¡¶ş³Ë·¨
+	//æ‹Ÿåˆæ–¹æ³•é‡‡ç”¨æœ€å°äºŒä¹˜æ³•
 	fitLine(linePointX, fitLineX, CV_DIST_HUBER, 0, 0.01, 0.01);
 	fitLine(linePointY, fitLineY, CV_DIST_HUBER, 0, 0.01, 0.01);
 	float ka, kb;
-	ka = (float)(fitLineX[1] / (fitLineX[0])); //Çó³öLineAĞ±ÂÊ
-	kb = (float)(fitLineY[1] / (fitLineY[0])); //Çó³öLineBĞ±ÂÊ
+	ka = (float)(fitLineX[1] / (fitLineX[0])); //æ±‚å‡ºLineAæ–œç‡
+	kb = (float)(fitLineY[1] / (fitLineY[0])); //æ±‚å‡ºLineBæ–œç‡
 	float ma, mb;
 	ma = fitLineX[3] - ka * fitLineX[2];
 	mb = fitLineY[3] - kb * fitLineY[2];
@@ -378,11 +380,11 @@ Point2f GetCrossPointL(Mat image,
 
 /*************************************************************
 Function:       GetCrossPointR
-Description:    Ê¹ÓÃÈ«¾ÖËã·¨¼ì²â¸Ç°åÓÒÍ¼ÏñÖĞµÄÖ±ÏßºÍ½Çµã
-Input:          srcImage:´ı²âÍ¼Ïñ,
-				CannyThreshold1,CannyThreshold2:CannyËã×Ó²ÎÊı
-				HoughThreshold1,HoughThreshold2,HoughThreshold3:»ô·òÖ±Ïß¼ì²âËã×Ó²ÎÊı
-Return:         crossPoint:ÓÒ½Çµã
+Description:    ä½¿ç”¨å…¨å±€ç®—æ³•æ£€æµ‹ç›–æ¿å³å›¾åƒä¸­çš„ç›´çº¿å’Œè§’ç‚¹
+Input:          srcImage:å¾…æµ‹å›¾åƒ,
+				CannyThreshold1,CannyThreshold2:Cannyç®—å­å‚æ•°
+				HoughThreshold1,HoughThreshold2,HoughThreshold3:éœå¤«ç›´çº¿æ£€æµ‹ç®—å­å‚æ•°
+Return:         crossPoint:å³è§’ç‚¹
 **************************************************************/
 Point2f GetCrossPointR(Mat srcImage, double CannyThreshold1, double CannyThreshold2,
 	double HoughThreshold1, double HoughThreshold2, double HoughThreshold3)
@@ -414,7 +416,7 @@ Point2f GetCrossPointR(Mat srcImage, double CannyThreshold1, double CannyThresho
 			linePointY.push_back(Point(l[0], l[1]));
 			linePointY.push_back(Point(l[2], l[3]));
 		}
-		else 
+		else
 		{
 			line(dstImage, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255));
 			line(srcImageRGB, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 255));
@@ -426,13 +428,13 @@ Point2f GetCrossPointR(Mat srcImage, double CannyThreshold1, double CannyThresho
 	}
 
 	Vec4f fitLineX, fitLineY;
-	//ÄâºÏ·½·¨²ÉÓÃ×îĞ¡¶ş³Ë·¨
+	//æ‹Ÿåˆæ–¹æ³•é‡‡ç”¨æœ€å°äºŒä¹˜æ³•
 	fitLine(linePointX, fitLineX, CV_DIST_HUBER, 0, 0.01, 0.01);
 	fitLine(linePointY, fitLineY, CV_DIST_HUBER, 0, 0.01, 0.01);
 
 	float ka, kb;
-	ka = (float)(fitLineX[1] / (fitLineX[0])); //Çó³öLineAĞ±ÂÊ
-	kb = (float)(fitLineY[1] / (fitLineY[0])); //Çó³öLineBĞ±ÂÊ
+	ka = (float)(fitLineX[1] / (fitLineX[0])); //æ±‚å‡ºLineAæ–œç‡
+	kb = (float)(fitLineY[1] / (fitLineY[0])); //æ±‚å‡ºLineBæ–œç‡
 
 	float ma, mb;
 	ma = fitLineX[3] - ka * fitLineX[2];
@@ -464,21 +466,19 @@ Point2f GetCrossPointR(Mat srcImage, double CannyThreshold1, double CannyThresho
 
 /*************************************************************
 Function:       GetGradientTable
-Description:    ¼ÆËãÌİ¶È±í
-Input:          image:´ı²âÍ¼Ïñ
-Return:         gradientTable:Í¼ÏñÌİ¶È±í
+Description:    è®¡ç®—æ¢¯åº¦è¡¨
+Input:          image:å¾…æµ‹å›¾åƒ
+Return:         gradientTable:å›¾åƒæ¢¯åº¦è¡¨
 **************************************************************/
-vector<Gradient>GetGradientTable(Mat& image,int modNum)
+vector<Gradient>GetGradientTable(Mat& image, int modNum)
 {
-	Mat xgrad;  //x·½ÏòÉÏµÄÌİ¶È
-	Mat ygrad;  //y·½ÏòÉÏµÄÌİ¶È
+	Mat xgrad;  //xæ–¹å‘ä¸Šçš„æ¢¯åº¦
+	Mat ygrad;  //yæ–¹å‘ä¸Šçš„æ¢¯åº¦
 	Mat xygrad;
 	vector<Gradient> gradientTable;
 
 	Sobel(image, xgrad, CV_32F, 1, 0, 3);
 	Sobel(image, ygrad, CV_32F, 0, 1, 3);
-	//convertScaleAbs(xgrad, xgrad);
-	//convertScaleAbs(ygrad, ygrad);
 
 	int width = image.cols;
 	int height = image.rows;
@@ -499,7 +499,7 @@ vector<Gradient>GetGradientTable(Mat& image,int modNum)
 					Gradient gradient;
 					gradient.pt = Point2f(col - width / 2, row - height / 2);
 					//gradient.margin = sqrt(pow(xg, 2) + pow(yg, 2));
-					gradient.margin = abs(xg) + abs(yg);
+					//gradient.margin = abs(xg) + abs(yg);
 					gradient.theta = atan2(yg, xg);
 					gradientTable.push_back(gradient);
 				}
@@ -512,7 +512,7 @@ vector<Gradient>GetGradientTable(Mat& image,int modNum)
 
 
 
-/*·µ»Ø×î¸ß²ã½ğ×ÖËşÖğ²½³¤ËÑË÷½á¹û*/
+/*è¿”å›æœ€é«˜å±‚é‡‘å­—å¡”é€æ­¥é•¿æœç´¢ç»“æœ*/
 vector<ShapeMatchLocation> GetCoarseTrans(Mat& maskImage, Mat& srcImage, int resizeFactor)
 {
 	//resize maskImage and srcImage
@@ -522,12 +522,12 @@ vector<ShapeMatchLocation> GetCoarseTrans(Mat& maskImage, Mat& srcImage, int res
 	resize(srcImage, resizeSrcImage,
 		Size(srcImage.cols / pow(2, resizeFactor), srcImage.rows / pow(2, resizeFactor)));
 
-	Mat xgrad;  //x·½ÏòÉÏµÄÌİ¶È
-	Mat ygrad;  //y·½ÏòÉÏµÄÌİ¶È
+	Mat xgrad;  //xæ–¹å‘ä¸Šçš„æ¢¯åº¦
+	Mat ygrad;  //yæ–¹å‘ä¸Šçš„æ¢¯åº¦
 	Sobel(resizeSrcImage, xgrad, CV_32F, 1, 0, 3);
 	Sobel(resizeSrcImage, ygrad, CV_32F, 0, 1, 3);
 
-	vector<Gradient>maskGradientTable = GetGradientTable(resizeMaskImage,1);
+	vector<Gradient>maskGradientTable = GetGradientTable(resizeMaskImage, 1);
 	vector<ShapeMatchLocation> coarseLocation;
 	ShapeMatchLocation tempLocation;
 
@@ -541,25 +541,25 @@ vector<ShapeMatchLocation> GetCoarseTrans(Mat& maskImage, Mat& srcImage, int res
 	{
 		for (float sy = 0; sy < resizeSrcImage.rows; sy += 1)
 		{
-			for (float theta = -10 * PI / 180; theta < 10 * PI / 180; theta += PI / 180)
+			for (float theta = -5 * PI / 180; theta < 5 * PI / 180; theta += 0.5 * PI / 180)
 			{
 				float similarity = 0;
 				for (double i = 0; i < maskGradientTable.size(); i += 1)
 				{
 					Gradient curMaskGradient = maskGradientTable[i];
 
-					/*Ä£°åÍ¼Ïñ¼ÆËãµÄÂÖÀªÏà¶ÔÓÚÖÊĞÄµÄ×ø±ê*/
+					/*æ¨¡æ¿å›¾åƒè®¡ç®—çš„è½®å»“ç›¸å¯¹äºè´¨å¿ƒçš„åæ ‡*/
 					float deltaPtX = curMaskGradient.pt.x;
 					float deltaPtY = curMaskGradient.pt.y;
 
-					/*¼ÆËãĞı×ªºóµÄÏà¶Ô×ø±ê*/
+					/*è®¡ç®—æ—‹è½¬åçš„ç›¸å¯¹åæ ‡*/
 					float rotateX = cos(theta)*deltaPtX - sin(theta)*deltaPtY;
 					float rotateY = sin(theta)*deltaPtX + cos(theta)*deltaPtY;
 
-					/*´ı²âÍ¼Ïñµ±Ç°µã(sx,sy)×÷ÎªÖÊĞÄ£¬¼ÆËãÖÊĞÄ+Ğı×ª×ø±êpt£¬ÓÃÓÚ¼ÆËãÆ¥Åä¶È*/
+					/*å¾…æµ‹å›¾åƒå½“å‰ç‚¹(sx,sy)ä½œä¸ºè´¨å¿ƒï¼Œè®¡ç®—è´¨å¿ƒ+æ—‹è½¬åæ ‡ptï¼Œç”¨äºè®¡ç®—åŒ¹é…åº¦*/
 					Point2f pt = Point2f(rotateX + sx, rotateY + sy);
 
-					/*´ı²âÍ¼Ïñ±ß½çÏŞÖÆ*/
+					/*å¾…æµ‹å›¾åƒè¾¹ç•Œé™åˆ¶*/
 					if (pt.x >= 0 && pt.x < resizeSrcImage.cols - 1
 						&& pt.y >= 0 && pt.y < resizeSrcImage.rows - 1)
 					{
@@ -568,16 +568,16 @@ vector<ShapeMatchLocation> GetCoarseTrans(Mat& maskImage, Mat& srcImage, int res
 						float gMargin = abs(xg) + abs(yg);
 						float gTheta = atan2(yg, xg);
 
-						/*ÓÉmaskGradientTableµÄµÚi¸öÔªËØ×ø±ê£¬¾­¹ı±ä»»
-						Ö®ºó¼ÆËãµÄ´ı²âÍ¼ÏòÉÏµÄ¶ÔÓ¦µãµÄÌİ¶ÈĞÅÏ¢*/
+						/*ç”±maskGradientTableçš„ç¬¬iä¸ªå…ƒç´ åæ ‡ï¼Œç»è¿‡å˜æ¢
+						ä¹‹åè®¡ç®—çš„å¾…æµ‹å›¾å‘ä¸Šçš„å¯¹åº”ç‚¹çš„æ¢¯åº¦ä¿¡æ¯*/
 						float gDirection1 = cos(gTheta);
 						float gDirection2 = sin(gTheta);
 
-						/*¼ÆËãÆ¥ÅäÏàËÆ¶È*/
+						/*è®¡ç®—åŒ¹é…ç›¸ä¼¼åº¦*/
 						similarity += gDirection1 * cos(curMaskGradient.theta + theta)
 							+ gDirection2 * sin(curMaskGradient.theta + theta);
 
-						/*ÔçÍ£²ßÂÔ*/
+						/*æ—©åœç­–ç•¥*/
 						if (similarity < bestSimilarity - 1 + i / maskGradientTable.size())
 						{
 							continue;
@@ -637,13 +637,13 @@ vector<ShapeMatchLocation> GetCoarseTrans(Mat& maskImage, Mat& srcImage, int res
 	//for (int i = 0; i < maskGradientTable.size(); i++)
 	//{
 	//	Gradient curMaskGradient = maskGradientTable[i];
-	//	/*Ä£°åÍ¼Ïñ¼ÆËãµÄÂÖÀªÏà¶ÔÓÚÖÊĞÄµÄ×ø±ê*/
+	//	/*æ¨¡æ¿å›¾åƒè®¡ç®—çš„è½®å»“ç›¸å¯¹äºè´¨å¿ƒçš„åæ ‡*/
 	//	float deltaPtX = curMaskGradient.pt.x;
 	//	float deltaPtY = curMaskGradient.pt.y;
-	//	/*¼ÆËãĞı×ªºóµÄÏà¶Ô×ø±ê*/
+	//	/*è®¡ç®—æ—‹è½¬åçš„ç›¸å¯¹åæ ‡*/
 	//	float rotateX = cos(bestLocation.theta)*deltaPtX - sin(bestLocation.theta)*deltaPtY;
 	//	float rotateY = sin(bestLocation.theta)*deltaPtX + cos(bestLocation.theta)*deltaPtY;
-	//	/*´ı²âÍ¼Ïñµ±Ç°µã(sx,sy)×÷ÎªÖÊĞÄ£¬¼ÆËãÖÊĞÄ+Ğı×ª×ø±êpt£¬ÓÃÓÚ¼ÆËãÆ¥Åä¶È*/
+	//	/*å¾…æµ‹å›¾åƒå½“å‰ç‚¹(sx,sy)ä½œä¸ºè´¨å¿ƒï¼Œè®¡ç®—è´¨å¿ƒ+æ—‹è½¬åæ ‡ptï¼Œç”¨äºè®¡ç®—åŒ¹é…åº¦*/
 	//	Point2f pt = Point2f(rotateX + bestLocation.anchorPt.x, rotateY + bestLocation.anchorPt.y);
 	//	if (pt.x >= 0 && pt.x < srcImage.cols - 1
 	//		&& pt.y >= 0 && pt.y < srcImage.rows - 1)
@@ -657,47 +657,47 @@ vector<ShapeMatchLocation> GetCoarseTrans(Mat& maskImage, Mat& srcImage, int res
 }
 
 
-/*´Ö->¾«*/
+/*ç²—->ç²¾*/
 vector<ShapeMatchLocation> GetRefinedTrans(Mat& maskImage, Mat& srcImage,
 	int resizeFactor, vector<ShapeMatchLocation> coarseLocation)
 {
-	//resize maskImage and srcImage
 	Mat resizeMaskImage, resizeSrcImage;
 	resize(maskImage, resizeMaskImage,
 		Size(maskImage.cols / pow(2, resizeFactor), maskImage.rows / pow(2, resizeFactor)));
 	resize(srcImage, resizeSrcImage,
 		Size(srcImage.cols / pow(2, resizeFactor), srcImage.rows / pow(2, resizeFactor)));
 
-	/*¼ÆËãËõ·ÅºóµÄÑÚÄ£Í¼ÏñµÄÌİ¶È±í*/
-	vector<Gradient>maskGradientTable = GetGradientTable(resizeMaskImage, 2);
+	/*è®¡ç®—ç¼©æ”¾åçš„æ©æ¨¡å›¾åƒçš„æ¢¯åº¦è¡¨*/
+	vector<Gradient>maskGradientTable = GetGradientTable(resizeMaskImage, 5);
 
 	vector<ShapeMatchLocation> refineLocation;
 	ShapeMatchLocation tempLocation;
 
-	/*´ı²âÍ¼ÏñÌİ¶ÈÍ¼*/
+	/*å¾…æµ‹å›¾åƒæ¢¯åº¦å›¾*/
 	Mat xgrad, ygrad;
 	Sobel(resizeSrcImage, xgrad, CV_32F, 1, 0, 3);
 	Sobel(resizeSrcImage, ygrad, CV_32F, 0, 1, 3);
 
-	float ratio = 0.7;
 	int regionX = 5, regionY = 5;
-	int factorIndex = coarseLocation[0].resizeFactor - resizeFactor;//ÏàÁÚËÑË÷½ğ×ÖËşÖ®¼äµÄËõ·ÅÒò×Ó
+	int factorIndex = coarseLocation[0].resizeFactor - resizeFactor;//ç›¸é‚»æœç´¢é‡‘å­—å¡”ä¹‹é—´çš„ç¼©æ”¾å› å­
 	int scaleFactor = pow(2, factorIndex);
+	//float ratio = 0.7;
 	//float bestSimilarity = ratio * maskGradientTable.size();
 	float bestSimilarity = 0;
+
 	//float stepTheta = (float)(PI / (180 * pow(2, factor - resizeFactor-1)));
-	float stepTheta = (float)(0.2*PI / 180);
+	float stepTheta = (float)(0.2 * PI / 180);
 
 	for (int i = 0; i < coarseLocation.size(); i++)
 	{
 		ShapeMatchLocation curLocation = coarseLocation[i];
-		for (float sx = scaleFactor * curLocation.anchorPt.x - regionX; 
+		for (float sx = scaleFactor * curLocation.anchorPt.x - regionX;
 			sx < scaleFactor * curLocation.anchorPt.x + regionX; sx += 1)
 		{
 			for (float sy = scaleFactor * curLocation.anchorPt.y - regionY;
 				sy < scaleFactor * curLocation.anchorPt.y + regionY; sy += 1)
 			{
-				for (float theta = curLocation.theta - stepTheta *10;
+				for (float theta = curLocation.theta - stepTheta * 10;
 					theta < curLocation.theta + stepTheta * 10; theta += stepTheta)
 				{
 					float similarity = 0;
@@ -705,18 +705,18 @@ vector<ShapeMatchLocation> GetRefinedTrans(Mat& maskImage, Mat& srcImage,
 					{
 						Gradient curMaskGradient = maskGradientTable[j];
 
-						/*Ä£°åÍ¼Ïñ¼ÆËãµÄÂÖÀªÏà¶ÔÓÚÖÊĞÄµÄ×ø±ê*/
+						/*æ¨¡æ¿å›¾åƒè®¡ç®—çš„è½®å»“ç›¸å¯¹äºè´¨å¿ƒçš„åæ ‡*/
 						float deltaPtX = curMaskGradient.pt.x;
 						float deltaPtY = curMaskGradient.pt.y;
 
-						/*¼ÆËãĞı×ªºóµÄÏà¶Ô×ø±ê*/
+						/*è®¡ç®—æ—‹è½¬åçš„ç›¸å¯¹åæ ‡*/
 						float rotateX = cos(theta)*deltaPtX - sin(theta)*deltaPtY;
 						float rotateY = sin(theta)*deltaPtX + cos(theta)*deltaPtY;
 
-						/*´ı²âÍ¼Ïñµ±Ç°µã(sx,sy)×÷ÎªÖÊĞÄ£¬¼ÆËãÖÊĞÄ+Ğı×ª×ø±êpt*/
+						/*å¾…æµ‹å›¾åƒå½“å‰ç‚¹(sx,sy)ä½œä¸ºè´¨å¿ƒï¼Œè®¡ç®—è´¨å¿ƒ+æ—‹è½¬åæ ‡pt*/
 						Point2f pt = Point2f(rotateX + sx, rotateY + sy);
 
-						/*´ı²âÍ¼Ïñ±ß½çÏŞÖÆ*/
+						/*å¾…æµ‹å›¾åƒè¾¹ç•Œé™åˆ¶*/
 						if (pt.x >= 0 && pt.x < resizeSrcImage.cols - 1
 							&& pt.y >= 0 && pt.y < resizeSrcImage.rows - 1)
 						{
@@ -725,18 +725,18 @@ vector<ShapeMatchLocation> GetRefinedTrans(Mat& maskImage, Mat& srcImage,
 							float gMargin = abs(xg) + abs(yg);
 							float gTheta = atan2(yg, xg);//[-Pi,Pi]
 
-							/*ÓÉmaskGradientTableµÄµÚi¸öÔªËØ×ø±ê£¬¾­¹ı±ä»»
-							Ö®ºó¼ÆËãµÄ´ı²âÍ¼ÏòÉÏµÄ¶ÔÓ¦µãµÄÌİ¶ÈĞÅÏ¢*/
+							/*ç”±maskGradientTableçš„ç¬¬iä¸ªå…ƒç´ åæ ‡ï¼Œç»è¿‡å˜æ¢
+							ä¹‹åè®¡ç®—çš„å¾…æµ‹å›¾å‘ä¸Šçš„å¯¹åº”ç‚¹çš„æ¢¯åº¦ä¿¡æ¯*/
 							float gDirection1 = cos(gTheta);
 							float gDirection2 = sin(gTheta);
 
-							/*¼ÆËãÆ¥ÅäÏàËÆ¶È*/
+							/*è®¡ç®—åŒ¹é…ç›¸ä¼¼åº¦*/
 							//similarity += abs(gDirection1 * cos(curMaskGradient.theta + theta)
 							//	+ gDirection2 * sin(curMaskGradient.theta + theta));
 							similarity += gDirection1 * cos(curMaskGradient.theta + theta)
 								+ gDirection2 * sin(curMaskGradient.theta + theta);
 
-							/*ÔçÍ£²ßÂÔ*/
+							/*æ—©åœç­–ç•¥*/
 							if (similarity < bestSimilarity - 1 + i / maskGradientTable.size())
 							{
 								continue;
@@ -796,13 +796,13 @@ vector<ShapeMatchLocation> GetRefinedTrans(Mat& maskImage, Mat& srcImage,
 	//for (int i = 0; i < maskGradientTable.size(); i++)
 	//{
 	//	Gradient curMaskGradient = maskGradientTable[i];
-	//	/*Ä£°åÍ¼Ïñ¼ÆËãµÄÂÖÀªÏà¶ÔÓÚÖÊĞÄµÄ×ø±ê*/
+	//	/*æ¨¡æ¿å›¾åƒè®¡ç®—çš„è½®å»“ç›¸å¯¹äºè´¨å¿ƒçš„åæ ‡*/
 	//	float deltaPtX = curMaskGradient.pt.x;
 	//	float deltaPtY = curMaskGradient.pt.y;
-	//	/*¼ÆËãĞı×ªºóµÄÏà¶Ô×ø±ê*/
+	//	/*è®¡ç®—æ—‹è½¬åçš„ç›¸å¯¹åæ ‡*/
 	//	float rotateX = cos(bestLocation.theta)*deltaPtX - sin(bestLocation.theta)*deltaPtY;
 	//	float rotateY = sin(bestLocation.theta)*deltaPtX + cos(bestLocation.theta)*deltaPtY;
-	//	/*´ı²âÍ¼Ïñµ±Ç°µã(sx,sy)×÷ÎªÖÊĞÄ£¬¼ÆËãÖÊĞÄ+Ğı×ª×ø±êpt£¬ÓÃÓÚ¼ÆËãÆ¥Åä¶È*/
+	//	/*å¾…æµ‹å›¾åƒå½“å‰ç‚¹(sx,sy)ä½œä¸ºè´¨å¿ƒï¼Œè®¡ç®—è´¨å¿ƒ+æ—‹è½¬åæ ‡ptï¼Œç”¨äºè®¡ç®—åŒ¹é…åº¦*/
 	//	Point2f pt = Point2f(rotateX + bestLocation.anchorPt.x, rotateY + bestLocation.anchorPt.y);
 	//	if (pt.x >= 0 && pt.x < srcImage.cols - 1
 	//		&& pt.y >= 0 && pt.y < srcImage.rows - 1)
@@ -816,23 +816,23 @@ vector<ShapeMatchLocation> GetRefinedTrans(Mat& maskImage, Mat& srcImage,
 }
 
 
-/*×îµ×²ã½ğ×ÖËş£¬¼ÆËãbestTrans*/
+/*æœ€åº•å±‚é‡‘å­—å¡”ï¼Œè®¡ç®—bestTrans*/
 ShapeMatchLocation GetBestTrans(Mat& maskImage, Mat& srcImage, vector<ShapeMatchLocation>refinedLocation)
 {
-	/*¼ÆËãËõ·ÅºóµÄÑÚÄ£Í¼ÏñµÄÌİ¶È±í*/
-	vector<Gradient>maskGradientTable = GetGradientTable(maskImage,4);
+	/*è®¡ç®—ç¼©æ”¾åçš„æ©æ¨¡å›¾åƒçš„æ¢¯åº¦è¡¨*/
+	vector<Gradient>maskGradientTable = GetGradientTable(maskImage, 10);
 	ShapeMatchLocation bestLocation;
 
-	/*´ı²âÍ¼ÏñÌİ¶ÈÍ¼*/
+	/*å¾…æµ‹å›¾åƒæ¢¯åº¦å›¾*/
 	Mat xgrad, ygrad;
 	Sobel(srcImage, xgrad, CV_32F, 1, 0, 3);
 	Sobel(srcImage, ygrad, CV_32F, 0, 1, 3);
 
-	int regionX = 10, regionY = 10;
+	int regionX = 20, regionY = 20;
 	int factorIndex = refinedLocation[0].resizeFactor;
 	int scaleFactor = pow(2, factorIndex);
 	float bestSimilarity = 0;
-	float stepTheta = 0.1 * PI / 180;
+	float stepTheta = 0.05 * PI / 180;
 
 	for (int i = 0; i < refinedLocation.size(); i++)
 	{
@@ -851,18 +851,18 @@ ShapeMatchLocation GetBestTrans(Mat& maskImage, Mat& srcImage, vector<ShapeMatch
 					{
 						Gradient curMaskGradient = maskGradientTable[j];
 
-						/*Ä£°åÍ¼Ïñ¼ÆËãµÄÂÖÀªÏà¶ÔÓÚÖÊĞÄµÄ×ø±ê*/
+						/*æ¨¡æ¿å›¾åƒè®¡ç®—çš„è½®å»“ç›¸å¯¹äºè´¨å¿ƒçš„åæ ‡*/
 						float deltaPtX = curMaskGradient.pt.x;
 						float deltaPtY = curMaskGradient.pt.y;
 
-						/*¼ÆËãĞı×ªºóµÄÏà¶Ô×ø±ê*/
+						/*è®¡ç®—æ—‹è½¬åçš„ç›¸å¯¹åæ ‡*/
 						float rotateX = cos(theta)*deltaPtX - sin(theta)*deltaPtY;
 						float rotateY = sin(theta)*deltaPtX + cos(theta)*deltaPtY;
 
-						/*´ı²âÍ¼Ïñµ±Ç°µã(sx,sy)×÷ÎªÖÊĞÄ£¬¼ÆËãÖÊĞÄ+Ğı×ª×ø±êpt*/
+						/*å¾…æµ‹å›¾åƒå½“å‰ç‚¹(sx,sy)ä½œä¸ºè´¨å¿ƒï¼Œè®¡ç®—è´¨å¿ƒ+æ—‹è½¬åæ ‡pt*/
 						Point2f pt = Point2f(rotateX + sx, rotateY + sy);
 
-						/*´ı²âÍ¼Ïñ±ß½çÏŞÖÆ*/
+						/*å¾…æµ‹å›¾åƒè¾¹ç•Œé™åˆ¶*/
 						if (pt.x >= 0 && pt.x < srcImage.cols - 1
 							&& pt.y >= 0 && pt.y < srcImage.rows - 1)
 						{
@@ -871,12 +871,12 @@ ShapeMatchLocation GetBestTrans(Mat& maskImage, Mat& srcImage, vector<ShapeMatch
 							float gMargin = abs(xg) + abs(yg);
 							float gTheta = atan2(yg, xg);//[-Pi,Pi]
 
-							/*ÓÉmaskGradientTableµÄµÚi¸öÔªËØ×ø±ê£¬¾­¹ı±ä»»
-							Ö®ºó¼ÆËãµÄ´ı²âÍ¼ÏòÉÏµÄ¶ÔÓ¦µãµÄÌİ¶ÈĞÅÏ¢*/
+							/*ç”±maskGradientTableçš„ç¬¬iä¸ªå…ƒç´ åæ ‡ï¼Œç»è¿‡å˜æ¢
+							ä¹‹åè®¡ç®—çš„å¾…æµ‹å›¾å‘ä¸Šçš„å¯¹åº”ç‚¹çš„æ¢¯åº¦ä¿¡æ¯*/
 							float gDirection1 = cos(gTheta);
 							float gDirection2 = sin(gTheta);
 
-							/*¼ÆËãÆ¥ÅäÏàËÆ¶È*/
+							/*è®¡ç®—åŒ¹é…ç›¸ä¼¼åº¦*/
 							similarity += gDirection1 * cos(curMaskGradient.theta + theta)
 								+ gDirection2 * sin(curMaskGradient.theta + theta);
 						}
@@ -894,44 +894,27 @@ ShapeMatchLocation GetBestTrans(Mat& maskImage, Mat& srcImage, vector<ShapeMatch
 		}
 	}
 
-	//Mat dstImage(srcImage);
-	//cvtColor(dstImage, dstImage, CV_GRAY2BGR);
-	//for (int i = 0; i < maskGradientTable.size(); i++)
-	//{
-	//	Gradient curMaskGradient = maskGradientTable[i];
-	//	/*Ä£°åÍ¼Ïñ¼ÆËãµÄÂÖÀªÏà¶ÔÓÚÖÊĞÄµÄ×ø±ê*/
-	//	float deltaPtX = curMaskGradient.pt.x;
-	//	float deltaPtY = curMaskGradient.pt.y;
-	//	/*´ı²âÍ¼Ïñµ±Ç°µã(sx,sy)×÷ÎªÖÊĞÄ£¬¼ÆËãÖÊĞÄ+Ğı×ª×ø±êpt£¬ÓÃÓÚ¼ÆËãÆ¥Åä¶È*/
-	//	Point2f pt = Point2f(deltaPtX + refinedLocation[0].anchorPt.x*scaleFactor,
-	//		deltaPtY + refinedLocation[0].anchorPt.y*scaleFactor);
-	//	if (pt.x >= 0 && pt.x < srcImage.cols - 1
-	//		&& pt.y >= 0 && pt.y < srcImage.rows - 1)
-	//	{
-	//		dstImage.at<Vec3b>(pt)[0] = 255;
-	//		dstImage.at<Vec3b>(pt)[1] = 0;
-	//		dstImage.at<Vec3b>(pt)[2] = 0;
-	//	}
-	//}
-	//for (int i = 0; i < maskGradientTable.size(); i++)
-	//{
-	//	Gradient curMaskGradient = maskGradientTable[i];
-	//	/*Ä£°åÍ¼Ïñ¼ÆËãµÄÂÖÀªÏà¶ÔÓÚÖÊĞÄµÄ×ø±ê*/
-	//	float deltaPtX = curMaskGradient.pt.x;
-	//	float deltaPtY = curMaskGradient.pt.y;
-	//	/*¼ÆËãĞı×ªºóµÄÏà¶Ô×ø±ê*/
-	//	float rotateX = cos(bestLocation.theta)*deltaPtX - sin(bestLocation.theta)*deltaPtY;
-	//	float rotateY = sin(bestLocation.theta)*deltaPtX + cos(bestLocation.theta)*deltaPtY;
-	//	/*´ı²âÍ¼Ïñµ±Ç°µã(sx,sy)×÷ÎªÖÊĞÄ£¬¼ÆËãÖÊĞÄ+Ğı×ª×ø±êpt£¬ÓÃÓÚ¼ÆËãÆ¥Åä¶È*/
-	//	Point2f pt = Point2f(rotateX + bestLocation.anchorPt.x, rotateY + bestLocation.anchorPt.y);
-	//	if (pt.x >= 0 && pt.x < srcImage.cols - 1
-	//		&& pt.y >= 0 && pt.y < srcImage.rows - 1)
-	//	{
-	//		dstImage.at<Vec3b>(pt)[0] = 0;
-	//		dstImage.at<Vec3b>(pt)[1] = 0;
-	//		dstImage.at<Vec3b>(pt)[2] = 255;
-	//	}
-	//}
+	Mat dstImage(srcImage);
+	cvtColor(dstImage, dstImage, CV_GRAY2BGR);
+	for (int i = 0; i < maskGradientTable.size(); i++)
+	{
+		Gradient curMaskGradient = maskGradientTable[i];
+		/*æ¨¡æ¿å›¾åƒè®¡ç®—çš„è½®å»“ç›¸å¯¹äºè´¨å¿ƒçš„åæ ‡*/
+		float deltaPtX = curMaskGradient.pt.x;
+		float deltaPtY = curMaskGradient.pt.y;
+		/*è®¡ç®—æ—‹è½¬åçš„ç›¸å¯¹åæ ‡*/
+		float rotateX = cos(bestLocation.theta)*deltaPtX - sin(bestLocation.theta)*deltaPtY;
+		float rotateY = sin(bestLocation.theta)*deltaPtX + cos(bestLocation.theta)*deltaPtY;
+		/*å¾…æµ‹å›¾åƒå½“å‰ç‚¹(sx,sy)ä½œä¸ºè´¨å¿ƒï¼Œè®¡ç®—è´¨å¿ƒ+æ—‹è½¬åæ ‡ptï¼Œç”¨äºè®¡ç®—åŒ¹é…åº¦*/
+		Point2f pt = Point2f(rotateX + bestLocation.anchorPt.x, rotateY + bestLocation.anchorPt.y);
+		if (pt.x >= 0 && pt.x < srcImage.cols - 1
+			&& pt.y >= 0 && pt.y < srcImage.rows - 1)
+		{
+			dstImage.at<Vec3b>(pt)[0] = 0;
+			dstImage.at<Vec3b>(pt)[1] = 0;
+			dstImage.at<Vec3b>(pt)[2] = 255;
+		}
+	}
 
 	return bestLocation;
 }
@@ -940,9 +923,9 @@ ShapeMatchLocation GetBestTrans(Mat& maskImage, Mat& srcImage, vector<ShapeMatch
 
 /*************************************************************
 Function:       GetShapeTrans
-Description:    ĞÎ×´Æ¥Åä
-Input:          maskImage:Ä£°åÍ¼Ïñ srcImage:´ıÆ¥ÅäÍ¼Ïñ
-Return:         result:ĞÎ×´Æ¥Åä½á¹û
+Description:    å½¢çŠ¶åŒ¹é…
+Input:          maskImage:æ¨¡æ¿å›¾åƒ srcImage:å¾…åŒ¹é…å›¾åƒ
+Return:         result:å½¢çŠ¶åŒ¹é…ç»“æœ
 **************************************************************/
 ShapeMatchLocation GetShapeTrans(Mat& maskImage, Mat& srcImage, int resizeFactor)
 {
@@ -950,11 +933,11 @@ ShapeMatchLocation GetShapeTrans(Mat& maskImage, Mat& srcImage, int resizeFactor
 	ShapeMatchLocation bestLocation;//best location
 	vector<ShapeMatchLocation> coarseLocation, refinedLocation;//coarse location and refined location
 
-	while (resizeFactor + 1)//resizeFactor³õÊ¼»¯Îª5
+	while (resizeFactor + 1)//resizeFactoråˆå§‹åŒ–ä¸º5
 	{
 		if (resizeFactor != 0)
 		{
-			if (resizeFactor == layers)//´Ö¶¨Î»
+			if (resizeFactor == layers)//ç²—å®šä½
 			{
 				coarseLocation = GetCoarseTrans(maskImage, srcImage, resizeFactor);
 			}
@@ -962,203 +945,44 @@ ShapeMatchLocation GetShapeTrans(Mat& maskImage, Mat& srcImage, int resizeFactor
 			{
 				refinedLocation = GetRefinedTrans(maskImage, srcImage, resizeFactor, coarseLocation);
 			}
-			//else //Öğ²ãÇó¾«
+			//else //é€å±‚æ±‚ç²¾
 			//{
 			//	refinedLocation = GetRefinedTrans(maskImage, srcImage, resizeFactor, refinedLocation);
 			//}
-			else if (resizeFactor == layers - 2)
-			{
-				refinedLocation = GetRefinedTrans(maskImage, srcImage, resizeFactor, refinedLocation);
-			}
+			//else if (resizeFactor == layers - 2)
+			//{
+			//	refinedLocation = GetRefinedTrans(maskImage, srcImage, resizeFactor, refinedLocation);
+			//}
 		}
 
-		else if (resizeFactor == 0)//×îµ×²ãµÄ×îÓÅ½â
+		else if (resizeFactor == 0)//æœ€åº•å±‚çš„æœ€ä¼˜è§£
 		{
-			//ÂÖÀª½ÏÎª¸´ÔÓµÄÍ¼Ïñ£¬ÔÚ½ğ×ÖËş×î¸ß²ã»á³öÏÖ¼¸¸öºòÑ¡Î»ÖÃ£¬²ÉÓÃÖğ¼¶Çó¾«²ßÂÔ
+			//è½®å»“è¾ƒä¸ºå¤æ‚çš„å›¾åƒï¼Œåœ¨é‡‘å­—å¡”æœ€é«˜å±‚ä¼šå‡ºç°å‡ ä¸ªå€™é€‰ä½ç½®ï¼Œé‡‡ç”¨é€çº§æ±‚ç²¾ç­–ç•¥
 			bestLocation = GetBestTrans(maskImage, srcImage, refinedLocation);
 
-			//ÊÖ»ú¸Ç°åÍ¼ÏñÂÖÀª¼òµ¥£¬½ğ×ÖËş×î¸ß²ã½öÓĞÒ»¸öºòÑ¡Î»ÖÃ£¬Òò´ËÖ±½Ó·µ»Ø×îµ×²ã¼ÆËãbestTrans
+			//æ‰‹æœºç›–æ¿å›¾åƒè½®å»“ç®€å•ï¼Œé‡‘å­—å¡”æœ€é«˜å±‚ä»…æœ‰ä¸€ä¸ªå€™é€‰ä½ç½®ï¼Œå› æ­¤ç›´æ¥è¿”å›æœ€åº•å±‚è®¡ç®—bestTrans
 			//bestLocation = GetBestTrans(maskImage, srcImage, coarseLocation);
 		}
 
 		resizeFactor--;
 	}
 
-	cout << "¹²¼Æ" << layers << "²ã½ğ×ÖËş" << endl;
-	cout << "¶¨Î»½á¹û£º[" << bestLocation.anchorPt.x << "," << bestLocation.anchorPt.y
-		<< "," << bestLocation.theta << "]" << endl;
+	//cout << "å…±è®¡" << layers << "å±‚é‡‘å­—å¡”" << endl;
+	//cout << "å®šä½ç»“æœï¼š[" << bestLocation.anchorPt.x << "," << bestLocation.anchorPt.y
+	//	<< "," << bestLocation.theta << "]" << endl;
 
 	return bestLocation;
-}
-
-
-/*************************************************************
-Function:       Hough
-Description:    Ê¹ÓÃHough¼ì²âÍ¼ÏñÖ±Ïß
-Input:          imageMat:´ı²âÍ¼Ïñ
-Return:         dstImage:°üº¬Ö±ÏßµÄÑÚÄ£Í¼Ïñ
-/**************************************************************/
-Mat Hough(Mat srcImage)
-{
-	Mat edges;
-	Mat dstImage = Mat::zeros(srcImage.size(), srcImage.type());
-
-	Canny(srcImage, edges, CannyThreshold1, CannyThreshold2);
-
-	vector<Vec4f> lines;
-	HoughLinesP(edges, lines, 1, CV_PI / 360, HoughThreshold1, HoughThreshold2, HoughThreshold3);
-
-	for (size_t i = 0; i < lines.size(); i++) {
-		Vec4f l = lines[i];
-		line(dstImage, Point2f(l[0], l[1]), Point2f(l[2], l[3]), Scalar(255));
-	}
-
-	return dstImage;
-}
-
-
-/*************************************************************
-Function:       LSD
-Description:    Ê¹ÓÃLSD¼ì²âÍ¼ÏñÖ±Ïß
-Input:          imageMat:´ı²âÍ¼Ïñ
-Return:         drawnLines:°üº¬Ö±ÏßµÄÑÚÄ£Í¼Ïñ
-**************************************************************/
-Mat LSD(Mat srcImage)
-{
-	/*´´½¨LSDÖ±Ïß¼ì²âÆ÷*/
-	Ptr<LineSegmentDetector> ls = createLineSegmentDetector(LSD_REFINE_STD);
-	vector<Vec4f> lines_std;
-	ls->detect(srcImage, lines_std);
-
-	/*»­Ö±Ïß*/
-	Mat drawnLines = Mat::zeros(srcImage.size(), srcImage.type());
-	Mat drawnLines2(srcImage);
-	ls->drawSegments(drawnLines, lines_std);
-	ls->drawSegments(drawnLines2, lines_std);
-
-	return drawnLines;
-}
-
-
-
-/*************************************************************
-Function:       GetLinePointsBaseLsd
-Description:    Ê¹ÓÃSobelÌáÈ¡Í¼ÏñÇ±ÔÚÖ±ÏßÄâºÏµã+LSDÄâºÏÖ±Ïß
-Input:          image:´ı²âÍ¼Ïñ
-				thresholdEdges:Ìİ¶ÈãĞÖµ
-				deltaX:´ı²âÍ¼ÏñÔÚ¹¤¼şÍ¼ÏñÖĞX·½ÏòÏà¶ÔÎ»ÖÃ
-				deltaY:´ı²âÍ¼ÏñÔÚ¹¤¼şÍ¼ÏñÖĞY·½ÏòÏà¶ÔÎ»ÖÃ
-Return:         linePoints:Ö±ÏßÄâºÏµã¼¯
-**************************************************************/
-vector<Point2f> GetLinePointsBaseLsd(Mat image,
-	float grayThreshold, float gradientThreshold,
-	float delatX, float deltaY)
-{
-	Mat imgBGR;
-	cvtColor(image, imgBGR, CV_GRAY2BGR);
-
-	Mat xygrad = Mat::zeros(image.size(), image.type());
-	Mat xgrad;  //x·½ÏòÉÏµÄÌİ¶È
-	Mat ygrad;  //y·½ÏòÉÏµÄÌİ¶È
-	Sobel(image, xgrad, CV_32F, 1, 0, 3);
-	Sobel(image, ygrad, CV_32F, 0, 1, 3);
-
-	/*LSDËã·¨¼ì²âÖ±Ïß£¬Êä³ö°üº¬Ö±Ïß¶ÎµÄÑÚÄ£Í¼ÏñlingImage*/
-	Mat lineImage = LSD(image);
-
-	/*±ßÔµµã¼¯linePoints*/
-	vector<Point2f>linePoints;
-	for (int x = 0; x < image.cols; x += 1)
-	{
-		for (int y = 0; y < image.rows; y += 1)
-		{
-			Point2f pt = Point2f(x, y);
-			float xg = xgrad.at<float>(pt);
-			float yg = ygrad.at<float>(pt);
-
-			/*µ±Ç°µãµÄÌİ¶ÈÄ£³¤*/
-			float gMargin = sqrt(pow(xg, 2) + pow(yg, 2));
-
-			/*Ö±ÏßÑÚÄ£Í¼Ïñµ±Ç°µãÊÇ·ñÊÇÖ±Ïß¶ÎÉÏµÄµã£¬255/0*/
-			float lineValue = lineImage.at<Vec3b>(pt)[2];
-
-			if (gMargin > gradientThreshold && lineValue != 0)
-			{
-				/*ÏÔÊ¾*/
-				xygrad.at<uchar>(pt) = 255;
-				imgBGR.at<Vec3b>(pt)[0] = 255;
-				imgBGR.at<Vec3b>(pt)[1] = 0;
-				imgBGR.at<Vec3b>(pt)[2] = 0;
-
-				/*ÑÇÏñËØ´¦Àí*/
-				GetSubPixel(image, pt);
-
-				/*´æµã*/
-				linePoints.push_back(Point2f(pt.x + delatX, pt.y + deltaY));
-			}
-		}
-	}
-
-	return linePoints;
-}
-
-
-
-/*************************************************************
-Function:       GetLinePoints2
-Description:    Ê¹ÓÃhoughlineÌáÈ¡Í¼ÏñÇ±ÔÚÖ±ÏßÄâºÏµã
-Input:          image:´ı²âÍ¼Ïñ
-				thresholdEdges:Ìİ¶ÈãĞÖµ
-				deltaX:´ı²âÍ¼ÏñÔÚ¹¤¼şÍ¼ÏñÖĞX·½ÏòÏà¶ÔÎ»ÖÃ
-				deltaY:´ı²âÍ¼ÏñÔÚ¹¤¼şÍ¼ÏñÖĞY·½ÏòÏà¶ÔÎ»ÖÃ
-Return:         linePoints:Ö±ÏßÄâºÏµã¼¯
-**************************************************************/
-vector<Point2f> GetLinePoints2(Mat& image, float delatX, float deltaY)
-{
-	vector<Point2f>linePoints;
-
-	Mat edges, imageRGB;
-	cvtColor(image, imageRGB, CV_GRAY2BGR);
-
-	Mat dstImage = Mat::zeros(image.size(), image.type());
-
-	Canny(image, edges, CannyThreshold1, CannyThreshold2);
-
-	vector<Vec4f> lines;
-	HoughLinesP(edges, lines, 1, CV_PI / 360, HoughThreshold1, HoughThreshold2, HoughThreshold3);
-
-	for (size_t i = 0; i < lines.size(); i++) {
-		Vec4f l = lines[i];
-
-		line(dstImage, Point2f(l[0], l[1]), Point2f(l[2], l[3]), Scalar(255), 1, LINE_AA);
-		line(imageRGB, Point2f(l[0], l[1]), Point2f(l[2], l[3]), Scalar(0, 0, 255), 1, LINE_AA);
-	}
-
-	for (int row = 0; row < dstImage.rows; row++)
-	{
-		for (int col = 0; col < dstImage.cols; col++)
-		{
-			Point2f pt = Point2f(col, row);
-			if (dstImage.at<uchar>(pt) != 0)
-			{
-				Point2f pt2 = Point2f(pt.x + delatX, pt.y + deltaY);
-				linePoints.push_back(pt2);
-			}
-		}
-	}
-
-	return linePoints;
 }
 
 
 
 vector<Point2f> GetLinePointsBaseSobel(Mat srcImage, Mat image, float deltaX, float deltaY, float imagePair, float direction)
 {
-	vector<Point2f>linePoints,tempLinePoints;
+	vector<Point2f>linePoints, tempLinePoints;
 
 	Mat edges;
-	Mat xgrad, xgradabs;  //x·½ÏòÉÏµÄÌİ¶È
-	Mat ygrad, ygradabs;  //y·½ÏòÉÏµÄÌİ¶È
+	Mat xgrad, xgradabs;  //xæ–¹å‘ä¸Šçš„æ¢¯åº¦
+	Mat ygrad, ygradabs;  //yæ–¹å‘ä¸Šçš„æ¢¯åº¦
 	vector<Gradient> gradientTable;
 
 	Mat imageBGR(image);
@@ -1179,11 +1003,11 @@ vector<Point2f> GetLinePointsBaseSobel(Mat srcImage, Mat image, float deltaX, fl
 				float deltaGray = abs(ygradabs.at<uchar>(pt1) - ygradabs.at<uchar>(pt2));
 				if (deltaGray >= thresholdValue)
 				{
-					imageBGR.at<Vec3b>(pt)[0] = 0;
-					imageBGR.at<Vec3b>(pt)[1] = 0;
-					imageBGR.at<Vec3b>(pt)[2] = 255;
+					imageBGR.at<Vec3b>(pt2)[0] = 0;
+					imageBGR.at<Vec3b>(pt2)[1] = 0;
+					imageBGR.at<Vec3b>(pt2)[2] = 255;
 
-					tempLinePoints.push_back(pt);
+					tempLinePoints.push_back(pt2);
 					break;
 				}
 			}
@@ -1207,11 +1031,11 @@ vector<Point2f> GetLinePointsBaseSobel(Mat srcImage, Mat image, float deltaX, fl
 					float deltaGray = abs(xgradabs.at<uchar>(pt1) - xgradabs.at<uchar>(pt2));
 					if (deltaGray >= thresholdValue)
 					{
-						imageBGR.at<Vec3b>(pt)[0] = 0;
-						imageBGR.at<Vec3b>(pt)[1] = 0;
-						imageBGR.at<Vec3b>(pt)[2] = 255;
+						imageBGR.at<Vec3b>(pt2)[0] = 0;
+						imageBGR.at<Vec3b>(pt2)[1] = 0;
+						imageBGR.at<Vec3b>(pt2)[2] = 255;
 
-						tempLinePoints.push_back(pt);
+						tempLinePoints.push_back(pt2);
 						break;
 					}
 				}
@@ -1229,11 +1053,11 @@ vector<Point2f> GetLinePointsBaseSobel(Mat srcImage, Mat image, float deltaX, fl
 					float deltaGray = abs(xgradabs.at<uchar>(pt1) - xgradabs.at<uchar>(pt2));
 					if (deltaGray >= thresholdValue)
 					{
-						imageBGR.at<Vec3b>(pt)[0] = 0;
-						imageBGR.at<Vec3b>(pt)[1] = 0;
-						imageBGR.at<Vec3b>(pt)[2] = 255;
+						imageBGR.at<Vec3b>(pt2)[0] = 0;
+						imageBGR.at<Vec3b>(pt2)[1] = 0;
+						imageBGR.at<Vec3b>(pt2)[2] = 255;
 
-						tempLinePoints.push_back(pt);
+						tempLinePoints.push_back(pt2);
 						break;
 					}
 				}
@@ -1243,7 +1067,8 @@ vector<Point2f> GetLinePointsBaseSobel(Mat srcImage, Mat image, float deltaX, fl
 
 
 	vector<Point2f>linPoints2;
-	refinePointSet(tempLinePoints, linPoints2);
+	//refinePointSet(tempLinePoints, linPoints2);
+	linPoints2 = tempLinePoints;
 	for (int i = 0; i < linPoints2.size(); i++)
 	{
 		Point2f pt = linPoints2[i];
@@ -1266,10 +1091,10 @@ vector<Point2f> GetLinePointsBaseSobel(Mat srcImage, Mat image, float deltaX, fl
 	for (int i = 0; i < linPoints2.size(); i++)
 	{
 		Point2f pt = linPoints2[i] + Point2f(deltaX, deltaY);
-		/*ÑÇÏñËØ´¦Àí*/
+		/*äºšåƒç´ å¤„ç†*/
 		//GetSubPixel(srcImage, pt);
 
-		/*´æµã*/
+		/*å­˜ç‚¹*/
 		linePoints.push_back(pt);
 	}
 
@@ -1277,712 +1102,52 @@ vector<Point2f> GetLinePointsBaseSobel(Mat srcImage, Mat image, float deltaX, fl
 }
 
 
-/*************************************************************
-Function:       GetCrossBasedShape
-Description:    Ê¹ÓÃĞÎ×´Æ¥Åä¼ÆËãÊÖ»ú¸Ç°å×ó½Çµã
-Input:          srcImage:´ı²âÍ¼Ïñ maskImage:Ä£°åÍ¼Ïñ
-Return:         ¸Ç°å×ó½Çµã
-**************************************************************/
-Point2f GetCrossBasedShapeL(Mat& srcImage, Mat& maskImage)
+Position CalPosition(Mat& imageL, Mat& imageR, string strL, string strR)
 {
-	/*step1:ĞÎ×´Æ¥Åä£¬ROI*/
-	ShapeMatchLocation arcShapeMatchLocation = GetShapeTrans(maskImage, srcImage,factor);
-
-	Point2f locate = arcShapeMatchLocation.anchorPt;
-	float bestTheta = arcShapeMatchLocation.theta;
-
-	Rect maskArcRegion = Rect(1674, 350, 2666 - 1674, 1141 - 350);
-	Rect maskLineRegion1 = Rect(2946, 350, 4500 - 2946, 700 - 350);
-	Rect maskLineRegion2 = Rect(1304, 1660, 2364 - 1304, 2372 - 1660);
-
-	float centerX = (1674 + 2666) / 2;
-	float centerY = (350 + 1141) / 2;
-	float deltaCol = locate.x ;
-	float deltaRow = locate.y ;
-
-	float xUA1 = 2946 - centerX, yUA1 = 350 - centerY;
-	float xUA2 = 4000 - centerX, yUA2 = 350 - centerY;
-	float xUB1 = 2946 - centerX, yUB1 = 700 - centerY;
-	float xUB2 = 4000 - centerX, yUB2 = 700 - centerY;
-
-	float xDA1 = 1304 - centerX, yDA1 = 1660 - centerY;
-	float xDA2 = 2364 - centerX, yDA2 = 1660 - centerY;
-	float xDB1 = 1304 - centerX, yDB1 = 2372 - centerY;
-	float xDB2 = 2364 - centerX, yDB2 = 2372 - centerY;
-
-	float trxUA1 = cos(bestTheta)*xUA1 - sin(bestTheta)*yUA1 + deltaCol;
-	float tryUA1 = sin(bestTheta)*xUA1 + cos(bestTheta)*yUA1 + deltaRow;
-	float trxUA2 = cos(bestTheta)*xUA2 - sin(bestTheta)*yUA2 + deltaCol;
-	float tryUA2 = sin(bestTheta)*xUA2 + cos(bestTheta)*yUA2 + deltaRow;
-	float trxUB1 = cos(bestTheta)*xUB1 - sin(bestTheta)*yUB1 + deltaCol;
-	float tryUB1 = sin(bestTheta)*xUB1 + cos(bestTheta)*yUB1 + deltaRow;
-	float trxUB2 = cos(bestTheta)*xUB2 - sin(bestTheta)*yUB2 + deltaCol;
-	float tryUB2 = sin(bestTheta)*xUB2 + cos(bestTheta)*yUB2 + deltaRow;
-
-	float trxDA1 = cos(bestTheta)*xDA1 - sin(bestTheta)*yDA1 + deltaCol;
-	float tryDA1 = sin(bestTheta)*xDA1 + cos(bestTheta)*yDA1 + deltaRow;
-	float trxDA2 = cos(bestTheta)*xDA2 - sin(bestTheta)*yDA2 + deltaCol;
-	float tryDA2 = sin(bestTheta)*xDA2 + cos(bestTheta)*yDA2 + deltaRow;
-	float trxDB1 = cos(bestTheta)*xDB1 - sin(bestTheta)*yDB1 + deltaCol;
-	float tryDB1 = sin(bestTheta)*xDB1 + cos(bestTheta)*yDB1 + deltaRow;
-	float trxDB2 = cos(bestTheta)*xDB2 - sin(bestTheta)*yDB2 + deltaCol;
-	float tryDB2 = sin(bestTheta)*xDB2 + cos(bestTheta)*yDB2 + deltaRow;
-
-
-	vector<Point2f> contourU, contourD;
-	Point2f pU1(trxUA1 + 300, tryUA1 - 150), pU2(trxUA2 + 500, tryUA2 - 150), pU3(trxUB1 + 300, tryUB1 - 150), pU4(trxUB2 + 500, tryUB2 - 150);
-	Point2f pD1(trxDA1 + 200, tryDA1 - 100), pD2(trxDA2 - 200, tryDA2 - 100), pD3(trxDB1 + 200, tryDB1 - 250), pD4(trxDB2 - 200, tryDB2 - 250);
-
-	contourU.push_back(pU1);
-	contourU.push_back(pU2);
-	contourU.push_back(pU3);
-	contourU.push_back(pU4);
-	RotatedRect rectU = minAreaRect(contourU);//Íâ½Ó¾ØĞÎ
-	Point2f verticesU[4];
-	rectU.points(verticesU);//Íâ½Ó¾ØĞÎµÄ4¸ö¶¥µã
-	Rect brectU = rectU.boundingRect();
-
-	contourD.push_back(pD1);
-	contourD.push_back(pD2);
-	contourD.push_back(pD3);
-	contourD.push_back(pD4);
-	RotatedRect rectD = minAreaRect(contourD);//Íâ½Ó¾ØĞÎ
-	Point2f verticesD[4];
-	rectD.points(verticesD);//Íâ½Ó¾ØĞÎµÄ4¸ö¶¥µã
-	Rect brectD = rectD.boundingRect();
-
-
-	if (brectU.x < 0)
-	{
-		brectU.width -= abs(brectU.x);
-		brectU.x = 0;
-	}
-	if (brectU.y < 0)
-	{
-		brectU.height -= abs(brectU.y);
-		brectU.y = 0;
-	}
-	if (brectD.x < 0)
-	{
-		brectD.width -= abs(brectD.x);
-		brectD.x = 0;
-	}
-	if (brectD.y < 0)
-	{
-		brectD.height -= abs(brectD.y);
-		brectD.y = 0;
-	}
-
-	if (brectU.x + brectU.width > srcImage.cols)brectU.width = srcImage.cols - brectU.x;
-	if (brectU.y + brectU.height > srcImage.rows)brectU.height = srcImage.rows - brectU.y;
-	if (brectD.x + brectD.width > srcImage.cols)brectD.width = srcImage.cols - brectD.x;
-	if (brectD.y + brectD.height > srcImage.rows)brectD.height = srcImage.rows - brectD.y;
-
-	if (brectU.x % 2 != 0)brectU.x += 1;
-	if (brectU.y % 2 != 0)brectU.y += 1;
-	if (brectU.width % 2 != 0)brectU.width -= 1;
-	if (brectU.height % 2 != 0)brectU.height -= 1;
-	if (brectD.x % 2 != 0)brectD.x += 1;
-	if (brectD.y % 2 != 0)brectD.y += 1;
-	if (brectD.width % 2 != 0)brectD.width -= 1;
-	if (brectD.height % 2 != 0)brectD.height -= 1;
-
-	Mat srcImageBGR, BGR1, BGR2;
-	cvtColor(srcImage, srcImageBGR, CV_GRAY2BGR);
-	cvtColor(srcImage, BGR1, CV_GRAY2BGR);
-	cvtColor(srcImage, BGR2, CV_GRAY2BGR);
-
-	for (int i = 0; i < 4; i++)//»­¾ØĞÎ
-	{
-		line(srcImageBGR, verticesU[i], verticesU[(i + 1) % 4], Scalar(0, 0, 255));
-		line(srcImageBGR, verticesD[i], verticesD[(i + 1) % 4], Scalar(0, 0, 255));
-	}
-
-	/*»­ROI*/
-	rectangle(srcImageBGR, brectD, Scalar(255, 0, 0));
-	rectangle(srcImageBGR, brectU, Scalar(255, 0, 0));
-
-
-	Mat lineRegionU, lineRegionD;
-	srcImage(brectU).copyTo(lineRegionU);
-	srcImage(brectD).copyTo(lineRegionD);
-
-	double start = double(getTickCount());
-
-	vector<Point2f>linePointU, linePointD;
-
-	vector<Vec4f> LU, LD;
-	LU = LSD(lineRegionU);
-	LD = LSD(lineRegionD);
-
-	for (int i = 0; i < LU.size(); i++)
-	{
-		linePointU.push_back(Point2f(LU[i][0] + brectU.x, LU[i][1] + brectU.y));
-		linePointU.push_back(Point2f(LU[i][2] + brectU.x, LU[i][3] + brectU.y));
-	}
-	for (int i = 0; i < LD.size(); i++)
-	{
-		linePointD.push_back(Point2f(LD[i][0] + brectD.x, LD[i][1] + brectD.y));
-		linePointD.push_back(Point2f(LD[i][2] + brectD.x, LD[i][3] + brectD.y));
-	}
-
-	/*»æÖÆÔ­Ê¼±ßÔµµã¼¯*/
-	for (int i = 0; i < linePointU.size(); i++)
-	{
-		BGR1.at<Vec3b>(linePointU[i])[0] = 0;
-		BGR1.at<Vec3b>(linePointU[i])[1] = 0;
-		BGR1.at<Vec3b>(linePointU[i])[2] = 255;
-	}
-	for (int i = 0; i < linePointD.size(); i++)
-	{
-		BGR1.at<Vec3b>(linePointD[i])[0] = 0;
-		BGR1.at<Vec3b>(linePointD[i])[1] = 0;
-		BGR1.at<Vec3b>(linePointD[i])[2] = 255;
-	}
-
-	cout << "before ransac refine: linePointU's size is: " << linePointU.size() << endl;
-	cout << "before ransac refine: linePointD's size is: " << linePointD.size() << endl;
-
-	////vector<Vec4d> linesU, linesD;
-	//vector<Point2f>linesU, linesD;
-	//ransacLines(linePointU, linesU, ransacDistance, 10, 2000);
-	//ransacLines(linePointD, linesD, ransacDistance, 10, 2000);
-	//cout << "after ransac refine: linePointU's size is: " << linePointU.size() << endl;
-	//cout << "after ransac refine: linePointD's size is: " << linePointD.size() << endl;
-
-	/*»æÖÆransacÉ¸Ñ¡ºóµÄµã¼¯*/
-	for (int i = 0; i < linePointU.size(); i++)
-	{
-		BGR2.at<Vec3b>(linePointU[i])[0] = 0;
-		BGR2.at<Vec3b>(linePointU[i])[1] = 0;
-		BGR2.at<Vec3b>(linePointU[i])[2] = 255;
-	}
-	for (int i = 0; i < linePointD.size(); i++)
-	{
-		BGR2.at<Vec3b>(linePointD[i])[0] = 0;
-		BGR2.at<Vec3b>(linePointD[i])[1] = 0;
-		BGR2.at<Vec3b>(linePointD[i])[2] = 255;
-	}
-
-	GatherLineInput inputLU;
-	GatherLineInput inputLD;
-	inputLU.edgePts = linePointU;
-	inputLD.edgePts = linePointD;
-	//inputLU.edgePts = linesU;
-	//inputLD.edgePts = linesD;
-
-	GatherLineOutput outputLU, outputLD;
-	gatherLine(inputLU, outputLU);
-	gatherLine(inputLD, outputLD);
-
-	Point2f ptU1 = outputLU.fitLine.pt1;
-	Point2f ptU2 = outputLU.fitLine.pt2;
-	Point2f ptD1 = outputLD.fitLine.pt1;
-	Point2f ptD2 = outputLD.fitLine.pt2;
-
-	float ka = (float)((ptU2.y - ptU1.y) / (ptU2.x - ptU1.x));
-	float kb = (float)((ptD2.y - ptD1.y) / (ptD2.x - ptD1.x));
-
-	float ma = ptU1.y - ka * ptU1.x;
-	float mb = ptD1.y - kb * ptD1.x;
-
-	Point2f crossPoint;
-	crossPoint.x = (mb - ma) / (ka - kb);
-	crossPoint.y = (ma * kb - mb * ka) / (kb - ka);
-
-	line(srcImageBGR, ptU2, crossPoint, Scalar(0, 0, 255), 1);
-	line(srcImageBGR, ptD2, crossPoint, Scalar(0, 0, 255), 1);
-
-	double duration_ms = (double(getTickCount()) - start) * 1000 / getTickFrequency();
-
-
-	for (int i = 0; i < linePointU.size(); i++)
-	{
-		Point pt = linePointU[i];
-		if (srcImageBGR.at<Vec3b>(pt)[0] == 0 &&
-			srcImageBGR.at<Vec3b>(pt)[1] == 0 &&
-			srcImageBGR.at<Vec3b>(pt)[2] == 255)
-		{
-			srcImageBGR.at<Vec3b>(pt)[0] = 255;
-			srcImageBGR.at<Vec3b>(pt)[1] = 0;
-			srcImageBGR.at<Vec3b>(pt)[2] = 0;
-		}
-		else
-		{
-			srcImageBGR.at<Vec3b>(pt)[0] = 255;
-			srcImageBGR.at<Vec3b>(pt)[1] = 0;
-			srcImageBGR.at<Vec3b>(pt)[2] = 255;
-
-		}
-	}
-	for (int i = 0; i < linePointD.size(); i++)
-	{
-		Point pt = linePointD[i];
-		if (srcImageBGR.at<Vec3b>(pt)[0] == 0 &&
-			srcImageBGR.at<Vec3b>(pt)[1] == 0 &&
-			srcImageBGR.at<Vec3b>(pt)[2] == 255)
-		{
-			srcImageBGR.at<Vec3b>(pt)[0] = 255;
-			srcImageBGR.at<Vec3b>(pt)[1] = 0;
-			srcImageBGR.at<Vec3b>(pt)[2] = 0;
-		}
-		else
-		{
-			srcImageBGR.at<Vec3b>(linePointD[i])[0] = 255;
-			srcImageBGR.at<Vec3b>(linePointD[i])[1] = 0;
-			srcImageBGR.at<Vec3b>(linePointD[i])[2] = 255;
-
-		}
-	}
-
-	float ans = abs(ka*kb + 1);
-
-	cout << "ka is: " << ka << endl;
-	cout << "kb is: " << kb << endl;
-	cout << "Best measurement is: " << ans << " \n";
-	cout << "Best crossPoint is: " << crossPoint << " \n";
-	std::cout << "It took " << duration_ms << " ms." << "\n" << std::endl;
-
-	return crossPoint;
-}
-
-
-
-/*************************************************************
-Function:       GetCrossBasedShapeR
-Description:    Ê¹ÓÃĞÎ×´Æ¥Åä¼ÆËãÊÖ»ú¸Ç°åÓÒ½Çµã
-Input:          srcImage:´ı²âÍ¼Ïñ maskImage:Ä£°åÍ¼Ïñ
-Return:         ¸Ç°åÓÒ½Çµã
-**************************************************************/
-Point2f GetCrossBasedShapeR(Mat& srcImage, Mat& maskImage)
-{
-	/*step1:ĞÎ×´Æ¥Åä£¬ROI*/
-	ShapeMatchLocation arcShapeMatchLocation = GetShapeTrans(maskImage, srcImage,factor);
-
-	Point2f locate = arcShapeMatchLocation.anchorPt;
-	float bestTheta = arcShapeMatchLocation.theta;
-
-	Rect maskArcRegion = Rect(1204, 418, 2330 - 1204, 1384 - 418);
-	Rect maskLineRegion1 = Rect(0, 360, 1327 - 0, 750 - 360);
-	Rect maskLineRegion2 = Rect(1916, 1474, 2338 - 1916, 3000 - 1474);
-
-	float centerX = (1204 + 2330) / 2;
-	float centerY = (1384 + 418) / 2;
-	float deltaCol = locate.x;
-	float deltaRow = locate.y;
-
-	float xUA1 = 0 - centerX, yUA1 = 360 - centerY;
-	float xUA2 = 1327 - centerX, yUA2 = 360 - centerY;
-	float xUB1 = 0 - centerX, yUB1 = 750 - centerY;
-	float xUB2 = 1327 - centerX, yUB2 = 750 - centerY;
-
-	float xDA1 = 1916 - centerX, yDA1 = 1474 - centerY;
-	float xDA2 = 2338 - centerX, yDA2 = 1474 - centerY;
-	float xDB1 = 1916 - centerX, yDB1 = 3000 - centerY;
-	float xDB2 = 2338 - centerX, yDB2 = 3000 - centerY;
-
-	float trxUA1 = cos(bestTheta)*xUA1 - sin(bestTheta)*yUA1 + deltaCol;
-	float tryUA1 = sin(bestTheta)*xUA1 + cos(bestTheta)*yUA1 + deltaRow;
-	float trxUA2 = cos(bestTheta)*xUA2 - sin(bestTheta)*yUA2 + deltaCol;
-	float tryUA2 = sin(bestTheta)*xUA2 + cos(bestTheta)*yUA2 + deltaRow;
-	float trxUB1 = cos(bestTheta)*xUB1 - sin(bestTheta)*yUB1 + deltaCol;
-	float tryUB1 = sin(bestTheta)*xUB1 + cos(bestTheta)*yUB1 + deltaRow;
-	float trxUB2 = cos(bestTheta)*xUB2 - sin(bestTheta)*yUB2 + deltaCol;
-	float tryUB2 = sin(bestTheta)*xUB2 + cos(bestTheta)*yUB2 + deltaRow;
-	float trxDA1 = cos(bestTheta)*xDA1 - sin(bestTheta)*yDA1 + deltaCol;
-	float tryDA1 = sin(bestTheta)*xDA1 + cos(bestTheta)*yDA1 + deltaRow;
-	float trxDA2 = cos(bestTheta)*xDA2 - sin(bestTheta)*yDA2 + deltaCol;
-	float tryDA2 = sin(bestTheta)*xDA2 + cos(bestTheta)*yDA2 + deltaRow;
-	float trxDB1 = cos(bestTheta)*xDB1 - sin(bestTheta)*yDB1 + deltaCol;
-	float tryDB1 = sin(bestTheta)*xDB1 + cos(bestTheta)*yDB1 + deltaRow;
-	float trxDB2 = cos(bestTheta)*xDB2 - sin(bestTheta)*yDB2 + deltaCol;
-	float tryDB2 = sin(bestTheta)*xDB2 + cos(bestTheta)*yDB2 + deltaRow;
-
-
-	vector<Point2f> contourU, contourD;
-	Point2f pU1(trxUA1, tryUA1), pU2(trxUA2 - 300, tryUA2), pU3(trxUB1, tryUB1), pU4(trxUB2 - 300, tryUB2);
-	Point2f pD1(trxDA1, tryDA1 + 40), pD2(trxDA2, tryDA2 + 40), pD3(trxDB1, tryDB1 - 1000), pD4(trxDB2, tryDB2 - 1000);
-
-	contourU.push_back(pU1);
-	contourU.push_back(pU2);
-	contourU.push_back(pU3);
-	contourU.push_back(pU4);
-	RotatedRect rectU = minAreaRect(contourU);//Íâ½Ó¾ØĞÎ
-	Point2f verticesU[4];
-	rectU.points(verticesU);//Íâ½Ó¾ØĞÎµÄ4¸ö¶¥µã
-	Rect brectU = rectU.boundingRect();
-
-	contourD.push_back(pD1);
-	contourD.push_back(pD2);
-	contourD.push_back(pD3);
-	contourD.push_back(pD4);
-	RotatedRect rectD = minAreaRect(contourD);//Íâ½Ó¾ØĞÎ
-	Point2f verticesD[4];
-	rectD.points(verticesD);//Íâ½Ó¾ØĞÎµÄ4¸ö¶¥µã
-	Rect brectD = rectD.boundingRect();
-
-	if (brectU.x % 2 != 0)brectU.x += 1;
-	if (brectU.y % 2 != 0)brectU.y += 1;
-	if (brectU.width % 2 != 0)brectU.width -= 1;
-	if (brectU.height % 2 != 0)brectU.height -= 1;
-	if (brectD.x % 2 != 0)brectD.x += 1;
-	if (brectD.y % 2 != 0)brectD.y += 1;
-	if (brectD.width % 2 != 0)brectD.width -= 1;
-	if (brectD.height % 2 != 0)brectD.height -= 1;
-
-	if (brectU.x < 0)
-	{
-		brectU.width -= abs(brectU.x);
-		brectU.x = 0;
-	}
-	if (brectU.y < 0)
-	{
-		brectU.height -= abs(brectU.y);
-		brectU.y = 0;
-	}
-	if (brectD.x < 0)
-	{
-		brectD.width -= abs(brectD.x);
-		brectD.x = 0;
-	}
-	if (brectD.y < 0)
-	{
-		brectD.height -= abs(brectD.y);
-		brectD.y = 0;
-	}
-
-	if (brectU.x + brectU.width > srcImage.cols)brectU.width = srcImage.cols - brectU.x;
-	if (brectU.y + brectU.height > srcImage.rows)brectU.height = srcImage.rows - brectU.y;
-	if (brectD.x + brectD.width > srcImage.cols)brectD.width = srcImage.cols - brectD.x;
-	if (brectD.y + brectD.height > srcImage.rows)brectD.height = srcImage.rows - brectD.y;
-
-	Mat srcImageBGR, BGR1, BGR2;
-	cvtColor(srcImage, srcImageBGR, CV_GRAY2BGR);
-	cvtColor(srcImage, BGR1, CV_GRAY2BGR);
-	cvtColor(srcImage, BGR2, CV_GRAY2BGR);
-
-	for (int i = 0; i < 4; i++)//»­¾ØĞÎ
-	{
-		line(srcImageBGR, verticesU[i], verticesU[(i + 1) % 4], Scalar(0, 0, 255));
-		line(srcImageBGR, verticesD[i], verticesD[(i + 1) % 4], Scalar(0, 0, 255));
-	}
-
-	rectangle(srcImageBGR, brectD, Scalar(255, 0, 0));
-	rectangle(srcImageBGR, brectU, Scalar(255, 0, 0));
-
-
-	Mat lineRegionU, lineRegionD;
-	srcImage(brectU).copyTo(lineRegionU);
-	srcImage(brectD).copyTo(lineRegionD);
-
-
-	double start = double(getTickCount());
-
-	vector<Point2f>linePointU, linePointD;
-
-	vector<Vec4f> LU, LD;
-	LU = LSD(lineRegionU);
-	LD = LSD(lineRegionD);
-
-	for (int i = 0; i < LU.size(); i++)
-	{
-		linePointU.push_back(Point2f(LU[i][0] + brectU.x, LU[i][1] + brectU.y));
-		linePointU.push_back(Point2f(LU[i][2] + brectU.x, LU[i][3] + brectU.y));
-	}
-	for (int i = 0; i < LD.size(); i++)
-	{
-		linePointD.push_back(Point2f(LD[i][0] + brectD.x, LD[i][1] + brectD.y));
-		linePointD.push_back(Point2f(LD[i][2] + brectD.x, LD[i][3] + brectD.y));
-	}
-
-	/*»æÖÆÔ­Ê¼±ßÔµµã¼¯*/
-	for (int i = 0; i < linePointU.size(); i++)
-	{
-		BGR1.at<Vec3b>(linePointU[i])[0] = 0;
-		BGR1.at<Vec3b>(linePointU[i])[1] = 0;
-		BGR1.at<Vec3b>(linePointU[i])[2] = 255;
-	}
-	for (int i = 0; i < linePointD.size(); i++)
-	{
-		BGR1.at<Vec3b>(linePointD[i])[0] = 0;
-		BGR1.at<Vec3b>(linePointD[i])[1] = 0;
-		BGR1.at<Vec3b>(linePointD[i])[2] = 255;
-	}
-
-	cout << "before ransac refine: linePointU's size is: " << linePointU.size() << endl;
-	cout << "before ransac refine: linePointD's size is: " << linePointD.size() << endl;
-
-	////vector<Vec4d> linesU, linesD;
-	//vector<Point2f>linesU, linesD;
-	//ransacLines(linePointU, linesU, ransacDistance, 10, 2000);
-	//ransacLines(linePointD, linesD, ransacDistance, 10, 2000);
-	//cout << "after ransac refine: linePointU's size is: " << linePointU.size() << endl;
-	//cout << "after ransac refine: linePointD's size is: " << linePointD.size() << endl;
-
-	/*»æÖÆransacÉ¸Ñ¡ºóµÄµã¼¯*/
-	for (int i = 0; i < linePointU.size(); i++)
-	{
-		BGR2.at<Vec3b>(linePointU[i])[0] = 0;
-		BGR2.at<Vec3b>(linePointU[i])[1] = 0;
-		BGR2.at<Vec3b>(linePointU[i])[2] = 255;
-	}
-	for (int i = 0; i < linePointD.size(); i++)
-	{
-		BGR2.at<Vec3b>(linePointD[i])[0] = 0;
-		BGR2.at<Vec3b>(linePointD[i])[1] = 0;
-		BGR2.at<Vec3b>(linePointD[i])[2] = 255;
-	}
-
-	GatherLineInput inputLU;
-	GatherLineInput inputLD;
-	inputLU.edgePts = linePointU;
-	inputLD.edgePts = linePointD;
-	//inputLU.edgePts = linesU;
-	//inputLD.edgePts = linesD;
-
-	GatherLineOutput outputLU, outputLD;
-	gatherLine(inputLU, outputLU);
-	gatherLine(inputLD, outputLD);
-
-	Point2f ptU1 = outputLU.fitLine.pt1;
-	Point2f ptU2 = outputLU.fitLine.pt2;
-	Point2f ptD1 = outputLD.fitLine.pt1;
-	Point2f ptD2 = outputLD.fitLine.pt2;
-
-	float ka = (float)((ptU2.y - ptU1.y) / (ptU2.x - ptU1.x));
-	float kb = (float)((ptD2.y - ptD1.y) / (ptD2.x - ptD1.x));
-
-	float ma = ptU1.y - ka * ptU1.x;
-	float mb = ptD1.y - kb * ptD1.x;
-
-	Point2f crossPoint;
-	crossPoint.x = (mb - ma) / (ka - kb);
-	crossPoint.y = (ma * kb - mb * ka) / (kb - ka);
-
-	line(srcImageBGR, ptU2, crossPoint, Scalar(0, 0, 255), 1);
-	line(srcImageBGR, ptD2, crossPoint, Scalar(0, 0, 255), 1);
-
-	double duration_ms = (double(getTickCount()) - start) * 1000 / getTickFrequency();
-
-
-	for (int i = 0; i < linePointU.size(); i++)
-	{
-		Point pt = linePointU[i];
-		if (srcImageBGR.at<Vec3b>(pt)[0] == 0 &&
-			srcImageBGR.at<Vec3b>(pt)[1] == 0 &&
-			srcImageBGR.at<Vec3b>(pt)[2] == 255)
-		{
-			srcImageBGR.at<Vec3b>(pt)[0] = 255;
-			srcImageBGR.at<Vec3b>(pt)[1] = 0;
-			srcImageBGR.at<Vec3b>(pt)[2] = 0;
-		}
-		else
-		{
-			srcImageBGR.at<Vec3b>(pt)[0] = 255;
-			srcImageBGR.at<Vec3b>(pt)[1] = 0;
-			srcImageBGR.at<Vec3b>(pt)[2] = 255;
-
-		}
-	}
-	for (int i = 0; i < linePointD.size(); i++)
-	{
-		Point pt = linePointD[i];
-		if (srcImageBGR.at<Vec3b>(pt)[0] == 0 &&
-			srcImageBGR.at<Vec3b>(pt)[1] == 0 &&
-			srcImageBGR.at<Vec3b>(pt)[2] == 255)
-		{
-			srcImageBGR.at<Vec3b>(pt)[0] = 255;
-			srcImageBGR.at<Vec3b>(pt)[1] = 0;
-			srcImageBGR.at<Vec3b>(pt)[2] = 0;
-		}
-		else
-		{
-			srcImageBGR.at<Vec3b>(linePointD[i])[0] = 255;
-			srcImageBGR.at<Vec3b>(linePointD[i])[1] = 0;
-			srcImageBGR.at<Vec3b>(linePointD[i])[2] = 255;
-
-		}
-	}
-
-	float ans = abs(ka*kb + 1);
-
-	cout << "ka is: " << ka << endl;
-	cout << "kb is: " << kb << endl;
-	cout << "Best measurement is: " << ans << " \n";
-	cout << "Best crossPoint is: " << crossPoint << " \n";
-	std::cout << "It took " << duration_ms << " ms." << "\n" << std::endl;
-
-	return crossPoint;
-}
-
-
-
-Point2f GetCrossPoint(Mat&srcImage, double CannyThreshold1, double CannyThreshold2,
-	double HoughThreshold1, double HoughThreshold2, double HoughThreshold3)
-{
-	Mat edges;
-	Mat dstImage = Mat::zeros(srcImage.size(), srcImage.type());
-	// Find the edges in the image using canny detector
-	Canny(srcImage, edges, CannyThreshold1, CannyThreshold2);
-	// Create a vector to store lines of the image
-	vector<Vec4f> lines;
-	vector<Point>linePointX, linePointY;
-	// Apply Hough Transform
-	HoughLinesP(edges, lines, 1, CV_PI / 180, HoughThreshold1,
-		HoughThreshold2, HoughThreshold3);
-
-	// Draw lines on the image
-	float epsilon = 0.001;
-	for (size_t i = 0; i < lines.size(); i++) {
-		Vec4f l = lines[i];
-		//line(dstImage, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255), 3, LINE_AA);
-		if (abs((l[3] - l[1]) / (l[2] - l[0] + epsilon)) > 5)
-		{
-			linePointY.push_back(Point(l[0], l[1]));
-			linePointY.push_back(Point(l[2], l[3]));
-		}
-		else if (abs((l[3] - l[1]) / (l[2] - l[0] + epsilon)) < 0.1)
-		{
-			linePointX.push_back(Point(l[0], l[1]));
-			linePointX.push_back(Point(l[2], l[3]));
-		}
-
-	}
-
-	Vec4f fitLineX, fitLineY;
-	//ÄâºÏ·½·¨²ÉÓÃ×îĞ¡¶ş³Ë·¨
-	fitLine(linePointX, fitLineX, CV_DIST_HUBER, 0, 0.01, 0.01);
-	fitLine(linePointY, fitLineY, CV_DIST_HUBER, 0, 0.01, 0.01);
-
-	float ka, kb;
-	ka = (float)(fitLineX[1] / (fitLineX[0] + 1e-6)); //Çó³öLineAĞ±ÂÊ
-	kb = (float)(fitLineY[1] / (fitLineY[0] + 1e-6)); //Çó³öLineBĞ±ÂÊ
-
-	float ma, mb;
-	ma = fitLineX[3] - ka * fitLineX[2];
-	mb = fitLineY[3] - kb * fitLineY[2];
-
-	Point2f crossPoint;
-	crossPoint.x = (mb - ma) / (ka - kb + 1e-6);
-	crossPoint.y = (ma * kb - mb * ka) / (kb - ka + 1e-6);
-
-	return crossPoint;
-}
-
-
-
-float CalThetaL(Mat srcImage,
-	float thresholdValue, int erodeSize,
-	float circleRadiusMax, float deltaRadius,
-	float CannyThreshold1, double CannyThreshold2,
-	float HoughThreshold1, double HoughThreshold2, double HoughThreshold3)
-{
-	threshold(srcImage, srcImage, thresholdValue, 255, CV_THRESH_BINARY);
-	//Mat element = getStructuringElement(MORPH_RECT, Size(erodeSize, erodeSize));
-	//morphologyEx(srcImage, srcImage, MORPH_OPEN, element);
-	//erode(srcImage, srcImage, element);
-	vector<Vec3f> circles;
-	//µÚÒ»¸ö²ÎÊı£¬InputArrayÀàĞÍµÄimage£¬ÊäÈëÍ¼Ïñ£¬¼´Ô´Í¼Ïñ£¬ĞèÎª8Î»µÄ»Ò¶Èµ¥Í¨µÀÍ¼Ïñ¡£
-	//µÚ¶ş¸ö²ÎÊı£¬InputArrayÀàĞÍµÄcircles£¬¾­¹ıµ÷ÓÃHoughCirclesº¯Êıºó´Ë²ÎÊı´æ´¢ÁË¼ì²âµ½µÄÔ²µÄÊä³öÊ¸Á¿£¬Ã¿¸öÊ¸Á¿ÓÉ°üº¬ÁË3¸öÔªËØµÄ¸¡µãÊ¸Á¿(x, y, radius)±íÊ¾¡£
-	//µÚÈı¸ö²ÎÊı£¬intÀàĞÍµÄmethod£¬¼´Ê¹ÓÃµÄ¼ì²â·½·¨£¬Ä¿Ç°OpenCVÖĞ¾Í»ô·òÌİ¶È·¨Ò»ÖÖ¿ÉÒÔÊ¹ÓÃ£¬ËüµÄ±êÊ¶·ûÎªCV_HOUGH_GRADIENT£¬ÔÚ´Ë²ÎÊı´¦ÌîÕâ¸ö±êÊ¶·û¼´¿É¡£
-	//µÚËÄ¸ö²ÎÊı£¬doubleÀàĞÍµÄdp£¬ÓÃÀ´¼ì²âÔ²ĞÄµÄÀÛ¼ÓÆ÷Í¼ÏñµÄ·Ö±æÂÊÓÚÊäÈëÍ¼ÏñÖ®±ÈµÄµ¹Êı£¬ÇÒ´Ë²ÎÊıÔÊĞí´´½¨Ò»¸ö±ÈÊäÈëÍ¼Ïñ·Ö±æÂÊµÍµÄÀÛ¼ÓÆ÷¡£ÉÏÊöÎÄ×Ö²»ºÃÀí½âµÄ»°£¬À´¿´Àı×Ó°É¡£ÀıÈç£¬Èç¹ûdp= 1Ê±£¬ÀÛ¼ÓÆ÷ºÍÊäÈëÍ¼Ïñ¾ßÓĞÏàÍ¬µÄ·Ö±æÂÊ¡£Èç¹ûdp=2£¬ÀÛ¼ÓÆ÷±ãÓĞÊäÈëÍ¼ÏñÒ»°ëÄÇÃ´´óµÄ¿í¶ÈºÍ¸ß¶È¡£
-	//µÚÎå¸ö²ÎÊı£¬doubleÀàĞÍµÄminDist£¬Îª»ô·ò±ä»»¼ì²âµ½µÄÔ²µÄÔ²ĞÄÖ®¼äµÄ×îĞ¡¾àÀë£¬¼´ÈÃÎÒÃÇµÄËã·¨ÄÜÃ÷ÏÔÇø·ÖµÄÁ½¸ö²»Í¬Ô²Ö®¼äµÄ×îĞ¡¾àÀë¡£Õâ¸ö²ÎÊıÈç¹ûÌ«Ğ¡µÄ»°£¬¶à¸öÏàÁÚµÄÔ²¿ÉÄÜ±»´íÎóµØ¼ì²â³ÉÁËÒ»¸öÖØºÏµÄÔ²¡£·´Ö®£¬Õâ¸ö²ÎÊıÉèÖÃÌ«´óµÄ»°£¬Ä³Ğ©Ô²¾Í²»ÄÜ±»¼ì²â³öÀ´ÁË¡£
-	//µÚÁù¸ö²ÎÊı£¬doubleÀàĞÍµÄparam1£¬ÓĞÄ¬ÈÏÖµ100¡£ËüÊÇµÚÈı¸ö²ÎÊımethodÉèÖÃµÄ¼ì²â·½·¨µÄ¶ÔÓ¦µÄ²ÎÊı¡£¶Ôµ±Ç°Î¨Ò»µÄ·½·¨»ô·òÌİ¶È·¨CV_HOUGH_GRADIENT£¬Ëü±íÊ¾´«µİ¸øcanny±ßÔµ¼ì²âËã×ÓµÄ¸ßãĞÖµ£¬¶øµÍãĞÖµÎª¸ßãĞÖµµÄÒ»°ë¡£
-	//µÚÆß¸ö²ÎÊı£¬doubleÀàĞÍµÄparam2£¬Ò²ÓĞÄ¬ÈÏÖµ100¡£ËüÊÇµÚÈı¸ö²ÎÊımethodÉèÖÃµÄ¼ì²â·½·¨µÄ¶ÔÓ¦µÄ²ÎÊı¡£¶Ôµ±Ç°Î¨Ò»µÄ·½·¨»ô·òÌİ¶È·¨CV_HOUGH_GRADIENT£¬Ëü±íÊ¾ÔÚ¼ì²â½×¶ÎÔ²ĞÄµÄÀÛ¼ÓÆ÷ãĞÖµ¡£ËüÔ½Ğ¡µÄ»°£¬¾Í¿ÉÒÔ¼ì²âµ½¸ü¶à¸ù±¾²»´æÔÚµÄÔ²£¬¶øËüÔ½´óµÄ»°£¬ÄÜÍ¨¹ı¼ì²âµÄÔ²¾Í¸ü¼Ó½Ó½üÍêÃÀµÄÔ²ĞÎÁË¡£
-	//µÚ°Ë¸ö²ÎÊı£¬intÀàĞÍµÄminRadius,ÓĞÄ¬ÈÏÖµ0£¬±íÊ¾Ô²°ë¾¶µÄ×îĞ¡Öµ¡£
-	//µÚ¾Å¸ö²ÎÊı£¬intÀàĞÍµÄmaxRadius,Ò²ÓĞÄ¬ÈÏÖµ0£¬±íÊ¾Ô²°ë¾¶µÄ×î´óÖµ¡£
-	//ĞèÒª×¢ÒâµÄÊÇ£¬Ê¹ÓÃ´Ëº¯Êı¿ÉÒÔºÜÈİÒ×µØ¼ì²â³öÔ²µÄÔ²ĞÄ£¬µ«ÊÇËü¿ÉÄÜÕÒ²»µ½ºÏÊÊµÄÔ²°ë¾¶
-	HoughCircles(srcImage, circles, cv::HOUGH_GRADIENT, 2, 50, 150, 100, 0, circleRadiusMax);
-	for (int i = 0; i < circles.size(); i++)
-	{
-		Vec3f cc = circles[i];
-		circle(srcImage, Point(cc[0], cc[1]), cc[2] + deltaRadius, Scalar(0), -1, LINE_AA);
-	}
-
-	Mat edges;
-	Mat srcImageRGB;
-	cvtColor(srcImage, srcImageRGB, CV_GRAY2BGR);
-	Mat dstImage = Mat::zeros(srcImage.size(), srcImage.type());
-	Canny(srcImage, edges, CannyThreshold1, CannyThreshold2);
-
-	vector<Vec4f> lines;
-	vector<Point>linePointX, linePointY;
-	// Apply Hough Transform
-	HoughLinesP(edges, lines, 1, CV_PI / 540, HoughThreshold1, HoughThreshold2, HoughThreshold3);
-	// Draw lines on the image
-	//float epsilon = 0.001;
-	for (size_t i = 0; i < lines.size(); i++) {
-		Vec4f l = lines[i];
-		//line(dstImage, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255), 3, LINE_AA);
-		if (abs((l[3] - l[1]) / (l[2] - l[0] /*+ epsilon*/)) > 5)
-		{
-			//line(dstImage, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255), 3, LINE_AA);
-			//line(srcImageRGB, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 255), 3, LINE_AA);
-			linePointY.push_back(Point(l[0], l[1]));
-			linePointY.push_back(Point(l[2], l[3]));
-		}
-		else if (abs((l[3] - l[1]) / (l[2] - l[0] /*+ epsilon*/)) < 0.1)
-		{
-			//line(dstImage, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255), 3, LINE_AA);				line(srcImageRGB, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 255), 3, LINE_AA);
-			//line(srcImageRGB, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 255), 3, LINE_AA);
-			linePointX.push_back(Point(l[0], l[1]));
-			linePointX.push_back(Point(l[2], l[3]));
-		}
-	}
-
-	Vec4f fitLineX, fitLineY;
-	//ÄâºÏ·½·¨²ÉÓÃ×îĞ¡¶ş³Ë·¨
-	fitLine(linePointX, fitLineX, CV_DIST_HUBER, 0, 0.01, 0.01);
-	fitLine(linePointY, fitLineY, CV_DIST_HUBER, 0, 0.01, 0.01);
-	float ka, kb;
-	ka = (float)(fitLineX[1] / (fitLineX[0])); //Çó³öLineAĞ±ÂÊ
-	float theta = atan(ka);
-
-	return theta;
-}
-
-
-
-Position CalPosition(Mat imageL, Mat imageR,
-	HomographyStruct invH, Point2f rotatePtW1, Point2f rotatePtW2)
-{
+	maskImageL = imread(".\\L-12-8.bmp", 0);
+	maskImageR = imread(".\\R-12-8.bmp", 0);
+	//maskImageL = imread("E:\\æ•°æ®é›†\\3å·å°ç›´è§’ç›–æ¿å›¾åƒ\\maskImageL.bmp", 0);
+	//maskImageR = imread("E:\\æ•°æ®é›†\\3å·å°ç›´è§’ç›–æ¿å›¾åƒ\\maskImageR.bmp", 0);
+
+
+	FileStorage fs(".\\æ ‡å®šç»“æœ.xml", FileStorage::READ);
+	//FileStorage fs(".\\ç›´è§’è¾¹å·¥ä»¶æ ‡å®šç»“æœ.xml", FileStorage::READ);
+	Mat invHL, invHR;
+	Mat ML, MR;
+	Point2f rotatePoint1, rotatePoint2;
+	fs["invHL"] >> invHL;
+	fs["invHR"] >> invHR;
+	fs["ML"] >> ML;
+	fs["MR"] >> MR;
+	fs["rotatePoint1"] >> rotatePoint1;
+	fs["rotatePoint2"] >> rotatePoint2;
+
+	/*è®¡ç®—è§’ç‚¹çš„åƒç´ åæ ‡*/
+	RansacTest rl, rr;//åç»­å®éªŒè°ƒç”¨ï¼Œæš‚æ— ç”¨å¤„
+	CrossPointInfo resultL, resultR;
 	Point2f crossPointL, crossPointR;
+	crossPointL = GetCrossBaseFastShapeL(imageL, maskImageL, rl, &strL[0]).crossPoint;
+	crossPointR = GetCrossBaseFastShapeR(imageR, maskImageR, rr, &strR[0]).crossPoint;
+	//crossPointL = resultL.crossPoint;
+	//crossPointR = resultR.crossPoint;
 
-	/*¼ÆËã½ÇµãµÄÏñËØ×ø±ê*/
-#if CrossMethod == 1
-	crossPointL = GetCrossPointL(imageL, thresholdValue, 3,
-		circleRadiusMax, deltaRadius, CannyThreshold1, CannyThreshold2,
-		HoughThreshold1, HoughThreshold2, HoughThreshold3);
-	crossPointR = GetCrossPointR(imageR, CannyThreshold1, CannyThreshold2,
-		HoughThreshold1, HoughThreshold2, HoughThreshold3);
-#elif CrossMethod == 2
-	crossPointL = GetCrossBasedShapeL(imageL, maskImageL);
-	crossPointR = GetCrossBasedShapeR(imageR, maskImageR);
-#elif CrossMethod == 3
-	string strL = "´ı²âÍ¼Ïñ×ó";
-	string strR = "´ı²âÍ¼ÏñÓÒ";
-	RansacTest rl, rr;
-	crossPointL = GetCrossBaseFastShapeL(imageL, maskImageL, rl, &strL[0]);
-	crossPointR = GetCrossBaseFastShapeR(imageR, maskImageR, rr, &strR[0]);
+	//è§’ç‚¹åƒç´ åæ ‡å˜æ¢è‡³å±€éƒ¨ä¸–ç•Œåæ ‡ç³»
+#if	CalibrationMethod ==1
+	Point2f crossPointWorldL = TransToWorldAxis(crossPointL, invHL);
+	Point2f crossPointWorldR = TransToWorldAxis(crossPointR, invHR);
+#elif CalibrationMethod ==2
+	Point2f crossPointWorldL = CalWorldPoint(crossPointL, ML);
+	Point2f crossPointWorldR = CalWorldPoint(crossPointR, MR);
+#endif	
 
-#endif 
+	/*åˆ†åˆ«å‡å»å„è‡ªçš„æ—‹è½¬ä¸­å¿ƒåæ ‡ï¼Œå˜æ¢è‡³ä»¥æ—‹è½¬ä¸­å¿ƒä¸ºåŸç‚¹çš„ç»Ÿä¸€ä¸–ç•Œåæ ‡ç³»*/
+	Point2f uniformCrossPointL = crossPointWorldL - rotatePoint1;//å·¦è§’ç‚¹-å·¦å±€éƒ¨ä¸–ç•Œåæ ‡ç³»æ—‹è½¬ä¸­å¿ƒåæ ‡
+	Point2f uniformCrossPointR = crossPointWorldR - rotatePoint2;//å³è§’ç‚¹-å³å±€éƒ¨ä¸–ç•Œåæ ‡ç³»æ—‹è½¬ä¸­å¿ƒåæ ‡
 
-	//½ÇµãÏñËØ×ø±ê±ä»»ÖÁ¾Ö²¿ÊÀ½ç×ø±êÏµ
-	Point2f crossPointWorldL = TransToWorldAxis(crossPointL, invH.L);
-	Point2f crossPointWorldR = TransToWorldAxis(crossPointR, invH.R);
+	//è®¡ç®—è§’ç‚¹çš„ä¸­å¿ƒç‚¹çš„ç»Ÿä¸€ä¸–ç•Œåæ ‡
+	Point2f uniformCenterPoint = (uniformCrossPointL + uniformCrossPointR) / 2;
 
-	/*·Ö±ğ¼õÈ¥¸÷×ÔµÄĞı×ªÖĞĞÄ×ø±ê£¬±ä»»ÖÁÒÔĞı×ªÖĞĞÄÎªÔ­µãµÄÍ³Ò»ÊÀ½ç×ø±êÏµ*/
-	Point2f uniformCrossPointL = Point2f(crossPointWorldL.x - rotatePtW1.x,
-		crossPointWorldL.y - rotatePtW1.y);//×ó½Çµã-×ó¾Ö²¿ÊÀ½ç×ø±êÏµĞı×ªÖĞĞÄ×ø±ê
-	Point2f uniformCrossPointR = Point2f(crossPointWorldR.x - rotatePtW2.x,
-		crossPointWorldR.y - rotatePtW2.y);//ÓÒ½Çµã-ÓÒ¾Ö²¿ÊÀ½ç×ø±êÏµĞı×ªÖĞĞÄ×ø±ê
-
-	//¼ÆËã½ÇµãµÄÖĞĞÄµãµÄÍ³Ò»ÊÀ½ç×ø±ê
-	float pointX = (uniformCrossPointL.x + uniformCrossPointR.x) / 2;
-	float pointY = (uniformCrossPointL.y + uniformCrossPointR.y) / 2;
-	Point2f uniformCenterPoint = Point2f(pointX, pointY);
-
-	//ÔÚÍ³Ò»ÊÀ½ç×ø±êÏµÏÂ¼ÆËã¸Ç°å±ßÔµµÄÇãĞ±½Ç¶Ètheta
+	//åœ¨ç»Ÿä¸€ä¸–ç•Œåæ ‡ç³»ä¸‹è®¡ç®—ç›–æ¿è¾¹ç¼˜çš„å€¾æ–œè§’åº¦theta
 	float theta = atan((uniformCrossPointR.y - uniformCrossPointL.y)
 		/ (uniformCrossPointR.x - uniformCrossPointL.x));
 
@@ -1997,245 +1162,85 @@ Position CalPosition(Mat imageL, Mat imageR,
 
 
 
-ControlInstruction GetInstruction(Position& bmPosition, Position& testPosition, Point2f& rotatePoint)
+ControlInstruction GetInstruction(Position& bmPosition, Position& testPosition)
 {
-	/*¼ÆËã´ı²â¹¤¼şÒÆ¶¯ÖÁ»ù×¼Î»ÖÃĞèÒªÒÆ¶¯µÄÆ«ÒÆÁ¿ºÍĞı×ªÁ¿*/
+	/*è®¡ç®—å¾…æµ‹å·¥ä»¶ç§»åŠ¨è‡³åŸºå‡†ä½ç½®éœ€è¦ç§»åŠ¨çš„åç§»é‡å’Œæ—‹è½¬é‡*/
 	ControlInstruction instruction;
 
-	//¼ÆËãĞı×ªÁ¿alpha
-	instruction.commandTheta = bmPosition.theta - testPosition.theta;
+	//è®¡ç®—æ—‹è½¬é‡alpha
+	float theta = -bmPosition.theta + testPosition.theta;
 
-	//¼ÆËãÆ«ÒÆÁ¿
-	Point2f uniformBmCrossPointL = bmPosition.uniformCrossPointL;
-	Point2f uniformBmCrossPointR = bmPosition.uniformCrossPointR;
-	Point2f uniformBmCenterPoint = bmPosition.uniformCenterPoint;
+	Point2f bmL = bmPosition.uniformCrossPointL;
+	Point2f bmR = bmPosition.uniformCrossPointR;
+	Point2f bmC = bmPosition.uniformCenterPoint;
+	Point2f testL = testPosition.uniformCrossPointL;
+	Point2f testR = testPosition.uniformCrossPointR;
+	Point2f testC = testPosition.uniformCenterPoint;
 
-	Point2f uniformTestCrossPointL = testPosition.uniformCrossPointL;
-	Point2f uniformTestCrossPointR = testPosition.uniformCrossPointR;
-	Point2f uniformTestCenterPoint = testPosition.uniformCenterPoint;
+	float rotateBmLX = cos(theta)*bmL.x - sin(theta)*bmL.y;
+	float rotateBmLY = sin(theta)*bmL.x + cos(theta)*bmL.y;
 
-	float uTCRotatePointLX = cos(instruction.commandTheta)*(uniformTestCrossPointL.x) -
-		sin(instruction.commandTheta)*(uniformTestCrossPointL.y);
-	float uTCRotatePointLY = sin(instruction.commandTheta)*(uniformTestCrossPointL.x) +
-		cos(instruction.commandTheta)*(uniformTestCrossPointL.y);
+	float rotateBmRX = cos(theta)*bmR.x - sin(theta)*bmR.y;
+	float rotateBmRY = sin(theta)*bmR.x + cos(theta)*bmR.y;
 
-	float uTCRotatePointRX = cos(instruction.commandTheta)*(uniformTestCrossPointR.x) -
-		sin(instruction.commandTheta)*(uniformTestCrossPointR.y);
-	float uTCRotatePointRY = sin(instruction.commandTheta)*(uniformTestCrossPointR.x) +
-		cos(instruction.commandTheta)*(uniformTestCrossPointR.y);
+	float rotateBmCX = cos(theta)*bmC.x - sin(theta)*bmC.y;
+	float rotateBmCY = sin(theta)*bmC.x + cos(theta)*bmC.y;
 
-	float uTCRotatePointCenterX = cos(instruction.commandTheta)*(uniformTestCenterPoint.x) -
-		sin(instruction.commandTheta)*(uniformTestCenterPoint.y);
-	float uTCRotatePointCenterY = sin(instruction.commandTheta)*(uniformTestCenterPoint.x) +
-		cos(instruction.commandTheta)*(uniformTestCenterPoint.y);
+	Point2f rbmL(rotateBmLX, rotateBmLY);
+	Point2f rbmR(rotateBmRX, rotateBmRY);
+	Point2f rbmC(rotateBmCX, rotateBmCY);
 
-	//Ğı×ªĞ£ÕıÖ®ºóµÄÖĞĞÄµã×ø±ê
-	Point2f testRotatePoint = Point2f(uTCRotatePointCenterX, uTCRotatePointCenterY);
+	Point2f commandL = rbmL - testL;
+	Point2f commandR = rbmR - testR;
+	Point2f commandC = rbmC - testC;
 
-	float commandX1, commandX2, commandX3;
-	float commandY1, commandY2, commandY3;
 
-	commandX1 = -uTCRotatePointLX + uniformBmCrossPointL.x;
-	commandY1 = -uTCRotatePointLY + uniformBmCrossPointL.y;
+	float errorLX = commandL.x - round(commandL.x);
+	float errorLY = commandL.y - round(commandL.y);
+	float errorRX = commandR.x - round(commandR.x);
+	float errorRY = commandR.y - round(commandR.y);
+	float errorCX = commandC.x - round(commandC.x);
+	float errorCY = commandC.y - round(commandC.y);
 
-	commandX2 = -uTCRotatePointRX + uniformBmCrossPointR.x;
-	commandY2 = -uTCRotatePointRY + uniformBmCrossPointR.y;
 
-	commandX3 = -uTCRotatePointCenterX + uniformBmCenterPoint.x;
-	commandY3 = -uTCRotatePointCenterY + uniformBmCenterPoint.y;
+	float commandX, commandY;
+	commandX = -commandC.x;
+	commandY = -commandC.y;
 
-	//instruction.commandX = (commandX1 + commandX2 + commandX3) / 3;
-	//instruction.commandY = (commandY1 + commandY2 + commandY3) / 3;
-	instruction.commandX = commandX3;
-	instruction.commandY = commandY3;
+	instruction.commandTheta = -theta;
+	instruction.commandX = commandX;
+	instruction.commandY = commandY;
+
+	cout << "å·¦è§’ç‚¹Xè¯¯å·®: " << errorLX << endl;
+	cout << "å·¦è§’ç‚¹Yè¯¯å·®: " << errorLY << endl;
+	cout << "å³è§’ç‚¹Xè¯¯å·®: " << errorRX << endl;
+	cout << "å³è§’ç‚¹Yè¯¯å·®: " << errorRY << endl;
+	cout << "ä¸­ç‚¹Xè¯¯å·®: " << errorCX << endl;
+	cout << "ä¸­ç‚¹Yè¯¯å·®: " << errorCY << "\n" << endl;
 
 	return instruction;
 }
 
 
-/*¼ÆËãÄ³Ò»±ä»»¶ÔÓ¦µÄÌØÕ÷¾àÀë*/
-GCBS SingleTransEvaluation(Mat& lineRegionU, Mat& lineRegionD,
-	tuple<float, float>& curParam, float brectUX, float brectUY,
-	float brectDX, float brectDY)
-{
-	GCBS curResult;
-
-	int gray = get<0>(curParam);
-	int gradient = get<1>(curParam);
-
-	vector<Point2f>linePointX, linePointY;
-	linePointX = GetLinePointsBaseLsd(lineRegionU, gray, gradient, brectUX, brectUY);
-	linePointY = GetLinePointsBaseLsd(lineRegionD, gray, gradient, brectDX, brectDY);
-
-	curResult.FLAG = (linePointX.size() < 20 || linePointY.size() < 20) ? false : true;
-
-	if (curResult.FLAG == 1)
-	{
-		Vec4f fitLineX, fitLineY;
-		fitLine(linePointX, fitLineX, CV_DIST_HUBER, 0, 0.01, 0.01);
-		fitLine(linePointY, fitLineY, CV_DIST_HUBER, 0, 0.01, 0.01);
-
-		float ka = (float)(fitLineX[1] / (fitLineX[0])); //Çó³öLineAĞ±ÂÊ
-		float kb = (float)(fitLineY[1] / (fitLineY[0])); //Çó³öLineBĞ±ÂÊ
-		float ma = fitLineX[3] - ka * fitLineX[2];
-		float mb = fitLineY[3] - kb * fitLineY[2];
-
-		Point2f crossPoint;
-		crossPoint.x = (mb - ma) / (ka - kb);
-		crossPoint.y = (ma * kb - mb * ka) / (kb - ka);
-
-		Point2f pt1, pt2;
-		pt1.x = fitLineX[2];
-		pt1.y = fitLineX[3];
-		pt2.x = fitLineY[2];
-		pt2.y = fitLineY[3];
-
-		//Mat srcImageRGB;
-		//cvtColor(srcImage, srcImageRGB, CV_GRAY2BGR);
-		//line(srcImageRGB, pt1, crossPoint, Scalar(0, 0, 255), 1, LINE_AA);
-		//line(srcImageRGB, pt2, crossPoint, Scalar(0, 0, 255), 1, LINE_AA);
-		////circle(srcImageRGB, crossPoint, 8, Scalar(0, 0, 255), -1);
-
-		float measure = abs(ka * kb + 1);
-
-		curResult.ka = ka;
-		curResult.kb = kb;
-		curResult.ma = ma;
-		curResult.mb = mb;
-		curResult.measure = measure;
-		curResult.gray = gray;
-		curResult.gradient = gradient;
-
-		curResult.crossPoint = crossPoint;
-		curResult.pt1 = pt1;
-		curResult.pt2 = pt2;
-	}
-
-	return curResult;
-}
-
-
-/*¼ÆËãµ±Ç°ParamNetÏÂµÄ×î¼Ñ±ä»»*/
-GCBS GetBestMeasure(Mat& imageU, Mat& imageD,
-	vector <tuple<float, float>> ParamNet,
-	float brectUX, float brectUY,
-	float brectDX, float brectDY,
-	float delta)
-{
-	tuple<float, float> bestParam;
-	GCBS curResult, bestResult;
-	bestResult.measure = 1;
-
-	for (int i = 0; i < ParamNet.size(); i++)
-	{
-		tuple<float, float> curParam = ParamNet[i];
-		curResult = SingleTransEvaluation(imageU, imageD,
-			curParam, brectUX, brectUY, brectDX, brectDY);
-
-		if (curResult.FLAG == 1)
-		{
-			bestResult.MeasureSet.push_back(curResult.measure);
-
-			if (curResult.measure < bestResult.measure)
-			{
-				bestResult.ka = curResult.ka;
-				bestResult.kb = curResult.kb;
-				bestResult.ma = curResult.ma;
-				bestResult.mb = bestResult.mb;
-				bestResult.measure = curResult.measure;
-				bestResult.gradient = curResult.gradient;
-				bestResult.gray = curResult.gray;
-
-				bestResult.crossPoint = curResult.crossPoint;
-				bestResult.pt1 = curResult.pt1;
-				bestResult.pt2 = curResult.pt2;
-			}
-		}
-		else
-		{
-			bestResult.MeasureSet.push_back(1000);
-		}
-	}
-
-	return bestResult;
-}
-
-
-
-vector <tuple<float, float>> GetNextNet(vector<tuple<float, float>> &GoodParamNet,
-	float txStep, float tyStep, float delta)
-{
-	txStep *= delta;
-	tyStep *= delta;
-
-	vector<tuple<float, float>> nextParamNet;
-	tuple<float, float> extendedParam;
-	for (int i = 0; i < GoodParamNet.size(); i++)
-	{
-		nextParamNet.push_back(GoodParamNet[i]);
-		for (float outerX = -txStep; outerX <= txStep; outerX += txStep)
-		{
-			for (float outerY = -tyStep; outerY <= tyStep; outerY += tyStep)
-			{
-				if (outerX == 0 && outerY == 0)
-				{
-					continue;
-				}
-				get<0>(extendedParam) = get<0>(GoodParamNet[i]) + outerX;
-				get<1>(extendedParam) = get<1>(GoodParamNet[i]) + outerY;
-				nextParamNet.push_back(extendedParam);
-			}
-		}
-	}
-
-	return nextParamNet;
-}
-
-
-vector<tuple<float, float>> ConstructNetForLineParam(
-	float lowGray, float highGray,
-	float lowGradient, float highGradient, float delta)
-{
-
-	float tx_step = float(delta * (highGray - lowGray));
-	float ty_step = float(delta * (highGradient - lowGradient));
-
-	float tx, ty;
-	vector<tuple<float, float>> Params;
-
-	for (float tx_index = lowGray; tx_index <= highGray; tx_index += tx_step)
-	{
-		tx = tx_index;
-		for (float ty_index = lowGradient; ty_index <= highGradient; ty_index += ty_step)
-		{
-			ty = ty_index;
-			tuple<float, float>curParam{ tx,ty };
-			Params.push_back(curParam);
-		}
-	}
-
-	return Params;
-}
-
 
 float select(vector<float> s, int left, int right, int k)
-{ // ÔÚs[ left .. right ]ÖĞÑ¡ÔñµÚk Ğ¡µÄÔªËØ
+{ // åœ¨s[ left .. right ]ä¸­é€‰æ‹©ç¬¬k å°çš„å…ƒç´ 
 	if (left >= right)
 		return abs(s[left]);
-	int i = left; // ´Ó×óÖÁÓÒµÄ±êÖ¾
-	int j = right + 1; // ´ÓÓÒµ½×óµÄ±êÖ¾
-	float pivot = abs(s[left]); // ½«×î×óÃæµÄÔªËØ×÷Îª·Ö½çÊı¾İ
+	int i = left; // ä»å·¦è‡³å³çš„æ ‡å¿—
+	int j = right + 1; // ä»å³åˆ°å·¦çš„æ ‡å¿—
+	float pivot = abs(s[left]); // å°†æœ€å·¦é¢çš„å…ƒç´ ä½œä¸ºåˆ†ç•Œæ•°æ®
 	while (true)
 	{
 		do
-		{ // ÔÚ×ó²àÑ°ÕÒ>= pivot µÄÔªËØ
+		{ // åœ¨å·¦ä¾§å¯»æ‰¾>= pivot çš„å…ƒç´ 
 			i = i + 1;
 		} while (abs(s[i]) < pivot);
 		do
-		{ // ÔÚÓÒ²àÑ°ÕÒ<= pivot µÄÔªËØ
+		{ // åœ¨å³ä¾§å¯»æ‰¾<= pivot çš„å…ƒç´ 
 			j = j - 1;
 		} while (abs(s[j]) > pivot);
-		if (i >= j) // Î´·¢ÏÖ½»»»¶ÔÏó
+		if (i >= j) // æœªå‘ç°äº¤æ¢å¯¹è±¡
 			break;
 		float temp = abs(s[i]);
 		s[i] = abs(s[j]);
@@ -2243,169 +1248,19 @@ float select(vector<float> s, int left, int right, int k)
 	}
 	if (j - left + 1 == k)
 		return pivot;
-	s[left] = abs(s[j]); // ÉèÖÃpivot
+	s[left] = abs(s[j]); // è®¾ç½®pivot
 	s[j] = pivot;
-	if (j - left + 1 < k) // ¶ÔÒ»¸ö¶Îµİ¹é
+	if (j - left + 1 < k) // å¯¹ä¸€ä¸ªæ®µé€’å½’
 		return select(s, j + 1, right, k - j - 1 + left);
 	else
 		return select(s, left, j - 1, k);
 }
 
 float findKth(vector<float>s, int n, int K)
-{ // ·µ»Ø s[0 .. n - 1]ÖĞµÚK Ğ¡µÄÔªËØ
+{ // è¿”å› s[0 .. n - 1]ä¸­ç¬¬K å°çš„å…ƒç´ 
 	if (K < 1 || K > n)
 		throw "error";
 	return select(s, 0, n - 1, K);
-}
-
-/* I1 : mask; I2 : src*/
-GCBS FastMatchForLineParam(Mat& imageU, Mat& imageD,
-	float lowGray, float highGray, float lowGradient, float highGradient,
-	float brectUX, float brectUY, float brectDX, float brectDY, float delta)
-{
-	//for (int ux = 0; ux < imageU.cols; ux++)
-	//{
-	//	for (int uy = 0; uy < imageU.rows; uy++)
-	//	{
-	//		Point2f pt = Point2f(ux, uy);
-	//		if (imageU.at<uchar>(pt) >220)
-	//		{
-	//			imageU.at<uchar>(pt) = 255;
-	//		}
-	//	}
-	//}
-
-	//for (int dx = 0; dx < imageD.cols; dx++)
-	//{
-	//	for (int dy = 0; dy < imageD.rows; dy++)
-	//	{
-	//		Point2f pt = Point2f(dx, dy);
-	//		if (imageD.at<uchar>(pt) > 220)
-	//		{
-	//			imageD.at<uchar>(pt) = 255;
-	//		}
-	//	}
-	//}
-
-	/*Step 1 : Construct the N(¦Ä) net */
-	float tx_step = delta * (highGray - lowGray);
-	float ty_step = delta * (highGradient - lowGradient);
-
-	/*vector<tuple<gray,gradient>>*/
-	vector<tuple<float, float>> ParamNet, GoodParamNet;
-
-	ParamNet = ConstructNetForLineParam(lowGray, highGray,
-		lowGradient, highGradient, delta);
-
-	/*Step 2: Iterate, update and calculate the best translation.*/
-	int index = 0;
-	GCBS curBestResult, bestResult;
-	bestResult.measure = 10;
-
-	vector<float>bestMeasureSet;
-	//float L_Delta = 0.4;
-	float L_Delta;
-
-	while (true)
-	{
-		index++;
-		cout << "Current TransNet's size is: " << ParamNet.size() << endl;
-
-		curBestResult = GetBestMeasure(imageU, imageD, ParamNet,
-			brectUX, brectUY, brectDX, brectDY, delta);
-
-		if (curBestResult.measure < bestResult.measure)
-		{
-			bestResult.measure = curBestResult.measure;
-			bestResult.ka = curBestResult.ka;
-			bestResult.kb = curBestResult.kb;
-			bestResult.ma = curBestResult.ma;
-			bestResult.mb = curBestResult.mb;
-			bestResult.gray = curBestResult.gray;
-			bestResult.gradient = curBestResult.gradient;
-			bestResult.crossPoint = curBestResult.crossPoint;
-			bestResult.pt1 = curBestResult.pt1;
-			bestResult.pt2 = curBestResult.pt2;
-		}
-
-		bestMeasureSet.push_back(bestResult.measure);
-		if (abs(bestMeasureSet[index - 1] - bestMeasureSet[index - 3]) < 0.1)
-		{
-			break;
-		}
-
-		/*¼ÆËãºÍ×î¼Ñ±ä»»Ïà½üµÄ´ÎÓÅ½â¼¯ºÏGoodTransNet*/
-		float alpha = 0.5, beta = 0;
-		L_Delta = alpha * bestResult.measure + beta;
-
-		float kThMin = select(curBestResult.MeasureSet, 0, curBestResult.MeasureSet.size(), 10);
-
-		//vector<tuple<float, float>> tempParamNet;
-		vector<tuple<float, float>>().swap(GoodParamNet);
-		for (int i = 0; i < ParamNet.size(); i++)
-		{
-			float curMeasure = curBestResult.MeasureSet[i];
-			if (curMeasure != 1000 && abs(curMeasure - bestResult.measure) < L_Delta && curMeasure <= kThMin)
-			{
-				tuple<float, float> curParam = ParamNet[i];//»ñÈ¡µ±Ç°±ä»»
-				GoodParamNet.push_back(curParam);
-			}
-		}
-
-		if (GoodParamNet.size() == 0)
-		{
-			cout << "L_Delta isn't suitable,please adjust." << endl;
-			break;
-		}
-
-		//Çå¿ÕGoodTransNet£¬´æÈëµ±Ç°µÄtempTransNet
-		//vector<tuple<float, float>>().swap(GoodParamNet);
-		//if (tempParamNet.size() > 10)
-		//{
-		//	int deltaNum = tempParamNet.size() - 10;
-		//	int offsetNum = rand() % deltaNum;
-		//	vector<tuple<float, float>>::const_iterator first = tempParamNet.begin() + offsetNum;
-		//	vector<tuple<float, float>>::const_iterator second = tempParamNet.begin() + offsetNum + 10;
-		//	vector<tuple<float, float>>cutGoodParamNet(first, second);
-		//	GoodParamNet = cutGoodParamNet;
-		//	tuple<float, float>curBestParam{ bestResult.gray,bestResult.gradient };
-		//	GoodParamNet.push_back(curBestParam);
-		//}
-		//else
-		//{
-		//	GoodParamNet = tempParamNet;
-		//}
-
-
-		cout << "the " << index << "th's GoodTransNet's size is :" << GoodParamNet.size() << endl;
-
-		//vector<tuple<float, float>>().swap(tempParamNet);
-
-		/*¸üĞÂL_DeltaÓë¦Ä*/
-		//L_Delta /= 2;
-		delta /= 2;
-
-		/*¸ù¾İĞÂµÄ¦ÄºÍGoodTransNet¸üĞÂ±ä»»ÍøÂçTransNet*/
-		vector<tuple<float, float>>().swap(ParamNet);//Çå¿ÕTransNet
-		ParamNet = GetNextNet(GoodParamNet, tx_step, ty_step, delta);
-
-		/*Çå¿Õvector*/
-		//vector<float>().swap(bestDistanceSet);
-		//vector<tuple<float, float>>().swap(GoodParamNet);
-
-		if (ParamNet.size() > 1000 || delta < 0.005 || abs(bestResult.measure) < 0.05)
-		{
-			break;
-		}
-	}
-
-	cout << "Step 2:gray is: " << bestResult.gray << endl;
-	cout << "Step 2:gradient is: " << bestResult.gradient << endl;
-	cout << "Step 2:Step 2:Size of the N(¦Ä) net is:" << ParamNet.size() << endl;
-	cout << "Step 2:delta is :" << delta << "; bestMeasure is :" << bestResult.measure << endl;
-	cout << "Step 2:Iterate, update and calculate the best translation has been finished !" << endl;
-
-	return bestResult;
 }
 
 
@@ -2422,9 +1277,9 @@ void refinePointSet(vector<Point2f>& srcPointSet, vector<Point2f>& dstPointSet)
 	for (int i = 0; i < deltaFreemanCode.size(); i++)
 	{
 		Point2f pt = srcPointSet[i + 1];
-		if (deltaFreemanCode[i] != 0)//×·×Ùµ±Ç°µã
+		if (deltaFreemanCode[i] != 0)//è¿½è¸ªå½“å‰ç‚¹
 		{
-			/*×·×Ùµ±Ç°µãµÄ×ó°ë¶Ë*/
+			/*è¿½è¸ªå½“å‰ç‚¹çš„å·¦åŠç«¯*/
 			int leftChaseIndex = 1;
 			while (deltaFreemanCode[i - leftChaseIndex] == 0)
 			{
@@ -2433,7 +1288,7 @@ void refinePointSet(vector<Point2f>& srcPointSet, vector<Point2f>& dstPointSet)
 				if (i - leftChaseIndex == srcPointSet.size() - 1)break;
 			}
 
-			/*×·×Ùµ±Ç°µãµÄÓÒ°ë¶Ë*/
+			/*è¿½è¸ªå½“å‰ç‚¹çš„å³åŠç«¯*/
 			int rightChaseIndex = 1;
 			while (deltaFreemanCode[i + rightChaseIndex] == 0)
 			{
@@ -2442,7 +1297,7 @@ void refinePointSet(vector<Point2f>& srcPointSet, vector<Point2f>& dstPointSet)
 				if (i + rightChaseIndex == srcPointSet.size() - 1)break;
 			}
 
-			/*ÔÚ5ÁÚÓòÄÚ±ä»¯Á½´Î£¬ÈÏÎªµ±Ç°µãÊôÓÚÒì³£µã*/
+			/*åœ¨5é‚»åŸŸå†…å˜åŒ–ä¸¤æ¬¡ï¼Œè®¤ä¸ºå½“å‰ç‚¹å±äºå¼‚å¸¸ç‚¹*/
 			if (leftChaseIndex <= 5 && rightChaseIndex <= 5)
 			{
 				//cout << "[" << pt.x << "," << pt.y << "] is a line-point." << endl;
@@ -2462,37 +1317,37 @@ void refinePointSet(vector<Point2f>& srcPointSet, vector<Point2f>& dstPointSet)
 
 /*************************************************************
 Function:       GetCrossBasedFastShapeL
-Description:    Ê¹ÓÃĞÎ×´Æ¥Åä¼ÆËãÊÖ»ú¸Ç°å×ó½Çµã
-Input:          srcImage:´ı²âÍ¼Ïñ maskImage:Ä£°åÍ¼Ïñ
-Return:         ¸Ç°å×ó½Çµã
+Description:    ä½¿ç”¨å½¢çŠ¶åŒ¹é…è®¡ç®—æ‰‹æœºç›–æ¿å·¦è§’ç‚¹
+Input:          srcImage:å¾…æµ‹å›¾åƒ maskImage:æ¨¡æ¿å›¾åƒ
+Return:         ç›–æ¿å·¦è§’ç‚¹
 **************************************************************/
-Point2f GetCrossBaseFastShapeL(Mat& srcImage, Mat& maskImage, RansacTest& ransacResult, char *a)
+CrossPointInfo GetCrossBaseFastShapeL(Mat& srcImage, Mat& maskImage, RansacTest& ransacResult, char *a)
 {
-	//GaussianBlur(srcImage, srcImage, Size(3, 3), 0, 0);
-
-	/*step1:ĞÎ×´Æ¥Åä£¬»ñÈ¡¾Ö²¿ROI*/
-	ShapeMatchLocation arcShapeMatchLocation = GetShapeTrans(maskImage, srcImage,factor);
+	/*step1:å½¢çŠ¶åŒ¹é…ï¼Œè·å–å±€éƒ¨ROI*/
+	ShapeMatchLocation arcShapeMatchLocation = GetShapeTrans(maskImage, srcImage, factor);
 
 	Point2f locate = arcShapeMatchLocation.anchorPt;
 	float bestTheta = arcShapeMatchLocation.theta;
 
-	//Rect maskArcRegion = Rect(1300, 708, 2580 - 1300, 1828 - 708);
-	//Rect maskLineRegion1 = Rect(2410 , 551, 600 + roiOffset, 400);
-	//Rect maskLineRegion2 = Rect(1044, 1707, 500, 400);
-
+	/*3å·æœºæ¨¡æ¿*/
+	//best backup
 	//Rect maskArcRegion = Rect(1500, 900, 1370, 1300);
-	//Rect maskLineRegion1 = Rect(2538, 850, 600, 400);
-	//Rect maskLineRegion2 = Rect(1350, 1970+200, 400, 400);
-	//Rect maskLineRegion2 = Rect(1350, 1930 + 210 , 400, 400);
-
+	//Rect maskLineRegion1 = Rect(2988, 850, 600, 400);
+	//Rect maskLineRegion2 = Rect(1350, 2100, 400, 400);
+	//å®é™…
 	Rect maskArcRegion = Rect(1500, 900, 1370, 1300);
-	Rect maskLineRegion1 = Rect(2988, 850, 600, 400);
+	Rect maskLineRegion1 = Rect(2988 - 200, 850, 600, 400);
 	Rect maskLineRegion2 = Rect(1350, 2100, 400, 400);
+
+	/*ç›´è§’è¾¹æ¨¡æ¿*/
+	//Rect maskArcRegion = Rect(1640, 620, 2280 - 1640, 1250 - 620);
+	//Rect maskLineRegion1 = Rect(2340, 600 - 100, 1000, 400);
+	//Rect maskLineRegion2 = Rect(1600 - 100, 1270, 400, 600);
 
 	float centerX = maskArcRegion.width / 2 + maskArcRegion.x;
 	float centerY = maskArcRegion.height / 2 + maskArcRegion.y;
-	float deltaCol = locate.x ;
-	float deltaRow = locate.y ;
+	float deltaCol = locate.x;
+	float deltaRow = locate.y;
 
 	float xUA1 = maskLineRegion1.x - centerX, yUA1 = maskLineRegion1.y - centerY;
 	float xUA2 = maskLineRegion1.x + maskLineRegion1.width - centerX, yUA2 = maskLineRegion1.y - centerY;
@@ -2504,56 +1359,56 @@ Point2f GetCrossBaseFastShapeL(Mat& srcImage, Mat& maskImage, RansacTest& ransac
 	float xDB1 = maskLineRegion2.x - centerX, yDB1 = maskLineRegion2.y + maskLineRegion2.height - centerY;
 	float xDB2 = maskLineRegion2.x + maskLineRegion2.width - centerX, yDB2 = maskLineRegion2.y + maskLineRegion2.height - centerY;
 
-	//U×óÉÏ½Çµã
+	//Uå·¦ä¸Šè§’ç‚¹
 	float trxUA1 = cos(bestTheta)*xUA1 - sin(bestTheta)*yUA1 + deltaCol;
 	float tryUA1 = sin(bestTheta)*xUA1 + cos(bestTheta)*yUA1 + deltaRow;
-	//UÓÒÉÏ½Çµã
+	//Uå³ä¸Šè§’ç‚¹
 	float trxUA2 = cos(bestTheta)*xUA2 - sin(bestTheta)*yUA2 + deltaCol;
 	float tryUA2 = sin(bestTheta)*xUA2 + cos(bestTheta)*yUA2 + deltaRow;
-	//U×óÏÂ½Çµã
+	//Uå·¦ä¸‹è§’ç‚¹
 	float trxUB1 = cos(bestTheta)*xUB1 - sin(bestTheta)*yUB1 + deltaCol;
 	float tryUB1 = sin(bestTheta)*xUB1 + cos(bestTheta)*yUB1 + deltaRow;
-	//UÓÒÏÂ½Çµã
+	//Uå³ä¸‹è§’ç‚¹
 	float trxUB2 = cos(bestTheta)*xUB2 - sin(bestTheta)*yUB2 + deltaCol;
 	float tryUB2 = sin(bestTheta)*xUB2 + cos(bestTheta)*yUB2 + deltaRow;
-	//D×óÉÏ½Çµã
+	//Då·¦ä¸Šè§’ç‚¹
 	float trxDA1 = cos(bestTheta)*xDA1 - sin(bestTheta)*yDA1 + deltaCol;
 	float tryDA1 = sin(bestTheta)*xDA1 + cos(bestTheta)*yDA1 + deltaRow;
-	//DÓÒÉÏ½Çµã
+	//Då³ä¸Šè§’ç‚¹
 	float trxDA2 = cos(bestTheta)*xDA2 - sin(bestTheta)*yDA2 + deltaCol;
 	float tryDA2 = sin(bestTheta)*xDA2 + cos(bestTheta)*yDA2 + deltaRow;
-	//D×óÏÂ½Çµã
+	//Då·¦ä¸‹è§’ç‚¹
 	float trxDB1 = cos(bestTheta)*xDB1 - sin(bestTheta)*yDB1 + deltaCol;
 	float tryDB1 = sin(bestTheta)*xDB1 + cos(bestTheta)*yDB1 + deltaRow;
-	//DÓÒÏÂ½Çµã
+	//Då³ä¸‹è§’ç‚¹
 	float trxDB2 = cos(bestTheta)*xDB2 - sin(bestTheta)*yDB2 + deltaCol;
 	float tryDB2 = sin(bestTheta)*xDB2 + cos(bestTheta)*yDB2 + deltaRow;
 
-	/*»ñÈ¡·ÂÉä±ä»»Ö®ºóµÄROIËÄ¸ö½Çµã*/
+	/*è·å–ä»¿å°„å˜æ¢ä¹‹åçš„ROIå››ä¸ªè§’ç‚¹*/
 	vector<Point2f> contourU, contourD;
 	Point2f pU1(trxUA1, tryUA1), pU2(trxUA2, tryUA2), pU3(trxUB1, tryUB1), pU4(trxUB2, tryUB2);
 	Point2f pD1(trxDA1, tryDA1), pD2(trxDA2, tryDA2), pD3(trxDB1, tryDB1), pD4(trxDB2, tryDB2);
 
-	/*¼ÆËãROIµÄ×îĞ¡Íâ½Ó¾ØĞÎ£¬×÷Îª´ı²âÍ¼ÏñµÄROI£ºbrectU,brectD*/
+	/*è®¡ç®—ROIçš„æœ€å°å¤–æ¥çŸ©å½¢ï¼Œä½œä¸ºå¾…æµ‹å›¾åƒçš„ROIï¼šbrectU,brectD*/
 	contourU.push_back(pU1);
 	contourU.push_back(pU2);
 	contourU.push_back(pU3);
 	contourU.push_back(pU4);
-	RotatedRect rectU = minAreaRect(contourU);//Íâ½Ó¾ØĞÎ
+	RotatedRect rectU = minAreaRect(contourU);//å¤–æ¥çŸ©å½¢
 	Point2f verticesU[4];
-	rectU.points(verticesU);//Íâ½Ó¾ØĞÎµÄ4¸ö¶¥µã
+	rectU.points(verticesU);//å¤–æ¥çŸ©å½¢çš„4ä¸ªé¡¶ç‚¹
 	Rect brectU = rectU.boundingRect();
 
 	contourD.push_back(pD1);
 	contourD.push_back(pD2);
 	contourD.push_back(pD3);
 	contourD.push_back(pD4);
-	RotatedRect rectD = minAreaRect(contourD);//Íâ½Ó¾ØĞÎ
+	RotatedRect rectD = minAreaRect(contourD);//å¤–æ¥çŸ©å½¢
 	Point2f verticesD[4];
-	rectD.points(verticesD);//Íâ½Ó¾ØĞÎµÄ4¸ö¶¥µã
+	rectD.points(verticesD);//å¤–æ¥çŸ©å½¢çš„4ä¸ªé¡¶ç‚¹
 	Rect brectD = rectD.boundingRect();
 
-	/*ROI±ß½çÏŞÖÆ*/
+	/*ROIè¾¹ç•Œé™åˆ¶*/
 	if (brectU.x < 0)
 	{
 		brectU.width -= abs(brectU.x);
@@ -2594,8 +1449,8 @@ Point2f GetCrossBaseFastShapeL(Mat& srcImage, Mat& maskImage, RansacTest& ransac
 	cvtColor(srcImage, BGR1, CV_GRAY2BGR);
 	cvtColor(srcImage, BGR2, CV_GRAY2BGR);
 
-	/*ÔÚ´ı²âÍ¼ÏòÉÏ»­³öROI*/
-	for (int i = 0; i < 4; i++)//»­¾ØĞÎ
+	/*åœ¨å¾…æµ‹å›¾å‘ä¸Šç”»å‡ºROI*/
+	for (int i = 0; i < 4; i++)//ç”»çŸ©å½¢
 	{
 		line(srcImageBGR, verticesU[i], verticesU[(i + 1) % 4], Scalar(0, 0, 255));
 		line(srcImageBGR, verticesD[i], verticesD[(i + 1) % 4], Scalar(0, 0, 255));
@@ -2603,21 +1458,21 @@ Point2f GetCrossBaseFastShapeL(Mat& srcImage, Mat& maskImage, RansacTest& ransac
 	//rectangle(srcImageBGR, brectD, Scalar(255, 0, 0));
 	//rectangle(srcImageBGR, brectU, Scalar(255, 0, 0));
 
-	/*»ñÈ¡ROI¾Ö²¿Í¼Ïñ:lineRegionU,lineRegionD¡£ÓÃÓÚÖ±Ïß¼ì²â*/
+	/*è·å–ROIå±€éƒ¨å›¾åƒ:lineRegionU,lineRegionDã€‚ç”¨äºç›´çº¿æ£€æµ‹*/
 	Mat lineRegionU, lineRegionD;
 	srcImage(brectU).copyTo(lineRegionU);
 	srcImage(brectD).copyTo(lineRegionD);
 
-	/*¼ÆËãÊ±¼ä*/
+	/*è®¡ç®—æ—¶é—´*/
 	double start = double(getTickCount());
 
 	vector<Point2f>linePointU, linePointD;
 
 #if CrossDetectionMode==1
-	linePointU = GetLinePointsBaseSobel(srcImage,lineRegionU, brectU.x, brectU.y, 0, 1);
-	linePointD = GetLinePointsBaseSobel(srcImage,lineRegionD, brectD.x, brectD.y, 0, 2);
+	linePointU = GetLinePointsBaseSobel(srcImage, lineRegionU, brectU.x, brectU.y, 0, 1);
+	linePointD = GetLinePointsBaseSobel(srcImage, lineRegionD, brectD.x, brectD.y, 0, 2);
 
-#elif CrossDetectionMode==2 //SobelÌáÈ¡±ßÔµ+ransacÌŞ³ı²»ÀíÏëµã+fitline
+#elif CrossDetectionMode==2 //Sobelæå–è¾¹ç¼˜+ransacå‰”é™¤ä¸ç†æƒ³ç‚¹+fitline
 	GatherEdgePtsInput inputU, inputD;
 	GatherEdgePtsOutput outputU, outputD;
 
@@ -2627,7 +1482,7 @@ Point2f GetCrossBaseFastShapeL(Mat& srcImage, Mat& maskImage, RansacTest& ransac
 	inputU.rectangleROI.pt1 = (pU1 + pU3) / 2;
 	inputU.rectangleROI.pt2 = (pU2 + pU4) / 2;
 	inputU.rectangleROI.offset = brectU.height / 2;
-	inputU.rectangleROI.direction = 1;//Ë³Ê±ÕëÉ¨Ãè£¬´Ó×óµ½ÓÒ
+	inputU.rectangleROI.direction = 1;//é¡ºæ—¶é’ˆæ‰«æï¼Œä»å·¦åˆ°å³
 
 	inputD.img = srcImage;
 	//inputD.rectangleROI.pt1 = Point2f(brectD.x + brectD.width / 2, brectD.y);
@@ -2635,18 +1490,22 @@ Point2f GetCrossBaseFastShapeL(Mat& srcImage, Mat& maskImage, RansacTest& ransac
 	inputD.rectangleROI.pt1 = (pD1 + pD2) / 2;
 	inputD.rectangleROI.pt2 = (pD3 + pD4) / 2;
 	inputD.rectangleROI.offset = brectD.width / 2;
-	inputD.rectangleROI.direction = 0;//ÄæÊ±ÕëÉ¨Ãè£¬´ÓÉÏµ½ÏÂ
+	inputD.rectangleROI.direction = 0;//é€†æ—¶é’ˆæ‰«æï¼Œä»ä¸Šåˆ°ä¸‹
 
-	/*»ñÈ¡±ßÔµµã¼¯linePointU,linePointD*/
+	/*è·å–è¾¹ç¼˜ç‚¹é›†linePointU,linePointD*/
 	gatherEdgePts(inputU, outputU);
 	gatherEdgePts(inputD, outputD);
+
+	//refinePointSet(outputU.imgPts, linePointU);
+	//refinePointSet(outputD.imgPts, linePointD);
+
 	linePointU = outputU.imgPts;
 	linePointD = outputD.imgPts;
 
-#elif CrossDetectionMode==3//LSDËã·¨¼ì²âÖ±Ïß,opencv4.10°æ±¾²»ÔÙ¿ÉÓÃ
+#elif CrossDetectionMode==3//LSDç®—æ³•æ£€æµ‹ç›´çº¿,opencv4.10ç‰ˆæœ¬ä¸å†å¯ç”¨
 	linePointU = GetLinePointsBaseLsd(lineRegionU, 0, 200, brectU.x, brectU.y);//direction=1:U  direction=2:D
 	linePointD = GetLinePointsBaseLsd(lineRegionD, 0, 200, brectD.x, brectD.y);
-#elif CrossDetectionMode==4//¾Ö²¿»ô·òÏß¼ì²â
+#elif CrossDetectionMode==4//å±€éƒ¨éœå¤«çº¿æ£€æµ‹
 	linePointU = GetLinePointsBaseHoughLineP(srcImage, lineRegionU, brectU.x, brectU.y,
 		CannyThreshold1, CannyThreshold2,
 		HoughThreshold1, HoughThreshold2, HoughThreshold3);
@@ -2655,7 +1514,7 @@ Point2f GetCrossBaseFastShapeL(Mat& srcImage, Mat& maskImage, RansacTest& ransac
 		HoughThreshold1, HoughThreshold2, HoughThreshold3);
 #endif
 
-	/*»æÖÆÔ­Ê¼±ßÔµµã¼¯*/
+	/*ç»˜åˆ¶åŸå§‹è¾¹ç¼˜ç‚¹é›†*/
 	for (int i = 0; i < linePointU.size(); i++)
 	{
 		BGR1.at<Vec3b>(linePointU[i])[0] = 0;
@@ -2669,17 +1528,11 @@ Point2f GetCrossBaseFastShapeL(Mat& srcImage, Mat& maskImage, RansacTest& ransac
 		BGR1.at<Vec3b>(linePointD[i])[2] = 255;
 	}
 
-	cout << "before ransac refine: linePointU's size is: " << linePointU.size() << endl;
-	cout << "before ransac refine: linePointD's size is: " << linePointD.size() << endl;
-
-	//vector<Vec4d> linesU, linesD;
 	vector<Point2f>linesU, linesD;
 	ransacLines(linePointU, linesU, ransacDistance, 10, 2000);
 	ransacLines(linePointD, linesD, ransacDistance, 10, 2000);
-	cout << "after ransac refine: linePointU's size is: " << linePointU.size() << endl;
-	cout << "after ransac refine: linePointD's size is: " << linePointD.size() << endl;
 
-	/*»æÖÆransacÉ¸Ñ¡ºóµÄµã¼¯*/
+	/*ç»˜åˆ¶ransacç­›é€‰åçš„ç‚¹é›†*/
 	for (int i = 0; i < linePointU.size(); i++)
 	{
 		BGR2.at<Vec3b>(linePointU[i])[0] = 0;
@@ -2697,8 +1550,6 @@ Point2f GetCrossBaseFastShapeL(Mat& srcImage, Mat& maskImage, RansacTest& ransac
 	GatherLineInput inputLD;
 	inputLU.edgePts = linePointU;
 	inputLD.edgePts = linePointD;
-	//inputLU.edgePts = linesU;
-	//inputLD.edgePts = linesD;
 
 	GatherLineOutput outputLU, outputLD;
 	gatherLine(inputLU, outputLU);
@@ -2709,8 +1560,8 @@ Point2f GetCrossBaseFastShapeL(Mat& srcImage, Mat& maskImage, RansacTest& ransac
 	Point2f ptD1 = outputLD.fitLine.pt1;
 	Point2f ptD2 = outputLD.fitLine.pt2;
 
-	float ka = (float)((ptU2.y - ptU1.y) / (ptU2.x - ptU1.x + 1e-16));
-	float kb = (float)((ptD2.y - ptD1.y) / (ptD2.x - ptD1.x + 1e-16));
+	float ka = (float)((ptU2.y - ptU1.y) / (ptU2.x - ptU1.x));
+	float kb = (float)((ptD2.y - ptD1.y) / (ptD2.x - ptD1.x));
 
 	float ma = ptU1.y - ka * ptU1.x;
 	float mb = ptD1.y - kb * ptD1.x;
@@ -2766,62 +1617,63 @@ Point2f GetCrossBaseFastShapeL(Mat& srcImage, Mat& maskImage, RansacTest& ransac
 
 	float ans = abs(ka*kb + 1);
 
-	//SinglePicInfo result;
-	//result.crossPoint = crossPoint;
-	//result.ptU = ptU2;
-	//result.ptD = ptD2;
-	//result.thetaU = atan(ka);
-	//result.thetaD = atan(kb);
-
-	ransacResult.crossPoint = crossPoint;
-	ransacResult.ka = ka;
-	ransacResult.ma = ma;
-	ransacResult.kb = kb;
-	ransacResult.mb = mb;
-	ransacResult.ransac = ransacDistance;
+	CrossPointInfo result;
+	result.crossPoint = crossPoint;
+	result.ptU1 = ptU1;
+	result.ptD1 = ptD1;
+	result.ptU2 = ptU2;
+	result.ptD2 = ptD2;
+	result.ka = ka;
+	result.kb = kb;
+	result.thetaU = atan(ka) * 180 / PI;
+	result.thetaD = atan(kb) * 180 / PI;
+	result.ransacDistance = ransacDistance;
+	result.imagePath = string(a);
+	result.status = 0;
 
 	cout << "the distance between crossPt and UPt is: " << inputU.rectangleROI.pt1.x - crossPoint.x << endl;
 	cout << "the distance between crossPt and DPt is: " << inputD.rectangleROI.pt1.y - crossPoint.y << endl;
-	cout << "current ransacDis is: " << ransacDistance << endl;
-	cout << "ka is: " << ka << endl;
-	cout << "kb is: " << kb << endl;
-	cout << "ma is:" << ma << endl;
-	cout << "mb is:" << mb << endl;
-	//cout << "Best measurement is: " << ans << " for the " << ans << " \n";
-	cout << "Best crossPoint is: " << crossPoint << " for the " << a << " image\n";
-	std::cout << "It took " << duration_ms << " ms." << "\n" << endl;
+	cout << "thetaU is: " << result.thetaU << endl;
+	cout << "thetaD is: " << result.thetaD << endl;
+	cout << "Best crossPoint is: " << crossPoint << " for the " << a << " image" << "\n" << endl;
 
-	return crossPoint;
+	return result;
 }
 
 
 /*************************************************************
 Function:       GetCrossBasedFastShapeR
-Description:    Ê¹ÓÃĞÎ×´Æ¥Åä¼ÆËãÊÖ»ú¸Ç°åÓÒ½Çµã
-Input:          srcImage:´ı²âÍ¼Ïñ maskImage:Ä£°åÍ¼Ïñ
-Return:         ¸Ç°åÓÒ½Çµã
+Description:    ä½¿ç”¨å½¢çŠ¶åŒ¹é…è®¡ç®—æ‰‹æœºç›–æ¿å³è§’ç‚¹
+Input:          srcImage:å¾…æµ‹å›¾åƒ maskImage:æ¨¡æ¿å›¾åƒ
+Return:         ç›–æ¿å³è§’ç‚¹
 **************************************************************/
-Point2f GetCrossBaseFastShapeR(Mat& srcImage, Mat& maskImage, RansacTest& ransacResult, char *a)
+CrossPointInfo GetCrossBaseFastShapeR(Mat& srcImage, Mat& maskImage, RansacTest& ransacResult, char *a)
 {
-	/*step1:ĞÎ×´Æ¥Åä£¬ROI*/
+	/*step1:å½¢çŠ¶åŒ¹é…ï¼ŒROI*/
 	ShapeMatchLocation arcShapeMatchLocation = GetShapeTrans(maskImage, srcImage, factor);
 
 	Point2f locate = arcShapeMatchLocation.anchorPt;
 	float bestTheta = arcShapeMatchLocation.theta;
 
+	/*2å·æœºæ¨¡æ¿*/
+	//best backup
 	//Rect maskArcRegion = Rect(310, 710, 2000, 2000);
-	//Rect maskLineRegion1 = Rect(410 , 950, 600, 400);
-	//Rect maskLineRegion2 = Rect(1760, 2138+100, 400, 400);
-	//Rect maskLineRegion2 = Rect(1760, 2120+200, 400, 400);
-
+	//Rect maskLineRegion1 = Rect(600 - 600 + 400, 950, 600, 400);
+	//Rect maskLineRegion2 = Rect(1760, 2320 - 200, 400, 400);
+	//å®é™…
 	Rect maskArcRegion = Rect(310, 710, 2000, 2000);
-	Rect maskLineRegion1 = Rect(600 - 600+400, 950, 600, 400);
-	Rect maskLineRegion2 = Rect(1760, 2320, 400, 400);
+	Rect maskLineRegion1 = Rect(600 - 600 + 400, 950, 600, 400);
+	Rect maskLineRegion2 = Rect(1760, 2320 - 200, 400, 400);
+
+	/*ç›´è§’è¾¹æ¨¡æ¿*/
+	//Rect maskArcRegion = Rect(1260, 660, 2090 - 1260, 1500 - 660);
+	//Rect maskLineRegion1 = Rect(770, 650-100, 600, 400);
+	//Rect maskLineRegion2 = Rect(1870-100, 1120, 400, 600);
 
 	float centerX = maskArcRegion.width / 2 + maskArcRegion.x;
 	float centerY = maskArcRegion.height / 2 + maskArcRegion.y;
-	float deltaCol = locate.x ;
-	float deltaRow = locate.y ;
+	float deltaCol = locate.x;
+	float deltaRow = locate.y;
 
 	float xUA1 = maskLineRegion1.x - centerX, yUA1 = maskLineRegion1.y - centerY;
 	float xUA2 = maskLineRegion1.x + maskLineRegion1.width - centerX, yUA2 = maskLineRegion1.y - centerY;
@@ -2860,18 +1712,18 @@ Point2f GetCrossBaseFastShapeR(Mat& srcImage, Mat& maskImage, RansacTest& ransac
 	contourU.push_back(pU2);
 	contourU.push_back(pU3);
 	contourU.push_back(pU4);
-	RotatedRect rectU = minAreaRect(contourU);//Íâ½Ó¾ØĞÎ
+	RotatedRect rectU = minAreaRect(contourU);//å¤–æ¥çŸ©å½¢
 	Point2f verticesU[4];
-	rectU.points(verticesU);//Íâ½Ó¾ØĞÎµÄ4¸ö¶¥µã
+	rectU.points(verticesU);//å¤–æ¥çŸ©å½¢çš„4ä¸ªé¡¶ç‚¹
 	Rect brectU = rectU.boundingRect();
 
 	contourD.push_back(pD1);
 	contourD.push_back(pD2);
 	contourD.push_back(pD3);
 	contourD.push_back(pD4);
-	RotatedRect rectD = minAreaRect(contourD);//Íâ½Ó¾ØĞÎ
+	RotatedRect rectD = minAreaRect(contourD);//å¤–æ¥çŸ©å½¢
 	Point2f verticesD[4];
-	rectD.points(verticesD);//Íâ½Ó¾ØĞÎµÄ4¸ö¶¥µã
+	rectD.points(verticesD);//å¤–æ¥çŸ©å½¢çš„4ä¸ªé¡¶ç‚¹
 	Rect brectD = rectD.boundingRect();
 
 	if (brectU.x % 2 != 0)brectU.x += 1;
@@ -2914,67 +1766,51 @@ Point2f GetCrossBaseFastShapeR(Mat& srcImage, Mat& maskImage, RansacTest& ransac
 	cvtColor(srcImage, BGR1, CV_GRAY2BGR);
 	cvtColor(srcImage, BGR2, CV_GRAY2BGR);
 
-	for (int i = 0; i < 4; i++)//»­¾ØĞÎ
+	for (int i = 0; i < 4; i++)//ç”»çŸ©å½¢
 	{
 		line(srcImageBGR, verticesU[i], verticesU[(i + 1) % 4], Scalar(0, 0, 255));
 		line(srcImageBGR, verticesD[i], verticesD[(i + 1) % 4], Scalar(0, 0, 255));
 	}
-	//rectangle(srcImageBGR, brectD, Scalar(255, 0, 0));
-	//rectangle(srcImageBGR, brectU, Scalar(255, 0, 0));
-
 
 	Mat lineRegionU, lineRegionD;
 	srcImage(brectU).copyTo(lineRegionU);
 	srcImage(brectD).copyTo(lineRegionD);
 
 
-	/*Ê¹ÓÃFastMatchËÑË÷×îÓÅ²ÎÊı£ºgray,gradient*/
+	/*ä½¿ç”¨FastMatchæœç´¢æœ€ä¼˜å‚æ•°ï¼šgray,gradient*/
 	double start = double(getTickCount());
 	vector<Point2f>linePointU, linePointD;
 #if CrossDetectionMode==1
-	linePointU = GetLinePointsBaseSobel(srcImage,lineRegionU, brectU.x, brectU.y, 1, 1);//direction=1:U  direction=2:D
-	linePointD = GetLinePointsBaseSobel(srcImage,lineRegionD, brectD.x, brectD.y, 1, 2);
+	//direction=1:U  direction=2:D
+	linePointU = GetLinePointsBaseSobel(srcImage, lineRegionU, brectU.x, brectU.y, 1, 1);
+	linePointD = GetLinePointsBaseSobel(srcImage, lineRegionD, brectD.x, brectD.y, 1, 2);
 #elif CrossDetectionMode==2
 	GatherEdgePtsInput inputU, inputD;
 	GatherEdgePtsOutput outputU, outputD;
 
 	inputU.img = srcImage;
-	//inputU.rectangleROI.pt1 = Point2f(brectU.x, brectU.y + brectU.height / 2);
-	//inputU.rectangleROI.pt2 = Point2f(brectU.x + brectU.width, brectU.y + brectU.height / 2);
-	//inputU.rectangleROI.offset = brectU.height / 2;
-	//inputU.rectangleROI.direction = 1;//Ë³Ê±ÕëÉ¨Ãè£¬´Ó×óµ½ÓÒ
-
-	//inputD.img = srcImage;
-	//inputD.rectangleROI.pt1 = Point2f(brectD.x + brectD.width / 2, brectD.y);
-	//inputD.rectangleROI.pt2 = Point2f(brectD.x + brectD.width / 2, brectD.y + brectD.height);
-	//inputD.rectangleROI.offset = brectD.width / 2;
-	//inputD.rectangleROI.direction = 1;//ÄæÊ±ÕëÉ¨Ãè£¬´ÓÉÏµ½ÏÂ
-
 	inputU.rectangleROI.pt1 = (pU1 + pU3) / 2;
 	inputU.rectangleROI.pt2 = (pU2 + pU4) / 2;
 	inputU.rectangleROI.offset = brectU.height / 2;
-	inputU.rectangleROI.direction = 1;//Ë³Ê±ÕëÉ¨Ãè£¬´Ó×óµ½ÓÒ
+	inputU.rectangleROI.direction = 1;//é¡ºæ—¶é’ˆæ‰«æï¼Œä»å·¦åˆ°å³
 
 	inputD.img = srcImage;
-	//inputD.rectangleROI.pt1 = Point2f(brectD.x + brectD.width / 2, brectD.y);
-	//inputD.rectangleROI.pt2 = Point2f(brectD.x + brectD.width / 2, brectD.y + brectD.height);
 	inputD.rectangleROI.pt1 = (pD1 + pD2) / 2;
 	inputD.rectangleROI.pt2 = (pD3 + pD4) / 2;
 	inputD.rectangleROI.offset = brectD.width / 2;
-	inputD.rectangleROI.direction = 1;//Ë³Ê±ÕëÉ¨Ãè£¬´ÓÉÏµ½ÏÂ
+	inputD.rectangleROI.direction = 1;//é¡ºæ—¶é’ˆæ‰«æï¼Œä»ä¸Šåˆ°ä¸‹
 
 	gatherEdgePts(inputU, outputU);
 	gatherEdgePts(inputD, outputD);
-	//getherEdgePtsLsd(lineRegionU, linePointU, brectU.x, brectU.y);
-	//getherEdgePtsLsd(lineRegionD, linePointD, brectD.x, brectD.y);
+
 
 	linePointU = outputU.imgPts;
 	linePointD = outputD.imgPts;
 
-#elif CrossDetectionMode==3//LSDËã·¨¼ì²âÖ±Ïß
+#elif CrossDetectionMode==3//LSDç®—æ³•æ£€æµ‹ç›´çº¿
 	linePointU = GetLinePointsBaseLsd(lineRegionU, 0, 200, brectU.x, brectU.y);//direction=1:U  direction=2:D
 	linePointD = GetLinePointsBaseLsd(lineRegionD, 0, 200, brectD.x, brectD.y);
-#elif CrossDetectionMode==4//¾Ö²¿»ô·òÏß¼ì²â
+#elif CrossDetectionMode==4//å±€éƒ¨éœå¤«çº¿æ£€æµ‹
 	linePointU = GetLinePointsBaseHoughLineP(srcImage, lineRegionU, brectU.x, brectU.y,
 		CannyThreshold1, CannyThreshold2,
 		HoughThreshold1, HoughThreshold2, HoughThreshold3);
@@ -2983,7 +1819,7 @@ Point2f GetCrossBaseFastShapeR(Mat& srcImage, Mat& maskImage, RansacTest& ransac
 		HoughThreshold1, HoughThreshold2, HoughThreshold3);
 #endif
 
-	/*»æÖÆÔ­Ê¼±ßÔµµã¼¯*/
+	/*ç»˜åˆ¶åŸå§‹è¾¹ç¼˜ç‚¹é›†*/
 	for (int i = 0; i < linePointU.size(); i++)
 	{
 		BGR1.at<Vec3b>(linePointU[i])[0] = 0;
@@ -2997,26 +1833,21 @@ Point2f GetCrossBaseFastShapeR(Mat& srcImage, Mat& maskImage, RansacTest& ransac
 		BGR1.at<Vec3b>(linePointD[i])[2] = 255;
 	}
 
-	cout << "before ransac refine: linePointU's size is: " << linePointU.size() << endl;
-	cout << "before ransac refine: linePointD's size is: " << linePointD.size() << endl;
-
 	//vector<Vec4d> linesU, linesD;
 	vector<Point2f>linesU, linesD;
 	ransacLines(linePointU, linesU, ransacDistance, 10, 2000);
 	ransacLines(linePointD, linesD, ransacDistance, 10, 2000);
-	cout << "after ransac refine: linePointU's size is: " << linePointU.size() << endl;
-	cout << "after ransac refine: linePointD's size is: " << linePointD.size() << endl;
 
-	/*»æÖÆransacÉ¸Ñ¡ºóµÄµã¼¯*/
+	/*ç»˜åˆ¶ransacç­›é€‰åçš„ç‚¹é›†*/
 	for (int i = 0; i < linePointU.size(); i++)
 	{
-		BGR2.at<Vec3b>(linePointU[i])[0] = 0;
+		BGR2.at<Vec3b>(linePointU[i])[0] = 255;
 		BGR2.at<Vec3b>(linePointU[i])[1] = 0;
 		BGR2.at<Vec3b>(linePointU[i])[2] = 255;
 	}
 	for (int i = 0; i < linePointD.size(); i++)
 	{
-		BGR2.at<Vec3b>(linePointD[i])[0] = 0;
+		BGR2.at<Vec3b>(linePointD[i])[0] = 255;
 		BGR2.at<Vec3b>(linePointD[i])[1] = 0;
 		BGR2.at<Vec3b>(linePointD[i])[2] = 255;
 	}
@@ -3035,11 +1866,9 @@ Point2f GetCrossBaseFastShapeR(Mat& srcImage, Mat& maskImage, RansacTest& ransac
 	Point2f ptD1 = outputLD.fitLine.pt1;
 	Point2f ptD2 = outputLD.fitLine.pt2;
 
-
-	float ka = (float)((ptU2.y - ptU1.y) / (ptU2.x - ptU1.x + 1e-16));
-	float kb = (float)((ptD2.y - ptD1.y) / (ptD2.x - ptD1.x + 1e-16));
-
+	float ka = (float)((ptU2.y - ptU1.y) / (ptU2.x - ptU1.x));
 	float ma = ptU1.y - ka * ptU1.x;
+	float kb = (float)((ptD2.y - ptD1.y) / (ptD2.x - ptD1.x));
 	float mb = ptD1.y - kb * ptD1.x;
 
 	Point2f crossPoint;
@@ -3091,47 +1920,45 @@ Point2f GetCrossBaseFastShapeR(Mat& srcImage, Mat& maskImage, RansacTest& ransac
 		}
 	}
 
-	SinglePicInfo result;
+	float ans = abs(ka*kb + 1);
+
+	CrossPointInfo result;
 	result.crossPoint = crossPoint;
-	result.ptU = ptU2;
-	result.ptD = ptD2;
-	result.thetaU = atan(ka);
-	result.thetaD = atan(kb);
+	result.ptU1 = ptU1;
+	result.ptD1 = ptD1;
+	result.ptU2 = ptU2;
+	result.ptD2 = ptD2;
+	result.ka = ka;
+	result.kb = kb;
+	result.thetaU = atan(ka) * 180 / PI;
+	result.thetaD = atan(kb) * 180 / PI;
+	result.ransacDistance = ransacDistance;
+	result.imagePath = string(a);
+	result.status = 0;
 
-	ransacResult.crossPoint = crossPoint;
-	ransacResult.ka = ka;
-	ransacResult.ma = ma;
-	ransacResult.kb = kb;
-	ransacResult.mb = mb;
-	ransacResult.ransac = ransacDistance;
+	cout << "the distance between crossPt and UPt is: " << inputU.rectangleROI.pt1.x - crossPoint.x << endl;
+	cout << "the distance between crossPt and DPt is: " << inputD.rectangleROI.pt1.y - crossPoint.y << endl;
+	cout << "thetaU is: " << result.thetaU << endl;
+	cout << "thetaD is: " << result.thetaD << endl;
+	cout << "Best crossPoint is: " << crossPoint << " for the " << a << " image" << "\n" << endl;
 
-	float ans = ka * kb;
-	cout << "the distance between crossPt and UPt is: " << crossPoint.x - inputU.rectangleROI.pt2.x << endl;
-	cout << "the distance between crossPt and DPt is: " << inputD.rectangleROI.pt1.y - crossPoint.y << endl;	cout << "current ransacDis is: " << ransacDistance << endl;
-	cout << "ka is: " << ka << endl;
-	cout << "kb is: " << kb << endl;
-	cout << "ma is:" << ma << endl;
-	cout << "mb is:" << mb << endl;
-	cout << "Best crossPoint is: " << crossPoint << " for the " << a << " image\n";
-	std::cout << "It took " << duration_ms << " ms." << "\n" << std::endl;
-
- 	return crossPoint;
+	return result;
 }
 
 
 //-----------------------------------------------GetRandom-----------------------------------------//
-//ÊµÏÖ£ºÈ¡Ëæ»úÊı
-//int interval                ÊäÈë£ºÉú³ÉÄ³¸öÇø¼äÄÚµÄËæ»úÊı,Çø¼ä: [0-interval]
-//·µ»ØÖµ:	                   [0-interval] µÄÒ»Ëæ»úÊı
+//å®ç°ï¼šå–éšæœºæ•°
+//int interval                è¾“å…¥ï¼šç”ŸæˆæŸä¸ªåŒºé—´å†…çš„éšæœºæ•°,åŒºé—´: [0-interval]
+//è¿”å›å€¼:	                   [0-interval] çš„ä¸€éšæœºæ•°
 //------------------------------------------------------------------------------------------------//
 int  GetRandom(int interval)
 {
-	//  Éú³ÉÄ³¸öÇø¼äÄÚµÄËæ»úÊı,Çø¼ä: [0-interval]
+	//  ç”ŸæˆæŸä¸ªåŒºé—´å†…çš„éšæœºæ•°,åŒºé—´: [0-interval]
 
-	int n = 10;   // µİÍÆµü´ú´ÎÊı
-	int a = 29;  // 1-¼ÆËã»ú×Ö³¤Ö®¼äµÄÈÎÒâÊı
+	int n = 10;   // é€’æ¨è¿­ä»£æ¬¡æ•°
+	int a = 29;  // 1-è®¡ç®—æœºå­—é•¿ä¹‹é—´çš„ä»»æ„æ•°
 	int b = 5;
-	int m = 1000000;  // ×ã¹»´óµÄÊı
+	int m = 1000000;  // è¶³å¤Ÿå¤§çš„æ•°
 	int i;
 	int res;
 	static  int	RandomSeed = 100;
@@ -3155,12 +1982,6 @@ float point2line(Point2f p, Point2f p1, Point2f p2)
 }
 
 
-int refinrPointSet(vector<Point2f>& input,
-	/*std::vector<cv::Vec4d>& lines*/vector<Point2f>& lines,
-	double distance, unsigned int ngon, unsigned int itmax)
-{
-}
-
 int ransacLines(std::vector<cv::Point2f>& input,
 	/*std::vector<cv::Vec4d>& lines*/vector<Point2f>& lines,
 	double distance, unsigned int ngon, unsigned int itmax)
@@ -3171,7 +1992,7 @@ int ransacLines(std::vector<cv::Point2f>& input,
 	cv::Vec4d line;
 	size_t t1, t2;
 
-	/*ransac Ëæ»úÑ¡È¡ÖÖ×Óµã*/
+	/*ransac éšæœºé€‰å–ç§å­ç‚¹*/
 	for (int i = 0; i <int(ngon); ++i) {
 		int inter = int(input.size());
 		unsigned int it = itmax;
@@ -3207,7 +2028,7 @@ int ransacLines(std::vector<cv::Point2f>& input,
 		}
 	}
 
-	/*Ã¿´ÎËÑË÷Õû¸öµã¼¯£¬ÕÒµ½×îÓÅµÄÖ±Ïß¶Ëµã£¬ÅÅ³ıransacËæ»úÖÖ×ÓµãµÄÓ°Ïì*/
+	/*æ¯æ¬¡æœç´¢æ•´ä¸ªç‚¹é›†ï¼Œæ‰¾åˆ°æœ€ä¼˜çš„ç›´çº¿ç«¯ç‚¹ï¼Œæ’é™¤ransacéšæœºç§å­ç‚¹çš„å½±å“*/
 	/*for (int t1 =0; t1 <input.size(); t1++)
 	{
 		for (int t2 = t1 +1; t2 < input.size(); t2++)
@@ -3231,9 +2052,9 @@ int ransacLines(std::vector<cv::Point2f>& input,
 		}
 	}*/
 
-	cout << "current Mmax is:" << Mmax << endl;
-	cout << "current imax is:" << imax << endl;
-	cout << "current jmax is:" << jmax << endl;
+	//cout << "current Mmax is:" << Mmax << endl;
+	//cout << "current imax is:" << imax << endl;
+	//cout << "current jmax is:" << jmax << endl;
 
 	auto iter = input.begin();
 	while (iter != input.end())
@@ -3244,7 +2065,7 @@ int ransacLines(std::vector<cv::Point2f>& input,
 		else ++iter;
 	}
 
-	cout << "current input's size is: " << input.size() << endl;
+	//cout << "current input's size is: " << input.size() << endl;
 
 	return 0;
 }
@@ -3267,49 +2088,11 @@ int GetFreemanCode(Point2f pt1, Point2f pt2)
 }
 
 
-/*************************************************************
-Function:       EdgesPtsRefine
-Description:    Ö±Ïß±ßÔµµã¼¯ĞŞ²¹
-Input:          srcImage:´ı²âÍ¼Ïñ maskImage:Ä£°åÍ¼Ïñ
-Return:         ¸Ç°åÓÒ½Çµã
-**************************************************************/
-void EdgesPtsRefine(Mat img, vector<Point2f>& edgePts, float flag)
-{
-
-	/*if (flag == 1)
-	{
-		vector<int> FreemanCodeSetL, FreemanCodeSetR;
-		for (int index = 2; index < edgePts.size()-2; index++)
-		{
-			Point2f pt = edgePts[index];
-			for (int indexL = 0; indexL <= 3; indexL++)
-			{
-				Point2f pt1 = edgePts[index - indexL];
-				Point2f pt2 = edgePts[index - indexL - 1];
-				int code = GetFreemanCode(pt1, pt2);
-
-			}
-		}
-	}
-	else if (flag==2)
-	{
-
-	}
-	else cout << "direction error" << endl;*/
-}
-
-
-void getherEdgePtsLsd(Mat img, vector<Point2f>&edgePts, float deltaX, float deltaY)
-{
-	edgePts = GetLinePointsBaseLsd(img, 0, 200, deltaX, deltaY);
-}
-
-
 //-------------------------------------------- Step2.1 gatherEdgePts---------------------------------//
-//Ãû³Æ£º»ñÈ¡±ßÔµµã
-//¹¦ÄÜ£º»ñÈ¡±ßÔµµãÄ£¿éÓÃÓÚÄâºÏÖ±Ïß
-//²ÎÊıÁĞ±í£º0-ÊäÈë 1-Êä³ö
-//·µ»ØÖµ£º0-³É¹¦ 1-Í¼ÏñÎª¿Õ 2-Ìİ¶ÈãĞÖµÉèÖÃ²»ºÏÊÊĞèÒªµ÷Õû 3-ºÚÍ¼Ã»ÓĞ±ßÔµ
+//åç§°ï¼šè·å–è¾¹ç¼˜ç‚¹
+//åŠŸèƒ½ï¼šè·å–è¾¹ç¼˜ç‚¹æ¨¡å—ç”¨äºæ‹Ÿåˆç›´çº¿
+//å‚æ•°åˆ—è¡¨ï¼š0-è¾“å…¥ 1-è¾“å‡º
+//è¿”å›å€¼ï¼š0-æˆåŠŸ 1-å›¾åƒä¸ºç©º 2-æ¢¯åº¦é˜ˆå€¼è®¾ç½®ä¸åˆé€‚éœ€è¦è°ƒæ•´ 3-é»‘å›¾æ²¡æœ‰è¾¹ç¼˜
 int gatherEdgePts(const GatherEdgePtsInput &input, GatherEdgePtsOutput &output)
 {
 	Mat img = input.img.clone();
@@ -3329,7 +2112,7 @@ int gatherEdgePts(const GatherEdgePtsInput &input, GatherEdgePtsOutput &output)
 	float vx = (float)(rectROI.pt2.x - rectROI.pt1.x) / len;//cos
 	float vy = (float)(rectROI.pt2.y - rectROI.pt1.y) / len;//sin
 
-	if (rectROI.direction)//Ë³Ê±ÕëÎª1 ÄæÊ±ÕëÎª0
+	if (rectROI.direction)//é¡ºæ—¶é’ˆä¸º1 é€†æ—¶é’ˆä¸º0
 	{
 		scanvx = -vy;
 		scanvy = vx;
@@ -3339,18 +2122,18 @@ int gatherEdgePts(const GatherEdgePtsInput &input, GatherEdgePtsOutput &output)
 		scanvy = -vx;
 	}
 
-	//ÓÃÓÚºóĞøÇóÖ±ÏßÓë¾ØĞÎROIµÄ½»µã
+	//ç”¨äºåç»­æ±‚ç›´çº¿ä¸çŸ©å½¢ROIçš„äº¤ç‚¹
 	vertex.push_back(Point2f((float)(rectROI.pt1.x - scanvx * rectROI.offset), (float)(rectROI.pt1.y - scanvy * rectROI.offset)));
 	vertex.push_back(Point2f((float)(rectROI.pt2.x - scanvx * rectROI.offset), (float)(rectROI.pt2.y - scanvy * rectROI.offset)));
 	vertex.push_back(Point2f((float)(rectROI.pt2.x + scanvx * rectROI.offset), (float)(rectROI.pt2.y + scanvy * rectROI.offset)));
 	vertex.push_back(Point2f((float)(rectROI.pt1.x + scanvx * rectROI.offset), (float)(rectROI.pt1.y + scanvy * rectROI.offset)));
 
-	//ÅĞ¶ÏÍ¼ÏñÊÇ·ñº¬ÓĞ±ßÔµ
+	//åˆ¤æ–­å›¾åƒæ˜¯å¦å«æœ‰è¾¹ç¼˜
 	double theta = abs(atan2(rectROI.pt2.y - rectROI.pt1.y, rectROI.pt2.x - rectROI.pt1.x));
 
 	int flagDark = 0;
 	int edgeProc = 1;
-	//µ±»ñÈ¡×óÓÒ±ßÏßµÄÊ±ºò
+	//å½“è·å–å·¦å³è¾¹çº¿çš„æ—¶å€™
 	int flagRight = 0;
 	Rect boundingRectangle = boundingRect(vertex);
 
@@ -3378,9 +2161,9 @@ int gatherEdgePts(const GatherEdgePtsInput &input, GatherEdgePtsOutput &output)
 	rectROI.pt2 -= Point2f(boundingRectangle.x, boundingRectangle.y);
 
 	/*check point1:check if the roi is correct*/
-	Mat imageBGR(input.img);
-	cvtColor(imageBGR, imageBGR, CV_GRAY2BGR);
-	rectangle(imageBGR, boundingRectangle, Scalar(0, 0, 255), 1);
+	//Mat imageBGR(input.img);
+	//cvtColor(imageBGR, imageBGR, CV_GRAY2BGR);
+	//rectangle(imageBGR, boundingRectangle, Scalar(0, 0, 255), 1);
 	//cout << "check point1, please insert a breakpoint here." << endl;
 
 	Mat subimgX, subimgY, subimgXY;
@@ -3408,10 +2191,10 @@ int gatherEdgePts(const GatherEdgePtsInput &input, GatherEdgePtsOutput &output)
 	convertScaleAbs(subimgXY, subimgXY);
 
 	if ((abs(theta - CV_PI) < abs(theta - CV_PI / 2)) || (abs(theta) < abs(theta - CV_PI / 2))) {
-		Sobel(subimg, edgeSobel, CV_16S, 0, 1, sobelsize, 1, 0, BORDER_DEFAULT);  //ÕÒË®Æ½µÄ±ßÏß ´¹Ö±·½Ïòsobel
+		Sobel(subimg, edgeSobel, CV_16S, 0, 1, sobelsize, 1, 0, BORDER_DEFAULT);  //æ‰¾æ°´å¹³çš„è¾¹çº¿ å‚ç›´æ–¹å‘sobel
 	}
 	else {
-		Sobel(subimg, edgeSobel, CV_16S, 1, 0, sobelsize, 1, 0, BORDER_DEFAULT);  //ÕÒ´¹Ö±µÄ±ßÏß ´¹Ö±·½Ïòsobel
+		Sobel(subimg, edgeSobel, CV_16S, 1, 0, sobelsize, 1, 0, BORDER_DEFAULT);  //æ‰¾å‚ç›´çš„è¾¹çº¿ å‚ç›´æ–¹å‘sobel
 	}
 
 	Mat subimg2;
@@ -3422,19 +2205,18 @@ int gatherEdgePts(const GatherEdgePtsInput &input, GatherEdgePtsOutput &output)
 }
 
 
-int collectPolygonEdgePointsGatherLineGray(const Mat& gray,
+int collectPolygonEdgePointsGatherLineGray(Mat gray,
 	int calMaxGrad, vector<Vec4f> seedEdgeGroups, int polar,
 	float Tdist, int Tgrad, int step, int validPts,
 	vector<Point2f>& edgePtsGroup, float& sharp)
 {
 	int H = gray.rows;
 	int W = gray.cols;
-	uchar* data = gray.data;
 	Vec4f seedEdge;
 	int xs, ys, xe, ye, xl, yl, x, y, x1, y1, x2, y2, tempMaxgrad, tempabsgrad, grad;
 	float len, curlen, nlen, nlen0;
 	Vec2f vl, vn;
-	//¶ÔÓÚÃ¿Ò»×é
+	//å¯¹äºæ¯ä¸€ç»„
 	int maxGrad = 0;
 	sharp = 0;
 	int cnt = 0;
@@ -3445,6 +2227,75 @@ int collectPolygonEdgePointsGatherLineGray(const Mat& gray,
 	int flag = 0;
 	int signflag = 1;
 
+	/*è¾¹ç¼˜å¹³æ»‘*/
+	//Point2f pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8, pt9;
+	//for (int m = 0; m < seedEdgeGroups.size(); m++) {
+	//	seedEdge = seedEdgeGroups[m];
+	//	xs = seedEdge[0]; ys = seedEdge[1]; xe = seedEdge[2]; ye = seedEdge[3];
+	//	len = sqrt((float)((xs - xe)*(xs - xe) + (ys - ye)*(ys - ye)));
+	//	if (len <= 0)continue;
+	//	vl[0] = (xe - xs) / len;
+	//	vl[1] = (ye - ys) / len;
+	//	if (polar) {
+	//		vn[0] = -vl[1];                             //æ²¿ç€é¡ºæ—¶é’ˆçš„æ³•çº¿æ–¹å‘
+	//		vn[1] = vl[0];
+	//	}
+	//	else {
+	//		vn[0] = vl[1];
+	//		vn[1] = -vl[0];
+	//	}
+	//	//æ²¿çº¿æ®µé‡‡æ ·
+	//	curlen = 1;
+	//	xl = xs;
+	//	yl = ys;
+	//	while (curlen <= len-1) {
+	//		flag = 0;
+	//		signflag = 0;
+	//		xl = int(xs + vl[0] * curlen);             //å½“å‰çš„è¿æ¥çº¿ä¸Šçš„åŸºå‡†ç‚¹
+	//		yl = int(ys + vl[1] * curlen);
+	//		if (xl < 0 || xl >= W || yl < 0 || yl >= H) {
+	//			curlen += step;
+	//			continue;
+	//		}
+	//		for (nlen = float(-Tdist)+1; nlen <= float(Tdist)-1; nlen++)
+	//		{
+	//			int pts = 1;
+	//			//é‡‡æ ·ç‚¹
+	//			x = xl + nlen * vn[0];
+	//			y = yl + nlen * vn[1];
+	//			pt5 = Point2f(x, y);
+	//			pt1 = pt5 + Point2f(vn[0] - vl[0], vn[1] - vl[1]);
+	//			pt2 = pt5 + Point2f(vn[0], vn[1]);
+	//			pt3 = pt5 + Point2f(vn[0] + vl[0], vn[1] + vl[1]);
+	//			pt4 = pt5 + Point2f(-vl[0], -vl[1]);
+	//			pt6 = pt5 + Point2f(vl[0], vl[1]);
+	//			pt7 = pt5 + Point2f(-vn[0] - vl[0], -vn[1] - vl[1]);
+	//			pt8 = pt5 + Point2f(-vn[0], -vn[1]);
+	//			pt9 = pt5 + Point2f(-vn[0] + vl[0], -vn[1] + vl[1]);
+	//			if (pt1.x >= 0 && pt1.x < W && pt1.y >= 0 && pt1.y < H
+	//				&&pt2.x >= 0 && pt2.x < W && pt2.y >= 0 && pt2.y < H
+	//				&&pt3.x >= 0 && pt3.x < W && pt3.y >= 0 && pt3.y < H
+	//				&&pt4.x >= 0 && pt4.x < W && pt4.y >= 0 && pt4.y < H
+	//				&&pt5.x >= 0 && pt5.x < W && pt5.y >= 0 && pt5.y < H
+	//				&&pt6.x >= 0 && pt6.x < W && pt6.y >= 0 && pt6.y < H
+	//				&&pt7.x >= 0 && pt7.x < W && pt7.y >= 0 && pt7.y < H
+	//				&&pt8.x >= 0 && pt8.x < W && pt8.y >= 0 && pt8.y < H
+	//				&&pt9.x >= 0 && pt9.x < W && pt9.y >= 0 && pt9.y < H)
+	//			{
+	//				//gray.at<uchar>(pt5) = (gray.at<uchar>(pt1) + gray.at<uchar>(pt2) +
+	//				//	gray.at<uchar>(pt3) + gray.at<uchar>(pt4) + gray.at<uchar>(pt5) +
+	//				//	gray.at<uchar>(pt6) + gray.at<uchar>(pt7) + gray.at<uchar>(pt8) +
+	//				//	gray.at<uchar>(pt9)) / 9;
+	//				gray.at<uchar>(pt5) = (gray.at<uchar>(pt4) + gray.at<uchar>(pt5) +
+	//					gray.at<uchar>(pt6)) / 3;
+	//			}
+	//		}
+	//		curlen += step;
+	//	}
+	//}
+
+	/*è·å–è¾¹ç¼˜ç‚¹*/
+	uchar* data = gray.data;
 	for (int m = 0; m < seedEdgeGroups.size(); m++) {
 		seedEdge = seedEdgeGroups[m];
 		xs = seedEdge[0]; ys = seedEdge[1]; xe = seedEdge[2]; ye = seedEdge[3];
@@ -3453,42 +2304,44 @@ int collectPolygonEdgePointsGatherLineGray(const Mat& gray,
 		vl[0] = (xe - xs) / len;
 		vl[1] = (ye - ys) / len;
 		if (polar) {
-			vn[0] = -vl[1];                             //ÑØ×ÅË³Ê±ÕëµÄ·¨Ïß·½Ïò
+			vn[0] = -vl[1];                             //æ²¿ç€é¡ºæ—¶é’ˆçš„æ³•çº¿æ–¹å‘
 			vn[1] = vl[0];
 		}
 		else {
 			vn[0] = vl[1];
 			vn[1] = -vl[0];
 		}
-		//ÑØÏß¶Î²ÉÑù
+		//æ²¿çº¿æ®µé‡‡æ ·
 		curlen = 0;
 		xl = xs;
 		yl = ys;
 		while (curlen <= len) {
 			flag = 0;
 			signflag = 0;
-			xl = int(xs + vl[0] * curlen);             //µ±Ç°µÄÁ¬½ÓÏßÉÏµÄ»ù×¼µã
+			xl = int(xs + vl[0] * curlen);             //å½“å‰çš„è¿æ¥çº¿ä¸Šçš„åŸºå‡†ç‚¹
 			yl = int(ys + vl[1] * curlen);
 			if (xl < 0 || xl >= W || yl < 0 || yl >= H) {
 				curlen += step;
 				continue;
 			}
-			//ÑØ·¨ÏòÊÕ¼¯
+			//æ²¿æ³•å‘æ”¶é›†
 			maxGrad = 0;
 			tempMaxgrad = 0;
 			tempabsgrad = 0;
 			grad = 0;
-			for (nlen = float(-Tdist); nlen <= float(Tdist); nlen++) {
+			for (nlen = float(-Tdist); nlen <= float(Tdist); nlen++)
+			{
 				int pts = 1;
-				//²ÉÑùµã
+				//é‡‡æ ·ç‚¹
 				x = int(xl + nlen * vn[0]);
 				y = int(yl + nlen * vn[1]);
 				tempMaxgrad = 0;
 				tempgrad = 0;
-				while (pts <= validPts) {
+				while (pts <= validPts)
+				{
 					x1 = int(xl + (nlen + pts)*vn[0]);
 					y1 = int(yl + (nlen + pts)*vn[1]);
-					//ÄÚ²ÉÑùµã
+					//å†…é‡‡æ ·ç‚¹
 					x2 = int(xl + (nlen - pts)*vn[0]);
 					y2 = int(yl + (nlen - pts)*vn[1]);
 					if (x < 0 || x >= W || y < 0 || y >= H ||
@@ -3497,8 +2350,10 @@ int collectPolygonEdgePointsGatherLineGray(const Mat& gray,
 						pts++;
 						continue;
 					}
-					int grayPix = int(data[x1 + y1 * W] - data[x2 + y2 * W]);
+					//int grayPix = int(data[x1 + y1 * W] - data[x2 + y2 * W]);
 					//int grayPix = int(data[x1 + y1 * W] - data[x + y * W]);
+					int grayPix = int(data[x + y * W]);
+
 					tempabsgrad = abs(grayPix) / 2;
 					if (tempabsgrad > tempMaxgrad) {
 						tempMaxgrad = tempabsgrad;
@@ -3552,9 +2407,9 @@ int collectPolygonEdgePointsGatherLineGray(const Mat& gray,
 
 
 //-------------------------------------------- Step2.3 gatherLine------------------------------------------//
-//Ãû³Æ£ºÄâºÏÂÖÀªµã»ñÈ¡Ö±Ïß
-//¹¦ÄÜ£ºÍ¨¹ıÄâºÏÊäÈëµÄÂÖÀªµãĞÅÏ¢»ñÈ¡Ö±Ïß£¬¿ÉÒÔÖ§³ÖÏñËØ¼¶ÂÖÀªµã»òÊÀ½ç¼¶ÂÖÀªµã£¬ÈôÎªÍ¼Ïñ£¬pixval²ÉÓÃÄ¬ÈÏÖµ1.0£¬ÈôÎªÊÀ½ç£¬pixvalÔòÎªµ±Ç°Ïà»úÏÂµÄpixval
-//·µ»ØÖµ 0-Õı³£ 1-ÂÖÀªµãÎª¿Õ
+//åç§°ï¼šæ‹Ÿåˆè½®å»“ç‚¹è·å–ç›´çº¿
+//åŠŸèƒ½ï¼šé€šè¿‡æ‹Ÿåˆè¾“å…¥çš„è½®å»“ç‚¹ä¿¡æ¯è·å–ç›´çº¿ï¼Œå¯ä»¥æ”¯æŒåƒç´ çº§è½®å»“ç‚¹æˆ–ä¸–ç•Œçº§è½®å»“ç‚¹ï¼Œè‹¥ä¸ºå›¾åƒï¼Œpixvalé‡‡ç”¨é»˜è®¤å€¼1.0ï¼Œè‹¥ä¸ºä¸–ç•Œï¼Œpixvalåˆ™ä¸ºå½“å‰ç›¸æœºä¸‹çš„pixval
+//è¿”å›å€¼ 0-æ­£å¸¸ 1-è½®å»“ç‚¹ä¸ºç©º
 void gatherLine(const GatherLineInput &input, GatherLineOutput &output)
 {
 	vector<Point2f> edgePtsFloat = input.edgePts;
@@ -3564,8 +2419,8 @@ void gatherLine(const GatherLineInput &input, GatherLineOutput &output)
 
 	int numpts = int(edgePtsFloat.size());
 	Vec4f lineV4f;
-	Vec4f temp;                                              //ÄâºÏµÄÂÖÀªÏß
-	vector<Point2f> vertex;                                  //ROIµÄËÄ¸ö¶¥µã
+	Vec4f temp;                  //æ‹Ÿåˆçš„è½®å»“çº¿
+	vector<Point2f> vertex;      //ROIçš„å››ä¸ªé¡¶ç‚¹
 	float k;
 	float len;
 
@@ -3584,14 +2439,14 @@ void gatherLine(const GatherLineInput &input, GatherLineOutput &output)
 		temp[3] = (float)(lineV4f[3] + len / 2.0);
 		flagK = 1;
 	}
-	else if (abs(asin(lineV4f[1])) > CV_PI / 4) {        //Ëù´¦ÀíµÄÏßÊÇÊúÖ±Ïß Ê×µãÔÚÉÏ Ä©µãÔÚÏÂ
+	else if (abs(asin(lineV4f[1])) > CV_PI / 4) {        //æ‰€å¤„ç†çš„çº¿æ˜¯ç«–ç›´çº¿ é¦–ç‚¹åœ¨ä¸Š æœ«ç‚¹åœ¨ä¸‹
 		k = (float)(lineV4f[1] / lineV4f[0]);
 		temp[0] = (float)(lineV4f[2] - (len / 2.0) / k);
 		temp[1] = (float)(lineV4f[3] - len / 2.0);
 		temp[2] = (float)(lineV4f[2] + (len / 2.0) / k);
 		temp[3] = (float)(lineV4f[3] + len / 2.0);
 	}
-	else {                                              //Ëù´¦ÀíµÄÏßÊÇË®Æ½ Ê×µãÔÚÉÏ Ä©µãÔÚÏÂ
+	else {                                              //æ‰€å¤„ç†çš„çº¿æ˜¯æ°´å¹³ é¦–ç‚¹åœ¨ä¸Š æœ«ç‚¹åœ¨ä¸‹
 		k = (float)(lineV4f[1] / lineV4f[0]);
 		temp[0] = (float)(lineV4f[2] - len / 2.0);
 		temp[1] = (float)(lineV4f[3] - len / 2.0 * k);
@@ -3600,13 +2455,13 @@ void gatherLine(const GatherLineInput &input, GatherLineOutput &output)
 	}
 	output.fitLine.pt1 = Point2f(temp[0], temp[1]);
 	output.fitLine.pt2 = Point2f(temp[2], temp[3]);
+	output.lineV4f = lineV4f;
 }
 
 
-//»Ò¶È¾Ø·½·¨ÑÇÏñËØ¼ì²â£¬Ä£°å¶¨Òå
+//ç°åº¦çŸ©æ–¹æ³•äºšåƒç´ æ£€æµ‹ï¼Œæ¨¡æ¿å®šä¹‰
 int GetSubPixel(const Mat &img, Point2f &point)
 {
-
 	Point2f tempPts = point;
 	double data[5][5];
 	int rows = img.rows;
@@ -3673,8 +2528,8 @@ int GetSubPixel(const Mat &img, Point2f &point)
 		return 0;
 	}
 
-	point.y = float(point.y - 5 * L*sin_theta / 2);           //ĞĞÊı
-	point.x = float(point.x + 5 * L*cos_theta / 2);           //ÁĞÊı
+	point.y = float(point.y - 5 * L*sin_theta / 2);           //è¡Œæ•°
+	point.x = float(point.x + 5 * L*cos_theta / 2);           //åˆ—æ•°
 	if ((abs(point.y - tempPts.y) > 2) || (abs(point.x - tempPts.x) > 2)) {
 		point.y = tempPts.y;
 		point.x = tempPts.x;
@@ -3685,16 +2540,16 @@ int GetSubPixel(const Mat &img, Point2f &point)
 
 
 //--------------------collectPolygonEdgePointsertherLine-----------------------//
-//ÊµÏÖ£º¸ø¶¨±ßÔµµÄ´óÖÂÎ»ÖÃ£¬ËÑ¼¯±ßÔµµã	
-//const cv::Mat& gray					                ÊäÈë£ºÊäÈë±ßÔµ¶şÖµ»¯Ö®ºóµÄÍ¼Ïñ
-////vector<cv::Vec4i> seedEdgeGroups                      ÊäÈë£ºÃ¿¸öROIµÄÁ½¸ö¶Ëµã<Æğµãx£¬Æğµãy£¬ÖÕµãx£¬ÖÕµãy>¶ÔÓ¦Í¬Ò»ÌõÖ±Ïß£»
-////bool polar                                            ÊäÈë£ºÑØ×Åp1-p2µÄË³Ê±Õë»¹ÊÇÄæÊ±Õë·½Ïò
-////int Tdist                                             ÊäÈë£º¾àÀë·¶Î§
-////int Tgrad                                             ÊäÈë£ºÌİ¶ÈÏÂÏŞ
-////std::vector<std::vector<cv::Point>>& edgePtsGroup		Êä³ö£ºµã¼¯groups£¬Ã¿¸ögroup°üº¬Ò»¸öµã¼¯²¢¶ÔÓ¦Ò»ÌõÖ±Ïß¡£//¿¼ÂÇµ½ÓÉ¶à¸öÏß¶Î¹¹³ÉµÄ²»Á¬ĞøÖ±Ïß					
-////float& sharp					                        Êä³ö£ºÈñ¶ÈÆÀ¼Û
-////·µ»ØÖµ                                                0£ºÕÒµ½ºÏÊÊµÄ±ßÔµµã
-////                                                      2: Î´ÕÒµ½ºÏÊÊµÄ±ßÔµµã
+//å®ç°ï¼šç»™å®šè¾¹ç¼˜çš„å¤§è‡´ä½ç½®ï¼Œæœé›†è¾¹ç¼˜ç‚¹	
+//const cv::Mat& gray					                è¾“å…¥ï¼šè¾“å…¥è¾¹ç¼˜äºŒå€¼åŒ–ä¹‹åçš„å›¾åƒ
+////vector<cv::Vec4i> seedEdgeGroups                      è¾“å…¥ï¼šæ¯ä¸ªROIçš„ä¸¤ä¸ªç«¯ç‚¹<èµ·ç‚¹xï¼Œèµ·ç‚¹yï¼Œç»ˆç‚¹xï¼Œç»ˆç‚¹y>å¯¹åº”åŒä¸€æ¡ç›´çº¿ï¼›
+////bool polar                                            è¾“å…¥ï¼šæ²¿ç€p1-p2çš„é¡ºæ—¶é’ˆè¿˜æ˜¯é€†æ—¶é’ˆæ–¹å‘
+////int Tdist                                             è¾“å…¥ï¼šè·ç¦»èŒƒå›´
+////int Tgrad                                             è¾“å…¥ï¼šæ¢¯åº¦ä¸‹é™
+////std::vector<std::vector<cv::Point>>& edgePtsGroup		è¾“å‡ºï¼šç‚¹é›†groupsï¼Œæ¯ä¸ªgroupåŒ…å«ä¸€ä¸ªç‚¹é›†å¹¶å¯¹åº”ä¸€æ¡ç›´çº¿ã€‚//è€ƒè™‘åˆ°ç”±å¤šä¸ªçº¿æ®µæ„æˆçš„ä¸è¿ç»­ç›´çº¿					
+////float& sharp					                        è¾“å‡ºï¼šé”åº¦è¯„ä»·
+////è¿”å›å€¼                                                0ï¼šæ‰¾åˆ°åˆé€‚çš„è¾¹ç¼˜ç‚¹
+////                                                      2: æœªæ‰¾åˆ°åˆé€‚çš„è¾¹ç¼˜ç‚¹
 ////------------------------------------------------------------------//
 int computeCoarseLine(const Mat& gray, int calMaxGrad,
 	vector<Vec4i> seedEdgeGroups, int polar, float Tdist,
@@ -3710,7 +2565,7 @@ int computeCoarseLine(const Mat& gray, int calMaxGrad,
 	int xs, ys, xe, ye, xl, yl, x, y, x1, y1, x2, y2, tempMaxgrad, tempabsgrad, grad;
 	float len, curlen, nlen, nlen0;
 	Vec2f vl, vn;
-	//¶ÔÓÚÃ¿Ò»×é
+	//å¯¹äºæ¯ä¸€ç»„
 	int maxGrad = 0;
 	sharp = 0;
 	int cnt = 0;
@@ -3733,27 +2588,27 @@ int computeCoarseLine(const Mat& gray, int calMaxGrad,
 		vl[0] = (xe - xs) / len;
 		vl[1] = (ye - ys) / len;
 		if (polar) {
-			vn[0] = -vl[1];                             //ÑØ×ÅË³Ê±ÕëµÄ·¨Ïß·½Ïò
+			vn[0] = -vl[1];                             //æ²¿ç€é¡ºæ—¶é’ˆçš„æ³•çº¿æ–¹å‘
 			vn[1] = vl[0];
 		}
 		else {
 			vn[0] = vl[1];
 			vn[1] = -vl[0];
 		}
-		//ÑØÏß¶Î²ÉÑù
+		//æ²¿çº¿æ®µé‡‡æ ·
 		curlen = 0;
 		xl = xs; yl = ys;
 		int flagstep = 0;
 		while (curlen <= len) {
 			flag = 0;
 			signflag = 0;
-			xl = int(xs + vl[0] * curlen);             //µ±Ç°µÄÁ¬½ÓÏßÉÏµÄ»ù×¼µã
+			xl = int(xs + vl[0] * curlen);             //å½“å‰çš„è¿æ¥çº¿ä¸Šçš„åŸºå‡†ç‚¹
 			yl = int(ys + vl[1] * curlen);
 			if (xl < 0 || xl >= W || yl < 0 || yl >= H) {
 				curlen += step;
 				continue;
 			}
-			//ÑØ·¨ÏòÊÕ¼¯
+			//æ²¿æ³•å‘æ”¶é›†
 			maxGrad = 0;
 			//vector<float> everylinegrad;
 			//vector<int> everylineX;
@@ -3764,7 +2619,7 @@ int computeCoarseLine(const Mat& gray, int calMaxGrad,
 			grad = 0;
 			for (nlen = float(-Tdist); nlen <= float(Tdist); nlen++) {
 				int pts = 1;
-				////²ÉÑùµã
+				////é‡‡æ ·ç‚¹
 				x = int(xl + nlen * vn[0]);
 				y = int(yl + nlen * vn[1]);
 				tempMaxgrad = 0;
@@ -3772,7 +2627,7 @@ int computeCoarseLine(const Mat& gray, int calMaxGrad,
 				while (pts <= validPts) {
 					x1 = int(xl + (nlen + pts)*vn[0]);
 					y1 = int(yl + (nlen + pts)*vn[1]);
-					//ÄÚ²ÉÑùµã
+					//å†…é‡‡æ ·ç‚¹
 					x2 = int(xl + (nlen - pts)*vn[0]);
 					y2 = int(yl + (nlen - pts)*vn[1]);
 					if (x < 0 || x >= W || y < 0 || y >= H ||
@@ -3836,10 +2691,10 @@ int computeCoarseLine(const Mat& gray, int calMaxGrad,
 	}
 	if (cnt > 0)
 		sharp /= cnt;
-	float distance = 6;                                                              //ÓÃÓÚranscanµÄãĞÖµÅĞ¶Ï
+	float distance = 6;                                                              //ç”¨äºranscançš„é˜ˆå€¼åˆ¤æ–­
 	//vector<Vec4d> lineV4;
 	vector<Point2f>lineV4;
-	Vec4f lineV4f;                           //»ñÈ¡µÄÄâºÏÖ±Ïß
+	Vec4f lineV4f;                           //è·å–çš„æ‹Ÿåˆç›´çº¿
 	if (ransacLines(edgePtsGroup, lineV4, distance, 1, 500))
 		return 3;
 	if (edgePtsGroup.size() < 2) {
@@ -3851,9 +2706,9 @@ int computeCoarseLine(const Mat& gray, int calMaxGrad,
 }
 
 
-//-----------------------------»ñÈ¡ÂÖÀªµã-----------------------//
-//0-ÊäÈëÍ¼Ïñ 1- ÊäÈë»ñÈ¡ÂÖÀªµÄROI 2-²ÎÊı 3- ·µ»ØÂÖÀªµã
-//0-Õı³£ 1- Òì³£
+//-----------------------------è·å–è½®å»“ç‚¹-----------------------//
+//0-è¾“å…¥å›¾åƒ 1- è¾“å…¥è·å–è½®å»“çš„ROI 2-å‚æ•° 3- è¿”å›è½®å»“ç‚¹
+//0-æ­£å¸¸ 1- å¼‚å¸¸
 int searchBoundaryForLine(Mat srcImage, cv::Mat &img, RectangleROI roiRect, int &calMaxGrad, cv::Rect &boundingRectangle, GatherEdgePtsOutput& output)
 {
 	float len = (float)sqrt(pow(roiRect.pt2.x - roiRect.pt1.x, 2) + pow(roiRect.pt2.y - roiRect.pt1.y, 2));
@@ -3863,18 +2718,18 @@ int searchBoundaryForLine(Mat srcImage, cv::Mat &img, RectangleROI roiRect, int 
 	vector<Vec4f> seedEdgeGroups;
 	vector<Point2f> edgePtsGroup;
 	vector<Point2f> edgePtsWhitegroup;
-	int Tgrad = thresholdValue;                                                                 //½«Ö®Ç°µÄ10±äÎªÁË20 ÅÅ³ıÔÓµãµÄ¸ÉÈÅ
+	int Tgrad = thresholdValue;                                                                 //å°†ä¹‹å‰çš„10å˜ä¸ºäº†20 æ’é™¤æ‚ç‚¹çš„å¹²æ‰°
 	float sharp;
-	LineStruct lineContour;//ÄâºÏµÄÂÖÀªÏß
-	LineStruct lineP1;//ROIµÄp1µãËùÔÚµÄÖ±Ïß
-	LineStruct lineP2;//ROIµÄp2µãËùÔÚµÄÖ±Ïß
+	LineStruct lineContour;//æ‹Ÿåˆçš„è½®å»“çº¿
+	LineStruct lineP1;//ROIçš„p1ç‚¹æ‰€åœ¨çš„ç›´çº¿
+	LineStruct lineP2;//ROIçš„p2ç‚¹æ‰€åœ¨çš„ç›´çº¿
 	Vec4f temp;
 	seedEdgeGroups.push_back(Vec4f(int(roiRect.pt1.x), int(roiRect.pt1.y), int(roiRect.pt2.x), int(roiRect.pt2.y)));
 	int rangeFinal = 400;
-	//½øĞĞ¼ÓËÙ´¦Àí
+	//è¿›è¡ŒåŠ é€Ÿå¤„ç†
 	int validPts = 1;
 
-	collectPolygonEdgePointsGatherLineGray(img, calMaxGrad, seedEdgeGroups, roiRect.direction, roiRect.offset, Tgrad, step, validPts, edgePtsGroup, sharp);                 //Èç¹ûÊÇ¶à¶ÎµÄROIÒ²¿ÉÒÔ¶à´Îµ÷ÓÃ´Ëº¯Êı
+	collectPolygonEdgePointsGatherLineGray(img, calMaxGrad, seedEdgeGroups, roiRect.direction, roiRect.offset, Tgrad, step, validPts, edgePtsGroup, sharp);                 //å¦‚æœæ˜¯å¤šæ®µçš„ROIä¹Ÿå¯ä»¥å¤šæ¬¡è°ƒç”¨æ­¤å‡½æ•°
 
 	Mat imgBGR;
 	cvtColor(srcImage, imgBGR, CV_GRAY2BGR);
@@ -3920,16 +2775,22 @@ float CalSD(Point2f circlePt, Point2f pt1, Point2f pt2, Point2f pt3)
 }
 
 
-Point2f GetAccuracyCirclePoint(Point2f pointLW1, Point2f pointLW2, Point2f pointLW3, float theta)
+Point2f GetAccuracyCirclePoint(Point2f pointW1, Point2f pointW2, Point2f pointW3, float theta)
 {
-	Point2f circlePoint1 = findCircle1(pointLW1, pointLW2, THETA);
-	float SD1 = CalSD(circlePoint1, pointLW1, pointLW2, pointLW3);
+	Point2f circlePoint1 = CalCircleCenter(pointW1, pointW2, theta);
+	float SD1 = CalSD(circlePoint1, pointW1, pointW2, pointW3);
+	cout << "circlePt1 is: " << circlePoint1 << endl;
+	cout << "SD1 is: " << SD1 << endl;
 
-	Point2f circlePoint2 = findCircle1(pointLW2, pointLW3, THETA);
-	float SD2 = CalSD(circlePoint2, pointLW1, pointLW2, pointLW3);
+	Point2f circlePoint2 = CalCircleCenter(pointW2, pointW3, theta);
+	float SD2 = CalSD(circlePoint2, pointW1, pointW2, pointW3);
+	cout << "circlePt2 is: " << circlePoint2 << endl;
+	cout << "SD2 is: " << SD2 << endl;
 
-	Point2f circlePoint3 = findCircle1(pointLW1, pointLW3, 2 * THETA);
-	float SD3 = CalSD(circlePoint3, pointLW1, pointLW2, pointLW3);
+	Point2f circlePoint3 = CalCircleCenter(pointW1, pointW3, 2 * theta);
+	float SD3 = CalSD(circlePoint3, pointW1, pointW2, pointW3);
+	cout << "circlePt3 is: " << circlePoint3 << endl;
+	cout << "SD3 is: " << SD3 << "\n" << endl;
 
 	Point2f resultPoint;
 	if (SD1 > SD2)
@@ -3943,4 +2804,544 @@ Point2f GetAccuracyCirclePoint(Point2f pointLW1, Point2f pointLW2, Point2f point
 		else resultPoint = circlePoint1;
 	}
 	return resultPoint;
+}
+
+
+bool polynomial_curve_fit(std::vector<cv::Point2f>& key_point, int n, cv::Mat& A)
+{
+	//Number of key points
+	int N = key_point.size();
+
+	//æ„é€ çŸ©é˜µX
+	cv::Mat X = cv::Mat::zeros(n + 1, n + 1, CV_32FC1);
+	for (int i = 0; i < n + 1; i++)
+	{
+		for (int j = 0; j < n + 1; j++)
+		{
+			for (int k = 0; k < N; k++)
+			{
+				X.at<float>(i, j) = X.at<float>(i, j) +
+					std::pow(key_point[k].x, i + j);
+			}
+		}
+	}
+
+	//æ„é€ çŸ©é˜µY
+	cv::Mat Y = cv::Mat::zeros(n + 1, 1, CV_32FC1);
+	for (int i = 0; i < n + 1; i++)
+	{
+		for (int k = 0; k < N; k++)
+		{
+			Y.at<float>(i, 0) = Y.at<float>(i, 0) +
+				std::pow(key_point[k].x, i) * key_point[k].y;
+		}
+	}
+
+	A = cv::Mat::zeros(n + 1, 1, CV_32FC1);
+	//æ±‚è§£çŸ©é˜µA
+	cv::solve(X, Y, A, cv::DECOMP_LU);
+	return true;
+}
+
+
+void SaveCrossInfo(vector<CrossPointInfo>&input, CString &strPathName)
+{
+	ofstream outfile;
+
+	outfile.open(strPathName, ios::out);
+	outfile << "index" << "," << "crossPt.x" << "," << "crossPt.y" << "," 
+		<< "ptU2.x" << "," << "ptU2.y" << ","
+		<< "thetaU"<< "," << "thetaD" << "," 
+		<< "image" << endl;
+
+	tuple<int, float, float, float> curResult2;
+	for (int i = 0; i < input.size(); i++)
+	{
+		outfile << i << ","
+			<< input[i].crossPoint.x << ","
+			<< input[i].crossPoint.y << ","
+			<< input[i].ptU2.x << ","
+			<< input[i].ptU2.y << ","
+			<< input[i].thetaU << ","
+			<< input[i].thetaD << ","
+			<< input[i].imagePath << endl;
+	}
+	outfile.close();//å…³é—­æ–‡ä»¶ï¼Œä¿å­˜æ–‡ä»¶
+}
+
+void SaveValue(vector<tuple<float, float, int, int>>&input, CString &strPathName)
+{
+	ofstream outfile;
+	outfile.open(strPathName, ios::out);
+
+	outfile << "index" << "," << "errorX" << "," << "errorY" << ","
+		<< "åŸºå‡†å›¾åƒ" << "," << "å¾…æµ‹å›¾åƒ" << endl;
+
+	for (int i = 0; i < input.size(); i++)
+	{
+		tuple<float, float, int, int> temp = input[i];
+		outfile << i + 1 << ","
+			<< get<0>(temp) << "," << get<1>(temp) << ","
+			<< "ç¬¬" << get<2>(temp) + 1 << "å¼ å›¾" << ","
+			<< "ç¬¬" << get<3>(temp) + 1 << "å¼ å›¾" << endl;
+	}
+	outfile.close();//å…³é—­æ–‡ä»¶ï¼Œä¿å­˜æ–‡ä»¶
+}
+
+void SavePointSet(vector<Point2f>&Pts, CString &strPathName)
+{
+	ofstream outfile;
+	outfile.open(strPathName, ios::out);
+	outfile << "index" << "," << "X" << "," << "Y" << endl;
+
+	tuple<int, float, float, float> curResult2;
+	for (int i = 0; i < Pts.size(); i++)
+	{
+		outfile << i + 1 << ","
+			<< Pts[i].x << ","
+			<< Pts[i].y << endl;
+	}
+	outfile.close();
+}
+
+void saveSingleCameraTransError(
+	vector<tuple<int, int, float, float, float, float, float, float>>&errorTranslationL,
+	vector<tuple<int, int, float, float, float, float, float, float>>&errorTranslationR,
+	CString& strPathName)
+{
+	ofstream outfile;
+	outfile.open(strPathName, ios::out);
+	outfile << "index" << "," << "" << ',' << "å›¾åƒ1" << ',' << "å›¾åƒ2" << ","
+		<< "ä¸–ç•Œåæ ‡å·®å€¼X" << ',' << "ä¸–ç•Œåæ ‡å·®å€¼Y" << ','
+		<< "åƒç´ åæ ‡å·®X" << "," << "åƒç´ åæ ‡å·®Y" << "," << "â–³thetaD"
+		<< endl;
+
+	for (int i = 0; i < errorTranslationL.size(); i++)
+	{
+		tuple<int, int, float, float, float, float, float, float> tempErrorTranslationL = errorTranslationL[i];
+		tuple<int, int, float, float, float, float, float, float> tempErrorTranslationR = errorTranslationR[i];
+
+		float errorXL = get<2>(tempErrorTranslationL);
+		float errorYL = get<3>(tempErrorTranslationL);
+		float errorXLP = get<4>(tempErrorTranslationL);
+		float errorYLP = get<5>(tempErrorTranslationL);
+		float thetaUL1 = get<6>(tempErrorTranslationL);
+		float thetaUL2 = get<7>(tempErrorTranslationL);
+
+		float errorXR = get<2>(tempErrorTranslationR);
+		float errorYR = get<3>(tempErrorTranslationR);
+		float errorXRP = get<4>(tempErrorTranslationR);
+		float errorYRP = get<5>(tempErrorTranslationR);
+		float thetaUR1 = get<6>(tempErrorTranslationR);
+		float thetaUR2 = get<7>(tempErrorTranslationR);
+
+		outfile << i << "," << "å·¦ç›¸æœº" << ","
+			<< "ç¬¬" << get<1>(tempErrorTranslationL) << "å¼ å›¾" << ","
+			<< "ç¬¬" << get<0>(tempErrorTranslationL) << "å¼ å›¾" << ","
+			<< errorXL << "," << errorYL << ","
+			<< errorXLP << "," << errorYLP << ","
+			<< thetaUL1 - thetaUL2 << ",\n"
+
+			<< i << "," << "å³ç›¸æœº" << ","
+			<< "ç¬¬" << get<1>(tempErrorTranslationR) << "å¼ å›¾" << ","
+			<< "ç¬¬" << get<0>(tempErrorTranslationR) << "å¼ å›¾" << ","
+			<< errorXR << "," << errorYR << ","
+			<< errorXRP << "," << errorYRP << ","
+			<< thetaUR1 - thetaUR2 << ",\n"
+
+			<< "ä¸¤è§’ç‚¹åæ ‡å¹³ç§»å·®å€¼ï¼ˆå·¦-å³ï¼‰" << "," << "" << "," << "" << "," << "" << ","
+			<< errorXL - errorXR << "," << errorYL - errorYR << ","
+			<< errorXLP - errorXRP << "," << errorYLP - errorYRP
+
+			<< "\n" << endl;
+	}
+	outfile.close();//å…³é—­æ–‡ä»¶ï¼Œä¿å­˜æ–‡ä»¶
+}
+
+/*å­˜å‚¨å¯¹ä½è¯¯å·®*/
+void saveAlignmentError(vector<tuple<float, float, int, int>>& errorInfo,
+	vector<tuple<CrossPointInfo, CrossPointInfo, float, float>>&errorInfoL,
+	vector<tuple<CrossPointInfo, CrossPointInfo, float, float>>	&errorInfoR,
+	CString& strPathName)
+{
+	ofstream outfile;
+	outfile.open(strPathName, ios::out);
+	outfile << "index" << ',' << "åŒç›¸æœºX" << ',' << "åŒç›¸æœºY" << ","
+		<< "å·¦ç›¸æœºX" << ',' << "å·¦ç›¸æœºY" << ','
+		<< "å³ç›¸æœºX" << "," << "å³ç›¸æœºY" << ","
+		<< "åŸºå‡†å›¾åƒ" << "," << "å¾…æµ‹å›¾åƒ" << endl;
+
+	for (int i = 0; i < errorInfo.size(); i++)
+	{
+		tuple<float, float, int, int>tempErrorInfo = errorInfo[i];
+		tuple<CrossPointInfo, CrossPointInfo, float, float> tempErrorInfoL = errorInfoL[i];
+		tuple<CrossPointInfo, CrossPointInfo, float, float> tempErrorInfoR = errorInfoR[i];
+
+		outfile << i << "," << get<0>(tempErrorInfo) << "," << get<1>(tempErrorInfo) << ","
+			<< get<2>(tempErrorInfoL) << "," << get<3>(tempErrorInfoL) << ","
+			<< get<2>(tempErrorInfoR) << "," << get<3>(tempErrorInfoR) << ","
+			<< "ç¬¬" << get<2>(tempErrorInfo) << "å¼ å›¾" << ","
+			<< "ç¬¬" << get<3>(tempErrorInfo) << "å¼ å›¾" << endl;
+
+	}
+	outfile.close();//å…³é—­æ–‡ä»¶ï¼Œä¿å­˜æ–‡ä»¶
+}
+
+
+
+/*å­˜å‚¨å¯¹ä½è¯¯å·®*/
+void saveInstruction(
+	vector<tuple<float, float, float, int, int>>& instruction,
+	CString& strPathName)
+{
+	ofstream outfile;
+	outfile.open(strPathName, ios::out);
+	outfile << "index" << ',' << "X" << ',' << "Y" << "," << "Theta" << ","
+		<< "åŸºå‡†å›¾åƒ" << "," << "å¾…æµ‹å›¾åƒ" << endl;
+
+	for (int i = 0; i < instruction.size(); i++)
+	{
+		tuple<float, float, float, int, int>tempInstruction = instruction[i];
+
+		outfile << i << "," << get<0>(tempInstruction) << ","
+			<< get<1>(tempInstruction) << ","
+			<< get<2>(tempInstruction) << ","
+			<< "ç¬¬" << get<3>(tempInstruction) << "å¼ å›¾" << ","
+			<< "ç¬¬" << get<4>(tempInstruction) << "å¼ å›¾" << endl;
+
+	}
+	outfile.close();//å…³é—­æ–‡ä»¶ï¼Œä¿å­˜æ–‡ä»¶
+}
+
+
+Point2f CalWorldPoint(Point2f pt, Mat& M)
+{
+	float u = pt.x;
+	float v = pt.y;
+	float A = M.at<float>(0, 0) - u * M.at<float>(6, 0);
+	float B = M.at<float>(1, 0) - u * M.at<float>(7, 0);
+	float C = u - M.at<float>(2, 0);
+	float D = M.at<float>(3, 0) - v * M.at<float>(6, 0);
+	float E = M.at<float>(4, 0) - v * M.at<float>(7, 0);
+	float F = v - M.at<float>(5, 0);
+
+	float Xw = (C * E - B * F) / (A * E - B * D);
+	float Yw = (A * F - C * D) / (A * E - B * D);
+
+	return Point2f(Xw, Yw);
+}
+
+
+void GetDiffComponent(DiffComponent &result, Solution x)
+{
+	float bx = x.bx;
+	float by = x.by;
+	float bz = x.bz;
+	float px = x.px;
+	float py = x.py;
+	float k = x.k;
+
+	/*r11 = cosÎ²z cosÎ²y ,r12 = cosÎ²z sinÎ²y sinÎ²x âˆ’ sinÎ²z cosÎ²x 
+	r21 = sinÎ²z cosÎ²y ,r22 = sinÎ²z sinÎ²y sinÎ²x + cosÎ²z cosÎ²x 
+	r13 = cosÎ²z sinÎ²y cosÎ²x + sinÎ²z sinÎ²x r23 = sinÎ²z sinÎ²y cosÎ²x âˆ’ cosÎ²z sinÎ²x*/
+	result.r11 = cos(bz) * cos(by);
+	result.r12 = cos(bz) * sin(by) * sin(bx) - sin(bz) * cos(bx);
+	result.r21 = sin(bz) * cos(by);
+	result.r22 = sin(bz) * sin(by) * sin(bx) + cos(bz) * cos(bx);
+	result.r13 = cos(bz) * sin(by) * cos(bx) + sin(bz) * sin(bx);
+	result.r23 = sin(bz) * sin(by) * cos(bx) - cos(bz) * sin(bx);
+	result.px = px;
+	result.py = py;
+	result.k = k;
+
+	result.r11_bx = 0;
+	result.r11_by = - cos(bz) * sin(by);
+	result.r11_bz = - sin(bz) * cos(by);
+
+	result.r12_bx = cos(bz) * sin(by) * cos(bx) + sin(bz) * sin(bx);
+	result.r12_by = cos(bz) * cos(by) * sin(bx);
+	result.r12_bz = - sin(bz) * sin(by) * sin(bx) - cos(bz) * cos(bx);
+
+	result.r13_bx = - cos(bz) * sin(by) * sin(bx) + sin(bz) * cos(bx);
+	result.r13_by = cos(bz) * cos(by) * cos(bx);
+	result.r13_bz = - sin(bz) * sin(by) * cos(bx) + cos(bz) * sin(bx);
+
+	result.r21_bx = 0;
+	result.r21_by = - sin(bz) * sin(by);
+	result.r21_bz = cos(bz) * cos(by);
+
+	result.r22_bx = sin(bz) * sin(by) * cos(bx) - cos(bz) * sin(bx);
+	result.r22_by = sin(bz) * cos(by) * sin(bx);
+	result.r22_bz = cos(bz) * sin(by) * sin(bx) - sin(bz) * cos(bx);
+
+	result.r23_bx = - sin(bz) * sin(by) * sin(bx) - cos(bz) * cos(bx);
+	result.r23_by = sin(bz) * cos(by) * cos(bx);
+	result.r23_bz = cos(bz) * sin(by) * cos(bx) + sin(bz) * sin(bx);
+}
+
+
+Mat GetJacobi(DiffComponent tempD, Mat matSetL, Mat matWorldSet)
+{
+	int m = matSetL.cols;         //9 points,18 equations
+	Mat Jacobi(18, 6, CV_32FC1); //declar Jacobin matrix: 18 * 6
+
+	for (int i = 0; i < m; i++)
+	{
+		float xW = matWorldSet.at<float>(0, i);
+		float yW = matWorldSet.at<float>(1, i);
+
+		float f1_bx = -tempD.k * (tempD.r11_bx * xW + tempD.r12_bx * yW);
+		float f1_by = -tempD.k * (tempD.r11_by * xW + tempD.r12_by * yW);
+		float f1_bz = -tempD.k * (tempD.r11_bz * xW + tempD.r12_bz * yW);
+		float f1_px = -tempD.k;
+		float f1_py = 0;
+
+		float f2_bx = -tempD.k * (tempD.r21_bx * xW + tempD.r22_bx * yW);
+		float f2_by = -tempD.k * (tempD.r21_by * xW + tempD.r22_by * yW);
+		float f2_bz = -tempD.k * (tempD.r21_bz * xW + tempD.r22_bz * yW);
+		float f2_px = 0;
+		float f2_py = -tempD.k;
+
+		//consider zW=0, we only get the first two components for calculation
+		float f1_k = -(tempD.r11 * xW + tempD.r12 * yW + tempD.px);
+		float f2_k = -(tempD.r21 * xW + tempD.r22 * yW + tempD.py);
+
+
+		Jacobi.at<float>(i, 0) = f1_bx;
+		Jacobi.at<float>(i, 1) = f1_by;
+		Jacobi.at<float>(i, 2) = f1_bz;
+		Jacobi.at<float>(i, 3) = f1_px;
+		Jacobi.at<float>(i, 4) = f1_py;
+		Jacobi.at<float>(i, 5) = f1_k;
+
+		Jacobi.at<float>(i + m, 0) = f2_bx;
+		Jacobi.at<float>(i + m, 1) = f2_by;
+		Jacobi.at<float>(i + m, 2) = f2_bz;
+		Jacobi.at<float>(i + m, 3) = f2_px;
+		Jacobi.at<float>(i + m, 4) = f2_py;
+		Jacobi.at<float>(i + m, 5) = f2_k;
+	}
+
+	return Jacobi;
+}
+
+
+Mat f(Solution xk, Mat matSet, Mat matWorldSet)
+{
+	/*r11 = cosÎ²z cosÎ²y ,r12 = cosÎ²z sinÎ²y sinÎ²x âˆ’ sinÎ²z cosÎ²x
+	r21 = sinÎ²z cosÎ²y ,r22 = sinÎ²z sinÎ²y sinÎ²x + cosÎ²z cosÎ²x
+	r13 = cosÎ²z sinÎ²y cosÎ²x + sinÎ²z sinÎ²x
+	r23 = sinÎ²z sinÎ²y cosÎ²x âˆ’ cosÎ²z sinÎ²x
+	fi = uiâˆ’k(r11xwi + r12 ywi + r13 zwi + px ),
+	f2i = viâˆ’k(r21xwi + r22 ywi + r23 zwi + py ),i = 1,...,m*/
+
+	float r11 = cos(xk.bz) * cos(xk.by);
+	float r12 = cos(xk.bz) * sin(xk.by) * sin(xk.bx) - sin(xk.bz) * cos(xk.bx);
+	float r21 = sin(xk.bz) * cos(xk.by);
+	float r22 = sin(xk.bz) * sin(xk.by) * sin(xk.bx) + cos(xk.bz) * cos(xk.bx);
+	float r13 = cos(xk.bz) * sin(xk.by) * cos(xk.bx) + sin(xk.bz) * sin(xk.bx);
+	float r23 = sin(xk.bz) * sin(xk.by) * cos(xk.bx) - cos(xk.bz) * sin(xk.bx);
+
+	Mat result(18, 1, CV_32FC1);
+	int m = matSet.cols;         //9 points,18 equations
+	for (int i = 0; i < m; i++)
+	{
+		float u = matSet.at<float>(0, i);
+		float v = matSet.at<float>(1, i);
+		float xW = matWorldSet.at<float>(0, i);
+		float yW = matWorldSet.at<float>(1, i);
+
+		result.at<float>(i, 0) = u - xk.k * (r11 * xW + r12 * yW + xk.px);
+		result.at<float>(i + m, 0) = v - xk.k * (r21 * xW + r22 * yW + xk.py);
+	}
+
+
+	return result;
+}
+
+
+float GetDiagMaxMatrix(Mat &src)
+{
+	float result = 0;
+	for (int row = 0; row < src.rows; row++)
+	{
+		float tempValue = src.at<float>(row, row);
+		if (result < tempValue)
+		{
+			result = tempValue;
+		}
+	}
+
+	return result;
+}
+
+float GetMatNorm(Mat &src)
+{
+	return sqrt(pow(src.at<float>(0, 0), 2) + pow(src.at<float>(1, 0), 2) +
+		pow(src.at<float>(2, 0), 2) + pow(src.at<float>(3, 0), 2) +
+		pow(src.at<float>(4, 0), 2) + pow(src.at<float>(5, 0), 2) +
+		pow(src.at<float>(6, 0), 2) + pow(src.at<float>(7, 0), 2));
+}
+
+void LM(Solution x, float mu, vector<Solution> &historyX, Mat matSet, Mat matWorldSet)
+{
+	Solution xk, xkk;
+	xk = x;
+
+	Mat gradientF(6, 1, CV_32FC1,Scalar(5));
+	float gradientNorm = GetMatNorm(gradientF);//è®¡ç®—æ¢¯åº¦å¹…å€¼
+
+	float error = 1e6;
+	float tau = 1e-2;
+	int iter = 0,iterNum = 5*1e3;
+	while (gradientNorm > 1e-2 && error > 1e-2 && iter < iterNum)
+	{
+		iter++;
+
+		historyX.push_back(xk);
+
+		Mat xkMat(6, 1, CV_32FC1);
+		Mat xkkMat(6, 1, CV_32FC1, Scalar(0));
+		Mat deltaXk(6, 1, CV_32FC1);
+
+		xkMat.at<float>(0, 0) = xk.bx;
+		xkMat.at<float>(1, 0) = xk.by;
+		xkMat.at<float>(2, 0) = xk.bz;
+		xkMat.at<float>(3, 0) = xk.px;
+		xkMat.at<float>(4, 0) = xk.py;
+		xkMat.at<float>(5, 0) = xk.k;
+
+		//Get Difference component for calculation.
+		DiffComponent tempDiffComponent;
+		GetDiffComponent(tempDiffComponent, xk);
+
+		//Get Jacobi matrix
+		Mat Jacobi = GetJacobi(tempDiffComponent, matSet, matWorldSet);
+
+		Mat G(6, 6, CV_32FC1);
+		G = Jacobi.t() * Jacobi;
+
+		Mat diagJ(6, 6, CV_32FC1, Scalar(0));
+		diagJ.at<float>(0, 0) = G.at<float>(0, 0);
+		diagJ.at<float>(1, 1) = G.at<float>(1, 1);
+		diagJ.at<float>(2, 2) = G.at<float>(2, 2);
+		diagJ.at<float>(3, 3) = G.at<float>(3, 3);
+		diagJ.at<float>(4, 4) = G.at<float>(4, 4);
+		diagJ.at<float>(5, 5) = G.at<float>(5, 5);
+		//diagJ.at<float>(0, 0) = 1;
+		//diagJ.at<float>(1, 1) = 1;
+		//diagJ.at<float>(2, 2) = 1;
+		//diagJ.at<float>(3, 3) = 1;
+		//diagJ.at<float>(4, 4) = 1;
+		//diagJ.at<float>(5, 5) = 1;
+
+		//if (iter==1)
+		//{
+		//	mu = tau * GetDiagMaxMatrix(G);
+		//}
+		//else
+		//{
+
+		//}
+
+		Mat GU =G.clone() + mu * diagJ.clone();
+		Mat invGU = GU.inv();
+		deltaXk = -invGU * Jacobi.t() * f(xk, matSet, matWorldSet);
+		xkkMat = xkMat + deltaXk;
+
+		//è®¡ç®—å½“å‰è§£xkå¯¹åº”çš„æ¢¯åº¦
+		gradientF = Jacobi.t() * f(xk, matSet, matWorldSet);
+		gradientNorm = GetMatNorm(gradientF);//è®¡ç®—æ¢¯åº¦å¹…å€¼
+
+		xkk.bx = xkkMat.at<float>(0, 0);
+		xkk.by = xkkMat.at<float>(1, 0);
+		xkk.bz = xkkMat.at<float>(2, 0);
+		xkk.px = xkkMat.at<float>(3, 0);
+		xkk.py = xkkMat.at<float>(4, 0);
+		xkk.k = xkkMat.at<float>(5, 0);
+
+		//update xk
+		error = sqrt(pow(xk.bx - xkk.bx, 2) + pow(xk.by - xkk.by, 2) + pow(xk.bz - xkk.bz, 2) +
+			pow(xk.px - xkk.px, 2) + pow(xk.py - xkk.py, 2) + pow(xk.k - xkk.k, 2));
+		xk = xkk;
+
+		//release all matrix, prepare for next iteration.
+		xkMat.release();
+		xkkMat.release();
+		deltaXk.release();
+		G.release();
+		invGU.release();
+		diagJ.release();
+		GU.release();
+		Jacobi.release();
+
+		cout << "iter: [" << iter << "\/" << iterNum << "], error is: " << error << endl;
+	}
+
+	x = xk;
+	cout << "Iteration: " << iter << ", error is: " << error <<
+		", [bx, by, bz, px, py, k] is: [" << xk.bx << "," << xk.by <<
+		"," << xk.bz << "," << xk.px << "," << xk.py << "," << xk.k << "]" << "\n" << endl;
+
+	cout << "LM calibration finished." << "\n" << endl;
+}
+
+
+void RestoreInfo(string csvPath, vector<CrossPointInfo> &resultVector, vector<Point2f>&pixelAxisSet)
+{
+	class innerFunc
+	{
+	public:
+
+		float stringToNum(const string& str)
+		{
+			istringstream iss(str);
+			float num;
+			iss >> num;
+			return num;
+		}
+	};
+
+	ifstream inFile(csvPath, ios::in);
+	string lineStr;
+	vector<vector<string>> strArray;
+	while (getline(inFile, lineStr))
+	{
+		// å­˜æˆäºŒç»´è¡¨ç»“æ„
+		stringstream ss(lineStr);
+		string str;
+		vector<string> lineArray;
+		// æŒ‰ç…§é€—å·åˆ†éš”
+		while (getline(ss, str, ','))
+			lineArray.push_back(str);
+		strArray.push_back(lineArray);
+	}
+
+	innerFunc m_innerFunc;
+	for (int i = 0; i < strArray.size(); i++)
+	{
+		if (i == 0)continue;
+		int index = (int)(m_innerFunc.stringToNum(strArray[i][0]));
+		float crossPtX = m_innerFunc.stringToNum(strArray[i][1]);
+		float crossPtY = m_innerFunc.stringToNum(strArray[i][2]);
+		float ptU2X = m_innerFunc.stringToNum(strArray[i][3]);
+		float ptU2Y = m_innerFunc.stringToNum(strArray[i][4]);
+		float thetaU = m_innerFunc.stringToNum(strArray[i][5]);
+		float thetaD = m_innerFunc.stringToNum(strArray[i][6]);
+		string imagePath = strArray[i][7];
+
+		Point2f crossPoint(crossPtX, crossPtY);
+		Point2f ptU2(ptU2X, ptU2Y);
+
+		CrossPointInfo tempLVector;
+		tempLVector.index = index;
+		tempLVector.crossPoint = crossPoint;
+		tempLVector.ptU2 = ptU2;
+		tempLVector.thetaU = thetaU;
+		tempLVector.thetaD = thetaD;
+		tempLVector.imagePath = imagePath;
+
+		pixelAxisSet.push_back(crossPoint);
+		resultVector.push_back(tempLVector);
+	}
 }

@@ -1,0 +1,22 @@
+*   ROI的变化会造成对位精度波动，当ROI取
+
+	Rect maskArcRegion = Rect(1500, 900, 1370, 1300);
+	Rect maskLineRegion1 = Rect(2988 , 850, 600, 400);
+	Rect maskLineRegion2 = Rect(1350, 2100 , 400, 400);
+
+	Rect maskArcRegion = Rect(310, 710, 2000, 2000);
+	Rect maskLineRegion1 = Rect(600 - 600 + 400, 950, 600, 400);
+	Rect maskLineRegion2 = Rect(1760, 2320-200, 400, 400);
+
+	时，对位实验的标定误差≤±0.020mm。
+	此时旋转中心坐标:[36.95748,-85.13777],[-35.90747,-85.16844]。
+
+
+*	bestResult-12-16 :
+	Rect maskArcRegion = Rect(1500, 900, 1370, 1300);
+	Rect maskLineRegion1 = Rect(2988, 850, 600, 400);
+	Rect maskLineRegion2 = Rect(1350, 2100, 400, 400);
+
+	Rect maskArcRegion = Rect(310, 710, 2000, 2000);
+	Rect maskLineRegion1 = Rect(600 - 600+400, 950, 600, 400);
+	Rect maskLineRegion2 = Rect(1760, 2320, 400, 400);

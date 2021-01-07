@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<opencv_storage>
+<invHL type_id="opencv-matrix">
+  <rows>4</rows>
+  <cols>3</cols>
+  <dt>f</dt>
+  <data>
+    1.10738650e-02 1.03648694e-04 -1.80946732e+01 8.45008108e-05
+    -1.08592203e-02 1.11260996e+01 0. 0. 0. 4.72823558e-10
+    -8.14246448e-10 1.</data></invHL>
+<invHR type_id="opencv-matrix">
+  <rows>4</rows>
+  <cols>3</cols>
+  <dt>f</dt>
+  <data>
+    1.10598607e-02 8.19973284e-05 -2.11943607e+01 6.34242388e-05
+    -1.08673451e-02 1.17554579e+01 0. 0. 0. 1.02420472e-09
+    -3.67307962e-10 9.99998391e-01</data></invHR>
+<ML type_id="opencv-matrix">
+  <rows>8</rows>
+  <cols>1</cols>
+  <dt>f</dt>
+  <data>
+    9.09097290e+01 9.08426642e-01 1.62449487e+03 1.09441185e+00
+    -9.20509109e+01 1.03720129e+03 3.77880846e-04 2.88256997e-05</data></ML>
+<MR type_id="opencv-matrix">
+  <rows>8</rows>
+  <cols>1</cols>
+  <dt>f</dt>
+  <data>
+    9.09301987e+01 3.45218420e-01 1.90837585e+03 8.24333251e-01
+    -9.22077637e+01 1.09295825e+03 2.71611672e-04 -1.76558955e-04</data></MR>
+</opencv_storage>

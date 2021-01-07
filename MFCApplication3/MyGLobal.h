@@ -18,9 +18,13 @@ extern Mat maskImageL;
 extern Mat maskImageR;
 extern Mat cosImage;
 extern Mat sinImage;
+extern Mat eWorldL;
+extern Mat eWorldR;
+//extern Mat ML;
+//extern Mat MR;
 
 /*九点标定*/
-#define CalibrationNum 9
+#define CalibrationMethod 1//1:直接求逆   2:单目标定
 
 /*CrossMethod=1:GetCrossPoint 
 CrossMethod=2:GetCrossBasedShape 
@@ -40,5 +44,7 @@ SubPixelMethod=2:Zernik矩亚像素算法*/
 #define factor 5
 
 #define  roiOffset 100
+
 /*标定时旋转角度*/
-#define THETA -3*PI/180
+#define THETA -3 * PI / 180
+//#define THETA 2 * PI / 180

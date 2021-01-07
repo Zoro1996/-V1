@@ -17,7 +17,7 @@ using namespace std;
 // CMFCApplication3Dlg 对话框
 class CMFCApplication3Dlg : public CDialogEx
 {
-// 构造
+	// 构造
 public:
 	CMFCApplication3Dlg(CWnd* pParent = nullptr);	// 标准构造函数
 
@@ -33,7 +33,7 @@ public:
 	enum { IDD = IDD_MFCAPPLICATION3_DIALOG };
 #endif
 
-	protected:
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
 
@@ -49,6 +49,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 
+	string strBmL, strBmR, strTestL, strTestR;
+
 	Mat maskL;
 	Mat maskRGBL;
 	Mat maskR;
@@ -60,21 +62,14 @@ public:
 	Mat bmImageL;
 	Mat bmImageR;
 	Mat resultImageL, resultImageR;
-
 	Mat maskL1;
 	Mat maskL2;
 	Mat maskR1;
 	Mat maskR2;
-
-	//Mat maskImageL;
-	//Mat maskImageR;
-
 	Mat secTestImageL;
 	Mat secTestImageR;
-
 	Mat secImageResultL;
 	Mat secImageResultR;
-
 	Mat HL, HR;
 	Mat worldL;
 	Mat worldR;
@@ -83,7 +78,6 @@ public:
 
 	CString RotateX1, RotateY1;
 	CString RotateX2, RotateY2;
-
 	CircleData centerWorldL1, centerWorldR1;
 	CircleData centerWorldL2, centerWorldR2;
 
@@ -97,12 +91,13 @@ public:
 
 	vector<tuple<int, float, float, float>> resultText1, resultText2;
 
-	Point2f rotatePoint1, rotatePoint2;
+	//Point2f rotatePoint1, rotatePoint2;
 
-	HomographyStruct invH1,invH2;
-	//Position bmPosition, testPosition, resultPosition, resultPosition2;
 
-	CenterPoint circlePoint1,circlePoint2;
+	HomographyStruct invH1, invH2;
+	Position bmPosition, testPosition;
+
+	CenterPoint circlePoint1, circlePoint2;
 	ControlInstruction instruction1, instruction2;
 
 	Point2f RectifiedRCenter;
@@ -146,7 +141,7 @@ public:
 private:
 	CListCtrl RectifyInstructionCommand;
 public:
-//	CListCtrl RectifyErrorList;
+	//	CListCtrl RectifyErrorList;
 private:
 	CListCtrl RectifyErrorList;
 public:

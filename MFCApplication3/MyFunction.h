@@ -13,10 +13,11 @@
 #include<iostream>
 #include <iterator>
 #include "MyFunction.h"
+#include <sstream>	
 
 using namespace std;
 using namespace cv;
-//using namespace cv::xfeatures2d;
+using namespace cv::xfeatures2d;
 
 static constexpr const double PI = 3.141592636;
 static constexpr const double circleRadiusMax = 200;
@@ -135,6 +136,7 @@ struct GatherLineInput
 struct GatherLineOutput
 {
 	LineStruct fitLine;
+	Vec4f lineV4f;
 };
 
 struct SingleCameraAlignment
@@ -143,14 +145,24 @@ struct SingleCameraAlignment
 	Point2f theta;
 };
 
-struct SinglePicInfo
+struct CrossPointInfo
 {
 	Point2f crossPoint;
-	Point2f ptU;
-	Point2f ptD;
+	Point2f ptU1;
+	Point2f ptU2;
+	Point2f ptD1;
+	Point2f ptD2;
+
+	float ka;
+	float kb;
 	float thetaU;
 	float thetaD;
+	float ransacDistance;
 
+	int index;
+	string imagePath;
+
+	int status;
 };
 
 
@@ -165,64 +177,75 @@ struct RansacTest
 };
 
 
+struct DiffComponent
+{
+	/* 用于微分计算的分量 */
+	float r11_bx;
+	float r11_by;
+	float r11_bz;
+
+	float r12_bx;
+	float r12_by;
+	float r12_bz;
+
+	float r13_bx;
+	float r13_by;
+	float r13_bz;
+
+	float r21_bx;
+	float r21_by;
+	float r21_bz;
+
+	float r22_bx;
+	float r22_by;
+	float r22_bz;
+
+	float r23_bx;
+	float r23_by;
+	float r23_bz;
+
+	float k;
+
+	float r11;
+	float r12;
+	float r21;
+	float r22;
+	float r13;
+	float r23;
+	float px;
+	float py;
+};
+
+struct Solution
+{
+	/*解向量 */
+	float bx, by, bz, px, py;
+
+	float k;
+
+	Solution operator=(Solution &xTmp)
+	{
+		bx = xTmp.bx;
+		by = xTmp.by;
+		bz = xTmp.bz;
+		px = xTmp.px;
+		py = xTmp.py;
+		k = xTmp.k;
+
+		return *this;
+	};
+};
+
+
 Point2f TransToWorldAxis(Point2f point, Mat& invH);
 
-Point2f findCircle1(Point2f pt1, Point2f pt2, float theta);
 
-CircleData findCircle2(Point2f pt1, Point2f pt2, Point2f pt3);
+ControlInstruction GetInstruction(Position& bmPosition, Position& testPosition);
 
-CircleData findCircle3(Point2f pt1, Point2f pt2, Point2f pt3);
-
-Point2f GetCrossInCMask(Mat& srcImageL,
-	double thresholdValue, int erodeSize,
-	double circleRadiusMax, double deltaRadius,
-	double CannyThreshold1, double CannyThreshold2,
-	double HoughThreshold1, double HoughThreshold2, double HoughThreshold3);
-
-Point2f GetCrossPointL(Mat srcImage,
-	double thresholdValue, int erodeSize,
-	double circleRadiusMax, double deltaRadius,
-	double CannyThreshold1, double CannyThreshold2,
-	double HoughThreshold1, double HoughThreshold2, double HoughThreshold3);
-
-Point2f GetCrossPointR(Mat srcImage, double CannyThreshold1, double CannyThreshold2,
-	double HoughThreshold1, double HoughThreshold2, double HoughThreshold3);
-
-Point2f GetCrossPoint(Mat&srcImage, double CannyThreshold1, double CannyThreshold2,
-	double HoughThreshold1, double HoughThreshold2, double HoughThreshold3);
-
-
-Position CalPosition(Mat  imageL, Mat  imageR, 
-	HomographyStruct invH,Point2f rotatePtW1,Point2f rotatePtW2);
-
-ControlInstruction GetInstruction(Position& bmPosition, Position& testPosition, Point2f& rotatePoint);
-
-ControlInstruction GetInstruction2(Mat& bmImageL, Mat& testImageL,
-	Position& bmPosition, Position& testPosition, Point2f& rotatePoint);
-
-//cv::Point2f RectifyRotateCenter(Position& testPosition, Position& bmPosition,
-//	ControlInstruction& instruction, float deltaXeWorld, float deltaYeWorld);
-
-Point2f GetCrossBasedShapeL(Mat& srcImage, Mat& maskImage);
-
-Point2f GetCrossBasedShapeR(Mat& srcImage, Mat& maskImage);
 
 ShapeMatchLocation GetShapeTrans(Mat& maskImage, Mat& srcImage, int resizeFactor);
 
 vector<Gradient>GetGradientTable(Mat& image, int modNum);
-
-vector<tuple<float, float>> ConstructNetForLineParam(
-	float lowGray, float highGray,
-	float lowGradient, float highGradient, float delta);
-
-
-GCBS FastMatchForLineParam(
-	Mat& imageU, Mat& imageD,
-	float lowGray, float highGray,
-	float lowGradient, float highGradient,
-	float brectUX, float brectUY,
-	float brectDX, float brectDY,
-	float delta);
 
 
 /*************************************************************
@@ -231,7 +254,7 @@ Description:    使用快速匹配形状匹配计算手机盖板左角点
 Input:          srcImage:待测图像 maskImage:模板图像
 Return:         盖板左角点
 **************************************************************/
-Point2f GetCrossBaseFastShapeL(Mat& srcImage, Mat& maskImage,RansacTest& ransacResult, char *a);
+CrossPointInfo GetCrossBaseFastShapeL(Mat& srcImage, Mat& maskImage,RansacTest& ransacResult, char *a);
 
 
 /*************************************************************
@@ -240,41 +263,8 @@ Description:    使用快速匹配形状匹配计算手机盖板右角点
 Input:          srcImage:待测图像 maskImage:模板图像
 Return:         盖板右角点
 **************************************************************/
-Point2f GetCrossBaseFastShapeR(Mat& srcImage, Mat& maskImage, RansacTest& ransacResult, char *a);
+CrossPointInfo GetCrossBaseFastShapeR(Mat& srcImage, Mat& maskImage, RansacTest& ransacResult, char *a);
 
-/*************************************************************
-Function:       GetLinePointsBaseLsd
-Description:    使用Sobel提取图像潜在直线拟合点
-Input:          image:待测图像
-				thresholdEdges:梯度阈值
-				deltaX:待测图像在工件图像中X方向相对位置
-				deltaY:待测图像在工件图像中Y方向相对位置
-Return:         linePoints:直线拟合点集
-**************************************************************/
-//vector<Point2f> GetLinePointsBaseLsd(Mat image, float delatX, float deltaY);
-
-/*计算某一变换对应的特征距离*/
-GCBS SingleTransEvaluation(Mat& lineRegionU, Mat& lineRegionD,
-	tuple<float, float>& curParam, float brectUX, float brectUY,
-	float brectDX, float brectDY);
-
-
-/*计算当前ParamNet下的最佳变换*/
-GCBS GetBestMeasure(Mat& imageU, Mat& imageD,
-	vector <tuple<float, float>> ParamNet,
-	float brectUX, float brectUY,
-	float brectDX, float brectDY,
-	float delta);
-
-
-vector <tuple<float, float>> GetNextNet(
-	vector<tuple<float, float>> &GoodParamNet,
-	float txStep, float tyStep, float delta);
-
-Mat LSD(Mat srcImage);
-
-
-//int ransacLines(std::vector<cv::Point2f>& input, std::vector<cv::Vec4d>& lines, double distance, unsigned int ngon, unsigned int itmax);
 
 
 //-----------------------------------------------GetRandom-----------------------------------------//
@@ -305,7 +295,7 @@ int ransacLines(std::vector<cv::Point2f>& input,
 //返回值：0-成功 1-图像为空 2-梯度阈值设置不合适需要调整 3-黑图没有边缘
 int gatherEdgePts(const GatherEdgePtsInput &input, GatherEdgePtsOutput &output);
 
-int collectPolygonEdgePointsGatherLineGray(const Mat& gray,
+int collectPolygonEdgePointsGatherLineGray(Mat gray,
 	int calMaxGrad, vector<Vec4f> seedEdgeGroups, int polar,
 	float Tdist, int Tgrad, int step, int validPts,
 	vector<Point2f>& edgePtsGroup, float& sharp);
@@ -358,3 +348,45 @@ vector<Point2f> GetLinePointsBaseHoughLineP(Mat& srcImage, Mat& image,
 	float deltaX, float deltaY,
 	double CannyThreshold1, double CannyThreshold2,
 	double HoughThreshold1, double HoughThreshold2, double HoughThreshold3);
+
+bool polynomial_curve_fit(std::vector<cv::Point2f>& key_point, int n, cv::Mat& A);
+
+void SavePointSet(vector<Point2f>&Pts, CString &strPathName);
+
+void SaveCrossInfo(vector<CrossPointInfo>&input, CString &strPathName);
+
+void SaveValue(vector<tuple<float, float, int, int>>&input, CString &strPathName);
+
+void saveSingleCameraTransError(
+	vector<tuple<int, int, float, float, float, float, float, float>>&errorTranslationL,
+	vector<tuple<int, int, float, float, float, float, float, float>>&errorTranslationR,
+	CString& strPathName);
+
+void saveAlignmentError(vector<tuple<float, float, int, int>>& errorInfo,
+	vector<tuple<CrossPointInfo, CrossPointInfo, float, float>>&errorInfoL,
+	vector<tuple<CrossPointInfo, CrossPointInfo, float, float>>	&errorInfoR,
+	CString& strPathName);
+
+
+void saveInstruction(vector<tuple<float, float, float, int, int>>& instruction,
+	CString& strPathName);
+
+
+Point2f CalWorldPoint(Point2f pt, Mat& M);
+
+
+Position CalPosition(Mat& imageL, Mat& imageR, string strL, string strR);
+
+
+void GetDiffComponent(DiffComponent &result, Solution x);
+
+
+Mat GetJacobi(DiffComponent tempD, Mat matSetL, Mat matWorldSet);
+
+
+Mat f(Solution xk, Mat matSet, Mat matWorldSet);
+
+
+void LM(Solution x, float mu, vector<Solution> &historyX, Mat matSet, Mat matWorldSet);
+
+void RestoreInfo(string csvPath, vector<CrossPointInfo> &resultVector, vector<Point2f>&pixelAxisSet);
